@@ -15,11 +15,10 @@ import win32evtlogutil
 import os, sys, string, time
 import socket
 import threading, time
+import tools
+from tools import log
 
-def log(msg):
-    #servicemanager.LogInfoMsg("SomeShortNameVersion - STOPPED!")
-    print(msg)
-    
+
 ##class aservice(win32serviceutil.ServiceFramework):
 ##   
 ##   _svc_name_ = "OVPNHandler"
@@ -71,8 +70,6 @@ def log(msg):
 ##
 # Done! Lets go out and get some dinner, bitches!
 
-
-OPENVPN_HOME = "../openvpn/"
 
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
@@ -130,11 +127,10 @@ class OVPNService(rpyc.Service):
 
     def exposed_ovpn_start(self):
         current = os.getcwd()
-        path = os.path.join(current, OPENVPN_HOME)
+        path = os.path.join(current, tools.get_openvpn_home())
         path = os.path.join(path, "openvpn")
 
-        cfg = os.path.join(current, "..")
-        cfg = os.path.join(cfg, "__config.ovpn")
+        cfg = os.path.join(current, "__config.ovpn")
 
         ##import subprocess
         ##subprocess.call(['runas', '/user:Administrator', 'C:/my_program.exe'])
