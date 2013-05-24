@@ -16,6 +16,7 @@ import os, sys, string, time
 import socket
 import threading, time
 import tools
+from pprint import pprint
 from tools import log
 
 
@@ -70,49 +71,89 @@ from tools import log
 ##
 # Done! Lets go out and get some dinner, bitches!
 
+# global that keeps track of the current status
+OVPN_STATUS = None
+stlock = threading.RLock()
 
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
+        print "creating monitor thread..."
         self.running = True
         self.connected = False
-        self.sock = socket.socket()
+        self.sock = None
+        threading.Thread.__init__(self)
+
+    def close(self):
+        if self.connected:
+            self.sock.shutdown(1)
+            self.sock.close()
+            self.connected = False
+
 
     def terminate(self):
+        self.close()
         self.running = False
 
     def run(self):
+        global OVPN_STATUS
         while self.running:
             try:
                 if not self.connected:
-                    self.sock.connect("localhost", 7505)
+                    self.sock = socket.socket()
+                    self.sock.connect(("localhost", 7505))
+                    self.connected = True
 
                 self.check_status()
-            except:
+            except Exception, e:
                 log("Cannot connect to OVPN management socket")
+                OVPN_STATUS = {'status': "DISCONNECTED"} 
+                self.close()
+                print e
 
+            if OVPN_STATUS: 
+                st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
+            else: 
+                st = "undefined"
+            print( st )
             time.sleep(0.5)
 
     def check_status(self):
-        self.sock.send("state")
-        sleep(0.5)  # half a sec
+        global OVPN_STATUS
+        self.sock.send("state\n")
+        time.sleep(0.5)  # half a sec
         while 1:
-            data = conn.recv(1024)
-            if not data: 
+            data = self.sock.recv(1024)
+            if not data:
+                OVPN_STATUS = {'status': "DISCONNECTED"} 
                 break
             else:
                 resp = self.parse_status_response(data)
+                #pprint(OVPN_STATUS)
+                with stlock:
+                    OVPN_STATUS = resp
+                break
 
     def parse_status_response(self, msg):
+        """ Parse messages like this: 1369378632,CONNECTED,SUCCESS,10.20.2.14,171.33.130.90 """
         parts = string.split(msg, ",")
-        pass
+        if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
+            return {'status': "CONNECTED", 'interface' : parts[3], 'gateway' : parts[4].split('\r')[0]}
+        elif parts[1] == "ASSIGN_IP":
+            return {'status': "CONNECTING"}
+
 
 class OVPNService(rpyc.Service):
     def on_connect(self):
         # code that runs when a connection is created
         # (to init the service, if needed)
         self.proc = None
+        self.monitor = None
         self.connected = False
         log("Connection from client opened...")
+
+        # start monitor thread
+        self.monitor = OVPNManagementThread()
+        self.monitor.start()
 
     def on_disconnect(self):
         # code that runs when the connection has already closed
@@ -149,9 +190,9 @@ class OVPNService(rpyc.Service):
         self.proc = subprocess.Popen([path, cfg], stdout=sys.stdout, stderr=sys.stdout)
         ## openvpn __config.ovpn
         #self.proc = subprocess.call([path, cfg], shell=True)
-        print("returned from subprocess call")
-        ## test that service is runnig
-        self.connected = True
+        # print("returned from subprocess call")
+        # ## test that service is runnig
+        # self.connected = True
 
     def exposed_ovpn_stop(self):
         self.proc.kill()
