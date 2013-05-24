@@ -5,6 +5,9 @@ header("Pragma: no-cache");
 $IMG = array('on' => 'vpn-on.jpg', 'off' => 'vpn-off.jpg');
 ?>
 <html>
+	<head>
+		<meta http-equiv="refresh" content="5">
+	</head>
 	<body>
 	<img src="/check/<?php if ( $_SERVER['REMOTE_ADDR'] == "171.33.130.90" ) {
 	        echo $IMG["on"];
