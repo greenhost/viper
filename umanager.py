@@ -27,7 +27,12 @@ class RemoteService:
         self.connection = rpyc.connect(host, port)
 
     def connect(self):
-        return self.connection.root.ovpn_start()
+        current = os.getcwd()
+        cfg = os.path.join(current, "__config.ovpn")
+        print "Loading config %s..." % (cfg,)
+        r =  self.connection.root.ovpn_start(cfg)
+        print r
+        return r
 
     def disconnect(self):
         return self.connection.root.ovpn_stop()
@@ -125,8 +130,9 @@ def handle_go_online(sysTrayIcon):
     # Enable some timer to check tunnel status every x minutes
     try:
         service.connect()
-    except:
+    except Exception, e:
         log("Service seems to be down")
+        print e
 
     # Ok we are online now
     set_icon_online(sysTrayIcon)
@@ -146,8 +152,9 @@ def handle_go_offline(sysTrayIcon):
     # Wait for reply and change icon. Give feedback?
     try:
         service.disconnect()
-    except ConnectionAbortedError:
+    except Exception, e:
         log("Service seems to be down")
+        print e
         
     
     set_icon_offline(sysTrayIcon)

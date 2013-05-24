@@ -1,7 +1,11 @@
-### Service to restart OpenVPN on windows
-### (c) Luis Rodil-Fernandez <luis@greenhost.nl>
-### Run Python scripts as a service example (ryrobes.com)
-### Usage : python aservice.py install (or / then start, stop, remove)
+#!/usr/bin/env python
+""" 
+Service to manage and monitor OpenVPN on windows
+(c) Luis Rodil-Fernandez <luis@greenhost.nl>
+
+Run Python scripts as a service example (ryrobes.com)
+Usage : python aservice.py install (or / then start, stop, remove)
+"""
 import rpyc
 import subprocess
 import os, sys
@@ -19,57 +23,6 @@ import tools
 from pprint import pprint
 from tools import log
 
-
-##class aservice(win32serviceutil.ServiceFramework):
-##   
-##   _svc_name_ = "OVPNHandler"
-##   _svc_display_name_ = "Greenhost OpenVPN Client Service"
-##   _svc_description_ = "This service takes care of starting and shutting down the OpenVPN client"
-##         
-##   def __init__(self, args):
-##           win32serviceutil.ServiceFramework.__init__(self, args)
-##           self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)           
-##
-##   def SvcStop(self):
-##           self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-##           win32event.SetEvent(self.hWaitStop)                    
-##         
-##   def SvcDoRun(self):
-##      import servicemanager      
-##      servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, '')) 
-##      
-##      #self.timeout = 640000    #640 seconds / 10 minutes (value is in milliseconds)
-##      self.timeout = 120000     #120 seconds / 2 minutes
-##      # This is how long the service will wait to run / refresh itself (see script below)
-##
-##      while 1:
-##         # Wait for service stop signal, if I timeout, loop again
-##         rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
-##         # Check to see if self.hWaitStop happened
-##         if rc == win32event.WAIT_OBJECT_0:
-##            # Stop signal encountered
-##            servicemanager.LogInfoMsg("SomeShortNameVersion - STOPPED!")  #For Event Log
-##            break
-##         else:
-##
-##                 #Ok, here's the real money shot right here.
-##                 #[actual service code between rests]
-##                 try:
-##                     file_path = "C:\whereever\my_REAL_py_work_to_be_done.py"
-##                     execfile(file_path)             #Execute the script
-##                 except:
-##                     pass
-##                 #[actual service code between rests]
-##
-##
-##def ctrlHandler(ctrlType):
-##   return True
-##                  
-##if __name__ == '__main__':   
-##   win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-##   win32serviceutil.HandleCommandLine(aservice)
-##
-# Done! Lets go out and get some dinner, bitches!
 
 # global that keeps track of the current status
 OVPN_STATUS = None
@@ -166,12 +119,11 @@ class OVPNService(rpyc.Service):
     def exposed_is_connected(self):
         return self.connected
 
-    def exposed_ovpn_start(self):
-        current = os.getcwd()
-        path = os.path.join(current, tools.get_openvpn_home())
+    def exposed_ovpn_start(self, cfgfile):
+        path = tools.get_openvpn_home()
         path = os.path.join(path, "openvpn")
 
-        cfg = os.path.join(current, "__config.ovpn")
+        #cfg = os.path.join(current, "__config.ovpn")
 
         ##import subprocess
         ##subprocess.call(['runas', '/user:Administrator', 'C:/my_program.exe'])
@@ -184,10 +136,11 @@ class OVPNService(rpyc.Service):
 ##            "C:\\python27", # base dir
 ##            1 ) # window visibility - 1: visible, 0: background
 
-        cmd = "%s %s" % (path, cfg)
-        print('Executing "' + cmd + '" as Administrator')
-        #self.proc = subprocess.Popen(['runas', '/user:Administrator', cmd], shell=True, stdout=sys.stdout, stderr=sys.stdout)
-        self.proc = subprocess.Popen([path, cfg], stdout=sys.stdout, stderr=sys.stdout)
+        cmd = "%s %s" % (path, cfgfile)
+        f = open(os.devnull, 'w')
+        #self.proc = subprocess.Popen(['runas', '/user:Administrator', cmd], shell=True, stdout=f, stderr=f)
+        #return 'Executing "' + cmd + '" as Administrator'
+        self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
         ## openvpn __config.ovpn
         #self.proc = subprocess.call([path, cfg], shell=True)
         # print("returned from subprocess call")
