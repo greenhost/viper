@@ -8,7 +8,7 @@ import win32file
 import systray
 import tools
 from tools import log
-
+# dependencies
 try:
     import winxpgui as win32gui
 except ImportError:
@@ -18,6 +18,10 @@ try:
     import rpyc
 except ImportError:
     print("RPYC module is required for interprocess communication. Please see: http://rpyc.readthedocs.org/en/latest/")
+
+
+# globals
+service = None
 
 
 class RemoteService:
@@ -54,9 +58,9 @@ def non_string_iterable(obj):
 ## ###########################################################################
 ## event handlers
 ## ###########################################################################
-def vpn_browser_check():
+def vpn_browser_check(checkurl):
     import webbrowser
-    webbrowser.open('https://www.freepressunlimited.org/check/')
+    webbrowser.open(checkurl)
     
 
 def handle_configure(sysTrayIcon):
@@ -64,13 +68,14 @@ def handle_configure(sysTrayIcon):
 
     r = os.path.exists(config_file)
     if r:
-        r = win32api.MessageBox(0, 'VPN already configured. Overwrite config?', 'Overwrite config', 1)
-        if not r:
+        r = win32api.MessageBox(0, 'VPN already configured. Overwrite config?', 'Overwrite config', win32con.MB_YESNOCANCEL)
+        if r == win32con.IDYES:
+            dlg = win32ui.CreateFileDialog(1, None,None,
+                                           (win32con.OFN_FILEMUSTEXIST|win32con.OFN_EXPLORER),
+                                           'VPN configuration (*.ovpn)|*.ovpn||')
+        else:
             return False
-                
-    dlg = win32ui.CreateFileDialog(1, None,None,
-                                   (win32con.OFN_FILEMUSTEXIST|win32con.OFN_EXPLORER),
-                                   'VPN configuration (*.ovpn)|*.ovpn||')
+
     dlg.SetOFNTitle('Select OpenVPN Files')
     testvalue = dlg.DoModal()
     if testvalue == win32con.IDOK:
@@ -136,7 +141,6 @@ def handle_go_online(sysTrayIcon):
 
     # Ok we are online now
     set_icon_online(sysTrayIcon)
-    vpn_browser_check()
     return True
 
 def handle_go_offline(sysTrayIcon):
@@ -170,7 +174,7 @@ def set_icon_offline(sysTrayIcon):
     sysTrayIcon.refresh_icon()
 
 def handle_quit(sysTrayIcon):
-    handle_go_offline(sysTrayIcon)
+    #handle_go_offline(sysTrayIcon)
     print('Bye, then.')
 
 def config_check_url(cfgfile):
@@ -193,32 +197,39 @@ def config_check_url(cfgfile):
     return None
 
 
-try:
-    service = RemoteService(host="localhost", port=18861)
-except:
-    win32api.MessageBox(0, "Seems like the OVPN service isn't running. OVPN tool cannot continue.", 'Service not running', 0x10)
-    print("Please run the OVPN service to continue")
-    sys.exit(1)
+def connect_to_service():
+    global service
+
+    try:
+        #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
+        service = RemoteService(host="localhost", port=18861)
+    except:
+        win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
+        print("Please run the OVPN service to continue")
+        sys.exit(1)
 
 # icons = itertools.cycle(glob.glob('*.ico'))
 icon_online = 'online.ico'
 icon_offline = 'offline.ico'
 vpn_status = False
 config_file = '__config.ovpn'
-hover_text = "IWPR VPN Control"
+hover_text = "IWPR VPN: Not connected"
 
 if __name__ == '__main__':
     import itertools, glob
     import shutil
 
+    #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
+    connect_to_service()
+
     checkurl = config_check_url(config_file)
-    print("URL to check VPN connection %s ..." % (checkurl,))
+    #print("URL to check VPN connection %s ..." % (checkurl,))
 
 
-    menu_options = (('Configure ...', None, handle_configure),
+    menu_options = (('Configure ...', None, handle_configure, None),
                     
-                    ('Go online ...', None, handle_go_online),
-                    ('Go offline ...', None, handle_go_offline)
+                    ('Go online ...', None, handle_go_online, None),
+                    ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
     systray.SysTrayIcon('offline.ico', hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)

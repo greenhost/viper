@@ -28,8 +28,10 @@ class SysTrayIcon(object):
         self.icon = icon
         self.hover_text = hover_text
         self.on_quit = on_quit
+
+        self.hicon = None
         
-        menu_options = menu_options + (('Quit', None, self.QUIT),)
+        menu_options = menu_options + (('Quit', None, self.QUIT, None),)
         self._next_action_id = self.FIRST_ID
         self.menu_actions_by_id = set()
         self.menu_options = self._add_ids_to_menu_options(list(menu_options))
@@ -75,17 +77,18 @@ class SysTrayIcon(object):
     def _add_ids_to_menu_options(self, menu_options):
         result = []
         for menu_option in menu_options:
-            option_text, option_icon, option_action = menu_option
+            option_text, option_icon, option_action, option_status = menu_option
             if callable(option_action) or option_action in self.SPECIAL_ACTIONS:
                 self.menu_actions_by_id.add((self._next_action_id, option_action))
                 result.append(menu_option + (self._next_action_id,))
             elif non_string_iterable(option_action):
                 result.append((option_text,
                                option_icon,
+                               option_status,
                                self._add_ids_to_menu_options(option_action),
                                self._next_action_id))
             else:
-                print('Unknown item', option_text, option_icon, option_action)
+                print('Unknown item', option_text, option_icon, option_action, option_status)
             self._next_action_id += 1
         return result
         
@@ -94,7 +97,7 @@ class SysTrayIcon(object):
         hinst = win32gui.GetModuleHandle(None)
         if os.path.isfile(self.icon):
             icon_flags = win32con.LR_LOADFROMFILE | win32con.LR_DEFAULTSIZE
-            hicon = win32gui.LoadImage(hinst,
+            self.hicon = win32gui.LoadImage(hinst,
                                        self.icon,
                                        win32con.IMAGE_ICON,
                                        0,
@@ -102,15 +105,30 @@ class SysTrayIcon(object):
                                        icon_flags)
         else:
             print("Can't find icon file - using default.")
-            hicon = win32gui.LoadIcon(0, win32con.IDI_APPLICATION)
+            self.hicon = win32gui.LoadIcon(0, win32con.IDI_APPLICATION)
+
+        self.set_hover_text(self.hover_text)
+        # if self.notify_id: message = win32gui.NIM_MODIFY
+        # else: message = win32gui.NIM_ADD
+        # self.notify_id = (self.hwnd,
+        #                   0,
+        #                   win32gui.NIF_ICON | win32gui.NIF_MESSAGE | win32gui.NIF_TIP,
+        #                   win32con.WM_USER+20,
+        #                   hicon,
+        #                   self.hover_text)
+        # win32gui.Shell_NotifyIcon(message, self.notify_id)
+
+    def set_hover_text(self, txt):
+        self.hover_text = txt
 
         if self.notify_id: message = win32gui.NIM_MODIFY
         else: message = win32gui.NIM_ADD
+
         self.notify_id = (self.hwnd,
                           0,
                           win32gui.NIF_ICON | win32gui.NIF_MESSAGE | win32gui.NIF_TIP,
                           win32con.WM_USER+20,
-                          hicon,
+                          self.hicon,
                           self.hover_text)
         win32gui.Shell_NotifyIcon(message, self.notify_id)
 
@@ -150,21 +168,23 @@ class SysTrayIcon(object):
         win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
     
     def create_menu(self, menu, menu_options):
-        for option_text, option_icon, option_action, option_id in menu_options[::-1]:
+        for option_text, option_icon, option_action, option_status, option_id in menu_options[::-1]:
             if option_icon:
                 option_icon = self.prep_menu_icon(option_icon)
             
             if option_id in self.menu_actions_by_id:                
                 item, extras = win32gui_struct.PackMENUITEMINFO(text=option_text,
                                                                 hbmpItem=option_icon,
-                                                                wID=option_id)
+                                                                wID=option_id,
+                                                                fState=option_status)
                 win32gui.InsertMenuItem(menu, 0, 1, item)
             else:
                 submenu = win32gui.CreatePopupMenu()
                 self.create_menu(submenu, option_action)
                 item, extras = win32gui_struct.PackMENUITEMINFO(text=option_text,
                                                                 hbmpItem=option_icon,
-                                                                hSubMenu=submenu)
+                                                                hSubMenu=submenu,
+                                                                fState=option_status)
                 win32gui.InsertMenuItem(menu, 0, 1, item)
 
     def prep_menu_icon(self, icon):
