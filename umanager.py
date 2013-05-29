@@ -7,7 +7,10 @@ import win32gui_struct
 import win32file
 import systray
 import tools
+import threading, time
 from tools import log
+from pprint import pprint
+
 # dependencies
 try:
     import winxpgui as win32gui
@@ -21,13 +24,14 @@ except ImportError:
 
 
 # globals
-service = None
-
+monitor = None
+trayapp = None
+svcproxy = None
 
 ##
 ## rpyc client to connect to windows service
 ##
-class RemoteService:
+class ServiceProxy:
     '''This service manager is meant to run on the same machine as the service itself, the localhost connection is hardcoded.
     '''
     def __init__(self, host="localhost", port=18861):
@@ -38,7 +42,6 @@ class RemoteService:
         cfg = os.path.join(current, "__config.ovpn")
         print "Loading config %s..." % (cfg,)
         r =  self.connection.root.ovpn_start(cfg)
-        print r
         return r
 
     def disconnect(self):
@@ -47,28 +50,27 @@ class RemoteService:
     def is_connected(self):
         return self.connection.root.is_connected()
 
-    def get_connection_settings():
-        pass
+    def get_connection_settings(self):
+        return self.connection.root.get_connection_settings()
 
-    def get_gateway():
-        pass
+    def get_gateway_ip(self):
+        return self.connection.root.get_gateway_ip()
 
-    def get_interface_ip():
-        pass
+    def get_interface_ip(self):
+        return self.connection.root.get_interface_ip()
     
 
 class ConnectionMonitor(threading.Thread):
     def __init__(self):
-        global service
-        
+        global svcproxy
+
         print "Creating thread to check connection status..."
         self.running = True
-        self.connected = False
 
         # open connection to windows service to monitor status
         try:
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
-            service = RemoteService(host="localhost", port=18861)
+            svcproxy = ServiceProxy(host="localhost", port=18861)
         except:
             win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
             print("Please run the OVPN service to continue")
@@ -77,47 +79,58 @@ class ConnectionMonitor(threading.Thread):
         threading.Thread.__init__(self)
 
     def close(self):
-        if self.connected:
-            self.sock.shutdown(1)
-            self.sock.close()
-            self.connected = False
+        self.terminate()
 
 
     def terminate(self):
-        self.close()
+        global svcproxy
         self.running = False
+        svcproxy.disconnect()
 
     def run(self):
-        global OVPN_STATUS
+        global svcproxy, trayapp
+
         while self.running:
             try:
-                if not self.connected:
-                    self.sock = socket.socket()
-                    self.sock.connect(("localhost", 7505))
-                    self.connected = True
+                print("Monitoring... ")
+                # openvpn is reporting back that we are online
+                ic = svcproxy.is_connected()
+                if ic:
+                    if trayapp: set_icon_online(trayapp)
+                else:
+                    if trayapp: set_icon_offline(trayapp)
 
-                self.check_status()
+                cs = svcproxy.get_connection_settings()
+                pprint(cs)
+                # @TODO check connection settings against routing table
+                if cs and trayapp: 
+                    caption = "Connected to\n\ngateway: %s\nwith ip:%s\n" % (cs['gateway'], cs['interface'])
+                    trayapp.set_hover_text(caption)
             except Exception, e:
-                log("Cannot connect to OVPN management socket")
-                OVPN_STATUS = {'status': "DISCONNECTED"} 
                 self.close()
                 print e
 
-            if OVPN_STATUS: 
-                st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
-            else: 
-                st = "undefined"
-            print( st )
             time.sleep(0.5)
+
     
+def start_monitor():
+    global monitor
+    monitor = ConnectionMonitor()
+    monitor.start()
+
+def stop_monitor():
+    global monitor
+    monitor.close()
+
             
-def non_string_iterable(obj):
-    try:
-        iter(obj)
-    except TypeError:
-        return False
-    else:
-        return not isinstance(obj, str)
+## ###########################################################################
+# def non_string_iterable(obj):
+#     try:
+#         iter(obj)
+#     except TypeError:
+#         return False
+#     else:
+#         return not isinstance(obj, str)
 
 
 ## ###########################################################################
@@ -180,7 +193,7 @@ def show_message(message, title):
     win32api.MessageBox(0, message, title)
     
 def handle_go_online(sysTrayIcon):
-    global vpn_status, service
+    global vpn_status, svcproxy
     
     # Check if config file exists
     r = os.path.exists(config_file)
@@ -188,7 +201,7 @@ def handle_go_online(sysTrayIcon):
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
         return False
 
-    if service.is_connected():
+    if svcproxy.is_connected():
         show_message('VPN already active, cannot go online twice', 'Already online')
         return False
 
@@ -199,19 +212,19 @@ def handle_go_online(sysTrayIcon):
     
     # Enable some timer to check tunnel status every x minutes
     try:
-        service.connect()
+        svcproxy.connect()
     except Exception, e:
         log("Service seems to be down")
         print e
 
     # Ok we are online now
-    set_icon_online(sysTrayIcon)
+    #set_icon_online(sysTrayIcon)
     return True
 
 def handle_go_offline(sysTrayIcon):
-    global vpn_status, service
+    global vpn_status, svcproxy
 
-    if not service.is_connected():
+    if not svcproxy.is_connected():
         show_message('VPN not online, cannot go offline when offline', 'Already offline')
         return False
 
@@ -220,13 +233,13 @@ def handle_go_offline(sysTrayIcon):
     # Close openvpn thru openvpn-control-daemon
     # Wait for reply and change icon. Give feedback?
     try:
-        service.disconnect()
+        svcproxy.disconnect()
     except Exception, e:
         log("Service seems to be down")
         print e
         
     
-    set_icon_offline(sysTrayIcon)
+    #set_icon_offline(sysTrayIcon)
     vpn_status = False
     return True
 
@@ -240,6 +253,7 @@ def set_icon_offline(sysTrayIcon):
 
 def handle_quit(sysTrayIcon):
     #handle_go_offline(sysTrayIcon)
+    stop_monitor()
     print('Bye, then.')
 
 def config_check_url(cfgfile):
@@ -267,11 +281,12 @@ def config_check_url(cfgfile):
 
 #     try:
 #         #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
-#         service = RemoteService(host="localhost", port=18861)
+#         service = ServiceProxy(host="localhost", port=18861)
 #     except:
 #         win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
 #         print("Please run the OVPN service to continue")
 #         sys.exit(1)
+
 
 # icons = itertools.cycle(glob.glob('*.ico'))
 icon_online = 'online.ico'
@@ -285,7 +300,7 @@ if __name__ == '__main__':
     import shutil
 
     #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
-    connect_to_service()
+    start_monitor()
 
     checkurl = config_check_url(config_file)
     #print("URL to check VPN connection %s ..." % (checkurl,))
@@ -297,5 +312,7 @@ if __name__ == '__main__':
                     ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
-    systray.SysTrayIcon('offline.ico', hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
-
+    trayapp = systray.SysTrayIcon('offline.ico', hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
+    print("Went on from assingment")
+    pprint(trayapp)
+    trayapp.loop()

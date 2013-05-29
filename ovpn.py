@@ -117,7 +117,34 @@ class OVPNService(rpyc.Service):
         return str(datetime.now())
 
     def exposed_is_connected(self):
-        return self.connected
+        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
+            return True
+        else:
+            return False
+
+    def exposed_get_vpn_status(self):
+        if OVPN_STATUS:
+            return OVPN_STATUS['status']
+        else:
+            return None
+
+    def exposed_get_connection_settings(self):
+        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
+            return OVPN_STATUS
+        else:
+            return None
+
+    def exposed_get_gateway_ip(self):
+        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
+            return OVPN_STATUS['gateway']
+        else:
+            return None
+
+    def exposed_get_interface_ip(self):
+        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
+            return OVPN_STATUS['interface']
+        else:
+            return None
 
     def exposed_ovpn_start(self, cfgfile):
         path = tools.get_openvpn_home()
