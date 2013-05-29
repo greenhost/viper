@@ -11,5 +11,3 @@ sc delete ovpnmon
 C:\openvpnd>net start ovpnmon
 #check-url <url>
    URL to open after connection is initialized, so that it is possible to check status from the user's browser
-#vpn-gateway-address <ip address>
-   Address to check on the routing table, it should correcpond to the default route (e.g. destination and netmask 0.0.0.0)

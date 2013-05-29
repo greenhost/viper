@@ -30,13 +30,14 @@ class SysTrayIcon(object):
         self.on_quit = on_quit
 
         self.hicon = None
-        
-        menu_options = menu_options + (('Quit', None, self.QUIT, None),)
-        self._next_action_id = self.FIRST_ID
-        self.menu_actions_by_id = set()
-        self.menu_options = self._add_ids_to_menu_options(list(menu_options))
-        self.menu_actions_by_id = dict(self.menu_actions_by_id)
-        del self._next_action_id
+
+        self.set_menu(menu_options)        
+        # menu_options = menu_options + (('Quit', None, self.QUIT, None),)
+        # self._next_action_id = self.FIRST_ID
+        # self.menu_actions_by_id = set()
+        # self.menu_options = self._add_ids_to_menu_options(list(menu_options))
+        # self.menu_actions_by_id = dict(self.menu_actions_by_id)
+        # del self._next_action_id
         
         
         self.default_menu_index = (default_menu_index or 0)
@@ -153,7 +154,16 @@ class SysTrayIcon(object):
         elif lparam==win32con.WM_LBUTTONUP:
             pass
         return True
-        
+    
+    def set_menu(self, menu_opts):
+        menu_opts = menu_opts + (('Quit', None, self.QUIT, None),)
+        self._next_action_id = self.FIRST_ID
+        self.menu_actions_by_id = set()
+        self.menu_options = self._add_ids_to_menu_options(list(menu_opts))
+        self.menu_actions_by_id = dict(self.menu_actions_by_id)
+        del self._next_action_id
+
+
     def show_menu(self):
         menu = win32gui.CreatePopupMenu()
         self.create_menu(menu, self.menu_options)

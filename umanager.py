@@ -27,6 +27,51 @@ except ImportError:
 monitor = None
 trayapp = None
 svcproxy = None
+config_file = '__config.ovpn'
+hover_text = "IWPR VPN: Not connected"
+checkurl = None
+
+icon_online = 'online.ico'
+icon_offline = 'offline.ico'
+icon_connecting = 'connecting.ico'
+
+def feedback_online(sysTrayIcon):
+    global icon_online
+    sysTrayIcon.icon = icon_online
+    sysTrayIcon.refresh_icon()
+
+    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                    
+                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                     ('Go offline...', None, handle_go_offline, None),
+                     ('Validate against server...', None, handle_validate_server, None)
+                    )
+    sysTrayIcon.set_menu(menu_options)
+
+def feedback_offline(sysTrayIcon):
+    global icon_offline
+    sysTrayIcon.icon = icon_offline
+    sysTrayIcon.refresh_icon()
+    menu_options = (('Configure...', None, handle_configure, None),
+                    
+                     ('Go online...', None, handle_go_online, None),
+                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                    )
+    sysTrayIcon.set_menu(menu_options)
+
+def feedback_connecting(sysTrayIcon):
+    global icon_connecting
+    sysTrayIcon.icon = icon_connecting
+    sysTrayIcon.refresh_icon()
+
+    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                    
+                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                    )
+    sysTrayIcon.set_menu(menu_options)
+
+
 
 ##
 ## rpyc client to connect to windows service
@@ -49,6 +94,9 @@ class ServiceProxy:
 
     def is_connected(self):
         return self.connection.root.is_connected()
+
+    def get_vpn_status(self):
+        return self.connection.root.get_vpn_status()
 
     def get_connection_settings(self):
         return self.connection.root.get_connection_settings()
@@ -92,19 +140,27 @@ class ConnectionMonitor(threading.Thread):
 
         while self.running:
             try:
-                print("Monitoring... ")
+                #print("Monitoring... ")
                 # openvpn is reporting back that we are online
-                ic = svcproxy.is_connected()
-                if ic:
-                    if trayapp: set_icon_online(trayapp)
+                st = svcproxy.get_vpn_status()
+                #print("Status: %s" % (st,))
+                if st == "CONNECTED":
+                    if trayapp:
+                        feedback_online(trayapp)
+                elif st == "CONNECTING":
+                    if trayapp: 
+                        #print("connecting.........")
+                        caption = "Connecting, please wait..."
+                        trayapp.set_hover_text(caption)
+                        feedback_connecting(trayapp)
                 else:
-                    if trayapp: set_icon_offline(trayapp)
+                    feedback_offline(trayapp)
 
                 cs = svcproxy.get_connection_settings()
-                pprint(cs)
+                #pprint(cs)
                 # @TODO check connection settings against routing table
                 if cs and trayapp: 
-                    caption = "Connected to\n\ngateway: %s\nwith ip:%s\n" % (cs['gateway'], cs['interface'])
+                    caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
                     trayapp.set_hover_text(caption)
             except Exception, e:
                 self.close()
@@ -124,22 +180,15 @@ def stop_monitor():
 
             
 ## ###########################################################################
-# def non_string_iterable(obj):
-#     try:
-#         iter(obj)
-#     except TypeError:
-#         return False
-#     else:
-#         return not isinstance(obj, str)
-
-
-## ###########################################################################
 ## event handlers
 ## ###########################################################################
-def vpn_browser_check(checkurl):
+def vpn_browser_check(url):
     import webbrowser
-    webbrowser.open(checkurl)
-    
+    webbrowser.open(url)
+
+def handle_validate_server(sysTrayIcon):
+    vpn_browser_check(checkurl)
+    return True
 
 def handle_configure(sysTrayIcon):
     print("Starting with configuration.")
@@ -193,7 +242,7 @@ def show_message(message, title):
     win32api.MessageBox(0, message, title)
     
 def handle_go_online(sysTrayIcon):
-    global vpn_status, svcproxy
+    global svcproxy
     
     # Check if config file exists
     r = os.path.exists(config_file)
@@ -205,51 +254,28 @@ def handle_go_online(sysTrayIcon):
         show_message('VPN already active, cannot go online twice', 'Already online')
         return False
 
-    # Open openvpn thru openvpn-control-daemon
-
-    # Wait for reply and change icon. Give feedback?
-    # Give feedback on failure
-    
-    # Enable some timer to check tunnel status every x minutes
     try:
         svcproxy.connect()
     except Exception, e:
         log("Service seems to be down")
         print e
 
-    # Ok we are online now
-    #set_icon_online(sysTrayIcon)
     return True
 
 def handle_go_offline(sysTrayIcon):
-    global vpn_status, svcproxy
+    global svcproxy
 
     if not svcproxy.is_connected():
         show_message('VPN not online, cannot go offline when offline', 'Already offline')
         return False
 
-    # Disable timer for vpn check
-    
-    # Close openvpn thru openvpn-control-daemon
-    # Wait for reply and change icon. Give feedback?
     try:
         svcproxy.disconnect()
     except Exception, e:
         log("Service seems to be down")
         print e
         
-    
-    #set_icon_offline(sysTrayIcon)
-    vpn_status = False
     return True
-
-def set_icon_online(sysTrayIcon):
-    sysTrayIcon.icon = icon_online
-    sysTrayIcon.refresh_icon()
-
-def set_icon_offline(sysTrayIcon):
-    sysTrayIcon.icon = icon_offline
-    sysTrayIcon.refresh_icon()
 
 def handle_quit(sysTrayIcon):
     #handle_go_offline(sysTrayIcon)
@@ -276,34 +302,15 @@ def config_check_url(cfgfile):
     return None
 
 
-# def connect_to_service():
-#     global service
-
-#     try:
-#         #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
-#         service = ServiceProxy(host="localhost", port=18861)
-#     except:
-#         win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
-#         print("Please run the OVPN service to continue")
-#         sys.exit(1)
-
-
-# icons = itertools.cycle(glob.glob('*.ico'))
-icon_online = 'online.ico'
-icon_offline = 'offline.ico'
-vpn_status = False
-config_file = '__config.ovpn'
-hover_text = "IWPR VPN: Not connected"
 
 if __name__ == '__main__':
     import itertools, glob
     import shutil
 
-    #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
     start_monitor()
 
     checkurl = config_check_url(config_file)
-    #print("URL to check VPN connection %s ..." % (checkurl,))
+    print("URL to check VPN connection %s ..." % (checkurl,))
 
 
     menu_options = (('Configure ...', None, handle_configure, None),
@@ -313,6 +320,5 @@ if __name__ == '__main__':
                    )
     
     trayapp = systray.SysTrayIcon('offline.ico', hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
-    print("Went on from assingment")
-    pprint(trayapp)
+    # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()

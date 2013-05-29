@@ -26,7 +26,7 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'offline.ico', 'README']
+RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README']
 
 # relative to the CWD
 def get_build_path():
@@ -71,5 +71,5 @@ def py2exe_build_services():
 if __name__ == '__main__':
 	create_executables()
 	copy_resources()
-	py2exe_build_services()
+	#py2exe_build_services()
 

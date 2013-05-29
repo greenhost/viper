@@ -175,7 +175,7 @@ class OVPNService(rpyc.Service):
         # self.connected = True
 
     def exposed_ovpn_stop(self):
-        self.proc.kill()
+        if self.proc: self.proc.kill()
 
 
 if __name__ == "__main__":
