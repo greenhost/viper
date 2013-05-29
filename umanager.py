@@ -24,8 +24,11 @@ except ImportError:
 service = None
 
 
+##
+## rpyc client to connect to windows service
+##
 class RemoteService:
-    '''This service manager is ment to run on the same machine as the service itself, the localhost connection is hardcoded.
+    '''This service manager is meant to run on the same machine as the service itself, the localhost connection is hardcoded.
     '''
     def __init__(self, host="localhost", port=18861):
         self.connection = rpyc.connect(host, port)
@@ -43,7 +46,69 @@ class RemoteService:
 
     def is_connected(self):
         return self.connection.root.is_connected()
+
+    def get_connection_settings():
+        pass
+
+    def get_gateway():
+        pass
+
+    def get_interface_ip():
+        pass
     
+
+class ConnectionMonitor(threading.Thread):
+    def __init__(self):
+        global service
+        
+        print "Creating thread to check connection status..."
+        self.running = True
+        self.connected = False
+
+        # open connection to windows service to monitor status
+        try:
+            #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
+            service = RemoteService(host="localhost", port=18861)
+        except:
+            win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
+            print("Please run the OVPN service to continue")
+            sys.exit(1)
+
+        threading.Thread.__init__(self)
+
+    def close(self):
+        if self.connected:
+            self.sock.shutdown(1)
+            self.sock.close()
+            self.connected = False
+
+
+    def terminate(self):
+        self.close()
+        self.running = False
+
+    def run(self):
+        global OVPN_STATUS
+        while self.running:
+            try:
+                if not self.connected:
+                    self.sock = socket.socket()
+                    self.sock.connect(("localhost", 7505))
+                    self.connected = True
+
+                self.check_status()
+            except Exception, e:
+                log("Cannot connect to OVPN management socket")
+                OVPN_STATUS = {'status': "DISCONNECTED"} 
+                self.close()
+                print e
+
+            if OVPN_STATUS: 
+                st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
+            else: 
+                st = "undefined"
+            print( st )
+            time.sleep(0.5)
     
             
 def non_string_iterable(obj):
@@ -197,16 +262,16 @@ def config_check_url(cfgfile):
     return None
 
 
-def connect_to_service():
-    global service
+# def connect_to_service():
+#     global service
 
-    try:
-        #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
-        service = RemoteService(host="localhost", port=18861)
-    except:
-        win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
-        print("Please run the OVPN service to continue")
-        sys.exit(1)
+#     try:
+#         #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
+#         service = RemoteService(host="localhost", port=18861)
+#     except:
+#         win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
+#         print("Please run the OVPN service to continue")
+#         sys.exit(1)
 
 # icons = itertools.cycle(glob.glob('*.ico'))
 icon_online = 'online.ico'

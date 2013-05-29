@@ -19,7 +19,6 @@ PYINST_DEFAULT_PATH = 'C:\pyinstaller-2.0'
 # Apps to build, specifying the entry point script and the icon to 
 # embed in the executable file as a resource
 APPS = [
-		{'script': 'winservice.py', 'icon' : 'monitor.ico'},
 		{'script': 'umanager.py', 'icon': 'online.ico'}
 	   ]
 
@@ -60,9 +59,17 @@ def copy_resources():
 		print("Copying resource %s" % (r,))
 		shutil.copy(r, os.path.join(get_build_path(), r))
 
+# Build windows services (PyInstaller doesn't seem to support services)
+def py2exe_build_services():
+	print("Building the windows service...")
+	subprocess.call("python setup.py py2exe", shell=True)
+	print("Sometimes when executing the py2exe command from a python script certain DLLs are not copied.\n\nRun this command to make sure they are copied: python setup.py py2exe")
+
 ##
 ## Main loop
 ##
 if __name__ == '__main__':
 	create_executables()
 	copy_resources()
+	py2exe_build_services()
+
