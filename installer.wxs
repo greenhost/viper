@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Name="Greenhost OpenViper"
+    Id="*"
+    UpgradeCode="{cbb23e3d-0922-496c-afce-34e15f8f7f3f}"
+    Manufacturer="http://greenhost.nl"
+    Version="1.0.0.0"
+    Language="1033">
+    <Package
+      Manufacturer="http://greenhost.nl"
+      InstallerVersion="200"
+      InstallPrivileges="elevated"
+      Languages="1033"
+      Compressed="yes" />
+ 
+    <Media Id="1" Cabinet="ovpnmon.cab" EmbedCab="yes" />
+
+    <Property Id="WHSLogo">1</Property>
+    <Property Id="DISTDIR" Value=".\dist"/>
+    <Property Id="CLIENTDIR" Value="[DISTDIR]}\client"/>
+    <Property Id="SERVICEDIR" Value="[DISTDIR]\service"/>
+
+      <!-- Installation folders -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLLOCATION" Name="OpenViper Monitor">
+
+          <Component Id="SysTray.Component" Guid="{087223ce-5f85-432f-8608-7ab200f4f5a6}">
+            <File Id="Executable" Source=".\dist\client\umanager.exe" Checksum="yes" />
+            <File Id="FILEN304692881" Source=".\dist\client\connecting.ico" />
+            <File Id="FILE1661160630" Source=".\dist\client\offline.ico"/>
+            <File Id="FILEN706008490" Source=".\dist\client\online.ico"/>
+            <File Id="FILEN858291512" Source=".\dist\client\README"/>
+            <File Id="FILE465411053" Source=".\dist\client\__config.ovpn"/>
+          </Component>
+
+
+          <Component Id="OpenVPN.Service" Guid="{752cbfaf-29a1-479d-9c82-8bfc56e69cff}">
+            <File Id="SvcExecutable" Name="winservice.exe" Source=".\dist\service\winservice.exe" KeyPath="yes" Checksum="yes"/>
+
+            <File Id="FILE1402341267" Source=".\dist\service\bz2.pyd" />
+            <File Id="FILEN1457738838" Source=".\dist\service\library.zip" />
+            <File Id="FILEN1934097200" Source=".\dist\service\perfmon.pyd" />
+            <File Id="FILEN280210412" Source=".\dist\service\pyexpat.pyd" />
+            <File Id="FILE2031150937" Source=".\dist\service\python27.dll" />
+            <File Id="FILE191738563" Source=".\dist\service\pywintypes27.dll" />
+            <File Id="FILEN1355528087" Source=".\dist\service\select.pyd" />
+            <File Id="FILE752997595" Source=".\dist\service\servicemanager.pyd" />
+            <File Id="FILEN2001194424" Source=".\dist\service\unicodedata.pyd" />
+            <File Id="FILE340004050" Source=".\dist\service\win32api.pyd" />
+            <File Id="FILEN675849594" Source=".\dist\service\win32event.pyd" />
+            <File Id="FILE33705075" Source=".\dist\service\win32evtlog.pyd" />
+            <File Id="FILEN1657418827" Source=".\dist\service\win32service.pyd" />
+            <File Id="FILEN1217724176" Source=".\dist\service\_ctypes.pyd" />
+            <File Id="FILEN463215773" Source=".\dist\service\_hashlib.pyd" />
+            <File Id="FILEN1846411406" Source=".\dist\service\_multiprocessing.pyd"/>
+            <File Id="FILEN1735949737" Source=".\dist\service\_socket.pyd"/>
+            <File Id="FILE2069171326" Source=".\dist\service\_ssl.pyd"/>
+            <File Id="FILE725455783" Source=".\dist\service\_win32sysloader.pyd"/>
+
+            <ServiceInstall
+              Id="ServiceInstaller"
+              Type="ownProcess"
+              Vital="yes"
+              Name="ovpnmon"
+              DisplayName="OpenViper VPN Monitor"
+              Description="OpenViper let's you connect to your VPN and monitor your connection status"
+              Start="auto"
+              Account="[SERVICEACCOUNT]"
+              Password="[SERVICEPASSWORD]"
+              ErrorControl="normal"
+              Interactive="no"
+              Arguments=" /start winservice"
+              >
+            </ServiceInstall>
+
+            <ServiceControl 
+              Id="StartService" 
+              Start="install" 
+              Stop="both" 
+              Remove="uninstall" 
+              Name="ovpnmon" 
+              Wait="yes" />
+          </Component>
+
+        </Directory>
+      </Directory>
+    </Directory>
+
+      <!-- Menu folders -->
+      <!--
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuSubfolder" Name="OpenViper VPN Client">
+           <Component Id="ApplicationShortcuts" Guid="12345678-1234-1234-1234-333333333333">
+              <Shortcut Id="ApplicationShortcut1" Name="OpenViper Monitor" Description="Start the Windows tray application"
+                        Target="[INSTALLDIR]umanager.exe" WorkingDirectory="INSTALLDIR"/>
+              <RegistryValue Root="HKCU" Key="Software\Greenhost\OpenViper" 
+                        Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+              <RemoveFolder Id="ProgramMenuSubfolder" On="uninstall"/>
+           </Component>
+        </Directory>
+     </Directory>
+      -->
+
+    <Feature Id="DefaultFeature" Level="1">
+       <ComponentRef Id="SysTray.Component"/>
+       <ComponentRef Id="OpenVPN.Service"/>
+    </Feature>
+
+  </Product>
+</Wix>

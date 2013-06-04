@@ -26,7 +26,7 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README']
+RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README', 'tap-windows', 'openvpn']
 
 # relative to the CWD
 def get_build_path():
@@ -57,7 +57,12 @@ def copy_resources():
 	print("Including resources...")
 	for r in RES:
 		print("Copying resource %s" % (r,))
-		shutil.copy(r, os.path.join(get_build_path(), r))
+		if os.path.isdir(r):
+			print("\t-> as directory tree" % (r,))
+			shutil.copytree(r, os.path.join(get_build_path(), r))
+		else:
+			print("\t-> as file" % (r,))
+			shutil.copy(r, os.path.join(get_build_path(), r))
 
 # Build windows services (PyInstaller doesn't seem to support services)
 def py2exe_build_services():
