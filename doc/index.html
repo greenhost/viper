@@ -134,13 +134,17 @@ interdependent programs.</p>
 
 <h2 id="the-windows-service">The windows service</h2>
 
-<p>The windows service is the one in charge of opening the connection to the VPN and closing it as well as monitoring its state.</p>
+<p>The windows service is the one in charge of opening the connection to the VPN and closing it as well as monitoring its state. To do this OpenVPN and the TAP-Windows driver included in the package must be installed.</p>
+
+<h4 id="pre-requisites">Pre-requisites</h4>
+
+<p>To let the monitor know where the OpenVPN client is, you must have an environment variable called <em>OPENVPN_HOME</em> that points to the folder where your OpenVPN installation is.</p>
 
 <h4 id="installation">Installation</h4>
 
 <p>To install the windows service you will need to open a <em>Command Prompt</em> in <em>Administrator mode</em>. For this go to your windows menu, right click on the <em>Command Promp</em> and select the item labeled as <em>Run as administrator</em>.</p>
 
-<p><img src="res/run_as_admin.png" alt="illustration1" title="Run as admin" /></p>
+<p><img src="file://C:\openvpnd\doc/res/run_as_admin.png" alt="illustration1" title="Run as admin" /></p>
 
 <p>Once you are at the command prompt, go to the directory where you unpacked the supplied .ZIP file and go into the <em>service</em> folder and run the following commands:</p>
 
@@ -167,11 +171,11 @@ interdependent programs.</p>
 
 <p>Once you start this application it will sit rather quietly in your system tray until you stablish the connection. You do not have to install this one, it is a self-standing executable. You may place it in your <em>Start Up</em> items if you wish to have it available upon startup.</p>
 
-<p><img src="res/configure.png" alt="illustration2" title="Configure the VPN client" /></p>
+<p><img src="file://C:\openvpnd\doc/res/configure.png" alt="illustration2" title="Configure the VPN client" /></p>
 
 <p>Choose <strong>Configure...</strong> to set the configuration file provided by your VPN administrator. This configuration file will be used in every subsequent connection.</p>
 
-<p><img src="res/validate.png" alt="illustration3" title="Validate your connection against a server within the VPN network" /></p>
+<p><img src="file://C:\openvpnd\doc/res/validate.png" alt="illustration3" title="Validate your connection against a server within the VPN network" /></p>
 
 <blockquote>
   <p>The GUI client provides a way to validate the VPN connection against a preconfigured server 
@@ -182,9 +186,9 @@ interdependent programs.</p>
 
 <p>When you click on <em>Go online...</em> the client will take a few seconds to initialize the connection. Please wait untill your connection is secured.</p>
 
-<p><img src="res/connecting.png" alt="illustration4" title="Opening the connection to the VPN takes a few seconds" /></p>
+<p><img src="file://C:\openvpnd\doc/res/connecting.png" alt="illustration4" title="Opening the connection to the VPN takes a few seconds" /></p>
 
 <p>You are now connected to the VPN. Plase validate the IP address of the gateway and the address of your interface, to make absolutely sure that your connection is secured.</p>
 
-<p><img src="res/connected.png" alt="illustration5" title="You are now connected to the VPN" /></p>
+<p><img src="file://C:\openvpnd\doc/res/connected.png" alt="illustration5" title="You are now connected to the VPN" /></p>
 </body></html>

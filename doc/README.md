@@ -10,7 +10,10 @@ interdependent programs.
 
 ## The windows service
 
-The windows service is the one in charge of opening the connection to the VPN and closing it as well as monitoring its state.
+The windows service is the one in charge of opening the connection to the VPN and closing it as well as monitoring its state. To do this OpenVPN and the TAP-Windows driver included in the package must be installed.
+
+#### Pre-requisites
+To let the monitor know where the OpenVPN client is, you must have an environment variable called *OPENVPN_HOME* that points to the folder where your OpenVPN installation is.
 
 #### Installation
 To install the windows service you will need to open a *Command Prompt* in *Administrator mode*. For this go to your windows menu, right click on the *Command Promp* and select the item labeled as *Run as administrator*.
