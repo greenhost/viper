@@ -26,11 +26,18 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README', 'tap-windows', 'openvpn']
+RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/umanager.exe']
+
+# Build byproducts to delete after build
+CLEAN = ['dist/umanager.exe']
 
 # relative to the CWD
 def get_build_path():
-	return os.path.join(os.getcwd(), "dist")
+	p = os.path.join(os.getcwd(), "dist\client")
+	if not os.path.exists(p):
+		os.makedirs(p)
+
+	return p
 
 # absolute path to PyInstaller - expects an environment variable pointing to it
 def get_pyinstaller_path():
@@ -49,6 +56,7 @@ def create_executables():
 	for app in APPS:
 		# build actual command to execute for this application
 		sc = cmd + " " + opt + " -i " + app['icon'] + " " + app['script']
+		print(sc)
 		subprocess.call(sc, shell=True)
 
 
@@ -58,11 +66,11 @@ def copy_resources():
 	for r in RES:
 		print("Copying resource %s" % (r,))
 		if os.path.isdir(r):
-			print("\t-> as directory tree" % (r,))
-			shutil.copytree(r, os.path.join(get_build_path(), r))
+			print("\t-> as directory tree")
+			shutil.copytree(r, os.path.join(get_build_path(), os.path.basename(r)) )
 		else:
-			print("\t-> as file" % (r,))
-			shutil.copy(r, os.path.join(get_build_path(), r))
+			print("\t-> as file")
+			shutil.copy(r, os.path.join(get_build_path(), os.path.basename(r)) )
 
 # Build windows services (PyInstaller doesn't seem to support services)
 def py2exe_build_services():
@@ -70,11 +78,17 @@ def py2exe_build_services():
 	subprocess.call("python setup.py py2exe", shell=True)
 	print("Sometimes when executing the py2exe command from a python script certain DLLs are not copied.\n\nRun this command to make sure they are copied: python setup.py py2exe")
 
+def cleanup():
+	for r in CLEAN:
+		print("Cleaning byproduct %s" % (r,))
+		os.remove(r)
+
 ##
 ## Main loop
 ##
 if __name__ == '__main__':
 	create_executables()
 	copy_resources()
+	cleanup()
 	#py2exe_build_services()
 
