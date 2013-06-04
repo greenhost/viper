@@ -1,4 +1,9 @@
 from distutils.core import setup
 import py2exe
 
-setup(service=['winservice'])
+opts = {'py2exe': {
+           'compressed':1,  
+           'dist_dir': "dist/service"
+           }}
+
+setup(service=['ovpnmon'], options=opts)

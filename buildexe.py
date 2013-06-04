@@ -65,6 +65,9 @@ def copy_resources():
 	print("Including resources...")
 	for r in RES:
 		print("Copying resource %s" % (r,))
+		if not os.path.exists(r):
+			print("WARNING: The requested resource %s could not be copied because source doesn't exist." % (r,))
+			continue
 		if os.path.isdir(r):
 			print("\t-> as directory tree")
 			shutil.copytree(r, os.path.join(get_build_path(), os.path.basename(r)) )
