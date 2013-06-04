@@ -99,25 +99,33 @@
     </Directory>
 
       <!-- Menu folders -->
-      <!--
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ProgramMenuSubfolder" Name="OpenViper VPN Client">
-           <Component Id="ApplicationShortcuts" Guid="12345678-1234-1234-1234-333333333333">
+        <Directory Id="ApplicationMenuDir" Name="UmanViper VPN Client">
+           <Component Id="ApplicationMenuDir" Guid="{654e283e-a209-4a9c-9c09-81906253f45c}">
               <Shortcut Id="ApplicationShortcut1" Name="OpenViper Monitor" Description="Start the Windows tray application"
                         Target="[INSTALLDIR]umanager.exe" WorkingDirectory="INSTALLDIR"/>
-              <RegistryValue Root="HKCU" Key="Software\Greenhost\OpenViper" 
+              <RegistryValue Root="HKCU" Key="Software\Greenhost\UmanViper" 
                         Name="installed" Type="integer" Value="1" KeyPath="yes"/>
-              <RemoveFolder Id="ProgramMenuSubfolder" On="uninstall"/>
+              <RemoveFolder Id="ApplicationMenuDir" On="uninstall"/>
            </Component>
         </Directory>
      </Directory>
-      -->
 
     <Feature Id="DefaultFeature" Level="1">
        <ComponentRef Id="SysTray.Component"/>
        <ComponentRef Id="UmanViper.Documentation"/>
        <ComponentRef Id="OpenVPN.Service"/>
     </Feature>
+
+    <!-- 
+      Using the Wix UI library
+ 
+      WixUI_InstallDir does not allow the user to choose 
+      features but adds a dialog to let the user choose a 
+      directory where the product will be installed
+    -->
+    <Property Id="WIXUI_INSTALLDIR">INSTALLDIR</Property>
+    <UIRef Id="WixUI_InstallDir"/>
 
   </Product>
 </Wix>

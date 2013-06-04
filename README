@@ -16,6 +16,13 @@ Will produce output in dist\client
 
 Remember to copy the doc folder to the distribution too.
 
+###### The OpenVPN configuration file must contain the following directives
+
+log on all
+management localhost 7505
+
+
+
 
 
 Greenhost directives

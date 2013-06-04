@@ -196,13 +196,12 @@ def handle_configure(sysTrayIcon):
     r = os.path.exists(config_file)
     if r:
         r = win32api.MessageBox(0, 'VPN already configured. Overwrite config?', 'Overwrite config', win32con.MB_YESNOCANCEL)
-        if r == win32con.IDYES:
-            dlg = win32ui.CreateFileDialog(1, None,None,
-                                           (win32con.OFN_FILEMUSTEXIST|win32con.OFN_EXPLORER),
-                                           'VPN configuration (*.ovpn)|*.ovpn||')
-        else:
+        if r != win32con.IDYES:
             return False
 
+    dlg = win32ui.CreateFileDialog(1, None,None,
+                                   (win32con.OFN_FILEMUSTEXIST|win32con.OFN_EXPLORER),
+                                   'VPN configuration (*.ovpn)|*.ovpn||')
     dlg.SetOFNTitle('Select OpenVPN Files')
     testvalue = dlg.DoModal()
     if testvalue == win32con.IDOK:

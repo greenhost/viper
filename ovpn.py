@@ -30,7 +30,7 @@ stlock = threading.RLock()
 
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
-        print "creating monitor thread..."
+        log("creating monitor thread...")
         self.running = True
         self.connected = False
         self.sock = None
@@ -147,6 +147,7 @@ class OVPNService(rpyc.Service):
             return None
 
     def exposed_ovpn_start(self, cfgfile):
+        log("Start on manager thread called, ready to call OpenVPN")
         path = tools.get_openvpn_home()
         path = os.path.join(path, "openvpn")
 
@@ -164,6 +165,7 @@ class OVPNService(rpyc.Service):
 ##            1 ) # window visibility - 1: visible, 0: background
 
         cmd = "%s %s" % (path, cfgfile)
+        log("Trying to execute OpenVPN client %s" % (cmd,))
         f = open(os.devnull, 'w')
         #self.proc = subprocess.Popen(['runas', '/user:Administrator', cmd], shell=True, stdout=f, stderr=f)
         #return 'Executing "' + cmd + '" as Administrator'
