@@ -17,6 +17,8 @@ Install TAP Windows from the client distribution by double-clicking on the insta
 
 To let the monitor know where the OpenVPN client is, you must have a system-wide environment variable called *OPENVPN_HOME* that points to the folder where your OpenVPN installation is. Make sure this variable is available to all users, not only to your current user.
 
+![illustration1](res/envvar.png "Set environment variable")
+
 #### Installation
 To install the windows service you will need to open a *Command Prompt* in *Administrator mode*. For this go to your windows menu, right click on the *Command Promp* and select the item labeled as *Run as administrator*.
 
