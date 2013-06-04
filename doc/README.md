@@ -22,7 +22,7 @@ To install the windows service you will need to open a *Command Prompt* in *Admi
 
 Once you are at the command prompt, go to the directory where you unpacked the supplied .ZIP file and go into the *service* folder and run the following commands:
 
-> c:\unpacked-zip\service> **winservice -install**
+> c:\unpacked-zip\service> **ovpnmon -install**
 
 This will install the service in your windows machine. To start the service type:
 
