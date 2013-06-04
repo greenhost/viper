@@ -10,7 +10,7 @@ interdependent programs.
 
 ## The windows service
 
-The windows service is the one in charge of opening the connection to the VPN and closing it as well as monitoring its state. To do this OpenVPN and the TAP-Windows driver included in the package must be installed.
+The windows service is the one in charge of opening the connection to the VPN as well as closing it and monitoring its state.
 
 #### Pre-requisites
 Install TAP Windows from the client distribution by double-clicking on the installer.
@@ -20,7 +20,7 @@ To let the monitor know where the OpenVPN client is, you must have a system-wide
 ![illustration1](res/envvar.png "Set environment variable")
 
 #### Installation
-To install the windows service you will need to open a *Command Prompt* in *Administrator mode*. For this go to your windows menu, right click on the *Command Promp* and select the item labeled as *Run as administrator*.
+To install the windows service you will need to open a *Command Prompt* in *Administrator mode*. For this go to your windows menu, right click on the *Command Prompt* and select the item labeled as *Run as administrator*.
 
 ![illustration1](res/run_as_admin.png "Run as admin")
 
@@ -43,7 +43,7 @@ From the previous command you should get the following output:
 
 ## The systray gui
 
-Once you start this application it will sit rather quietly in your system tray until you stablish the connection. You do not have to install this one, it is a self-standing executable. You may place it in your *Start Up* items if you wish to have it available upon startup.
+Once you start this application it will sit rather quietly in your system tray until you establish the connection. You do not have to install this one, it is a self-standing executable. You may place it in your *Start Up* items if you wish to have it available upon startup.
 
 ![illustration2](res/configure.png "Configure the VPN client")
 
