@@ -1,3 +1,23 @@
+### DEVELOPERS
+
+To build a binary distribution:
+
+###### Windows Service
+c:\> python setup.py py2exe
+
+Will produce output in dist\service
+
+
+###### Windows Systray program
+c:\> python buildexe.py
+
+Will produce output in dist\client
+
+
+Remember to copy the doc folder to the distribution too.
+
+
+
 Greenhost directives
 
 OpenVPN Monitor Service 

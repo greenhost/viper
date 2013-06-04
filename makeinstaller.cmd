@@ -1,3 +1,3 @@
-candle installer.wxs
-light installer.wixobj
+candle install-umanviper.wxs
+light install-umanviper.wixobj
 @pause

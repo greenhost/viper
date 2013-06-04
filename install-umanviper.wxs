@@ -32,13 +32,23 @@
             <File Id="FILE1661160630" Source=".\dist\client\offline.ico"/>
             <File Id="FILEN706008490" Source=".\dist\client\online.ico"/>
             <File Id="FILEN858291512" Source=".\dist\client\README"/>
-            <File Id="FILE465411053" Source=".\dist\client\__config.ovpn"/>
+            <!-- <File Id="FILE465411053" Source=".\dist\client\__config.ovpn"/> -->
           </Component>
 
 
-          <Component Id="OpenVPN.Service" Guid="{752cbfaf-29a1-479d-9c82-8bfc56e69cff}">
-            <File Id="SvcExecutable" Name="winservice.exe" Source=".\dist\service\winservice.exe" KeyPath="yes" Checksum="yes"/>
+          <Component Id="UmanViper.Documentation" Guid="{9a086d02-ac45-4e2f-989f-374e26236fe7}">
+            <File Id="FILEN925481764" Source=".\dist\doc\index.html"/>
+            <File Id="FILEN868105796" Source=".\dist\doc\README.md"/>
+            <File Id="FILEN1520248070" Source=".\dist\doc\res\configure.png"/>
+            <File Id="FILE2052629647" Source=".\dist\doc\res\connected.png"/>
+            <File Id="FILEN197255902" Source=".\dist\doc\res\connecting.png"/>
+            <File Id="FILE1199532673" Source=".\dist\doc\res\not_connected.png"/>
+            <File Id="FILEN1658094922" Source=".\dist\doc\res\run_as_admin.png"/>
+            <File Id="FILE147044714" Source=".\dist\doc\res\validate.png"/>
+          </Component>
 
+          <Component Id="OpenVPN.Service" Guid="{752cbfaf-29a1-479d-9c82-8bfc56e69cff}">
+            <File Id="SvcExecutable" Name="winservice.exe" Source=".\dist\service\ovpnmon.exe" KeyPath="yes" Checksum="yes"/>
             <File Id="FILE1402341267" Source=".\dist\service\bz2.pyd" />
             <File Id="FILEN1457738838" Source=".\dist\service\library.zip" />
             <File Id="FILEN1934097200" Source=".\dist\service\perfmon.pyd" />
@@ -71,7 +81,7 @@
               Password="[SERVICEPASSWORD]"
               ErrorControl="normal"
               Interactive="no"
-              Arguments=" /start winservice"
+              Arguments=" /start ovpnmon"
               >
             </ServiceInstall>
 
@@ -105,6 +115,7 @@
 
     <Feature Id="DefaultFeature" Level="1">
        <ComponentRef Id="SysTray.Component"/>
+       <ComponentRef Id="UmanViper.Documentation"/>
        <ComponentRef Id="OpenVPN.Service"/>
     </Feature>
 
