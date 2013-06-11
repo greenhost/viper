@@ -59,6 +59,10 @@ def feedback_offline(sysTrayIcon):
                     )
     sysTrayIcon.set_menu(menu_options)
 
+    if trayapp:
+        trayapp.set_hover_text("IWPR VPN: Not connected")
+
+
 def feedback_connecting(sysTrayIcon):
     global icon_connecting
     sysTrayIcon.icon = icon_connecting

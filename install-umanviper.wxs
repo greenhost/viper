@@ -48,7 +48,7 @@
           </Component>
 
           <Component Id="OpenVPN.Service" Guid="{752cbfaf-29a1-479d-9c82-8bfc56e69cff}">
-            <File Id="SvcExecutable" Name="winservice.exe" Source=".\dist\service\ovpnmon.exe" KeyPath="yes" Checksum="yes"/>
+            <File Id="SvcExecutable" Name="ovpnmon.exe" Source=".\dist\service\ovpnmon.exe" KeyPath="yes" Checksum="yes"/>
             <File Id="FILE1402341267" Source=".\dist\service\bz2.pyd" />
             <File Id="FILEN1457738838" Source=".\dist\service\library.zip" />
             <File Id="FILEN1934097200" Source=".\dist\service\perfmon.pyd" />
@@ -69,6 +69,7 @@
             <File Id="FILE2069171326" Source=".\dist\service\_ssl.pyd"/>
             <File Id="FILE725455783" Source=".\dist\service\_win32sysloader.pyd"/>
 
+            <!--
             <ServiceInstall
               Id="ServiceInstaller"
               Type="ownProcess"
@@ -92,13 +93,14 @@
               Remove="uninstall" 
               Name="ovpnmon" 
               Wait="yes" />
+          -->
           </Component>
-
         </Directory>
       </Directory>
     </Directory>
 
       <!-- Menu folders -->
+      <!--
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ApplicationMenuDir" Name="UmanViper VPN Client">
            <Component Id="ApplicationMenuDir" Guid="{654e283e-a209-4a9c-9c09-81906253f45c}">
@@ -110,6 +112,7 @@
            </Component>
         </Directory>
      </Directory>
+      -->
 
     <Feature Id="DefaultFeature" Level="1">
        <ComponentRef Id="SysTray.Component"/>
