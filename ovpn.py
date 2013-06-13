@@ -24,6 +24,7 @@ from pprint import pprint
 from tools import log
 
 
+
 # global that keeps track of the current status
 OVPN_STATUS = None
 stlock = threading.RLock()

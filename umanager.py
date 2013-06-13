@@ -8,7 +8,7 @@ import win32file
 import systray
 import tools
 import threading, time
-from tools import log
+from tools import log, get_openvpn_home
 from pprint import pprint
 
 # dependencies
@@ -31,9 +31,9 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-icon_online = 'online.ico'
-icon_offline = 'offline.ico'
-icon_connecting = 'connecting.ico'
+icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
+icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
+icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
 
 def feedback_online(sysTrayIcon):
     global icon_online
@@ -87,8 +87,8 @@ class ServiceProxy:
         self.connection = rpyc.connect(host, port)
 
     def connect(self):
-        current = os.getcwd()
-        cfg = os.path.join(current, "__config.ovpn")
+        #current = os.getcwd()
+        cfg = os.path.join(tools.get_user_cwd(), "__config.ovpn")
         print "Loading config %s..." % (cfg,)
         r =  self.connection.root.ovpn_start(cfg)
         return r
@@ -197,7 +197,9 @@ def handle_validate_server(sysTrayIcon):
 def handle_configure(sysTrayIcon):
     print("Starting with configuration.")
 
-    r = os.path.exists(config_file)
+    cfgdst = os.path.join(tools.get_user_cwd(), config_file)
+
+    r = os.path.exists(cfgdst)
     if r:
         r = win32api.MessageBox(0, 'VPN already configured. Overwrite config?', 'Overwrite config', win32con.MB_YESNOCANCEL)
         if r != win32con.IDYES:
@@ -218,26 +220,26 @@ def handle_configure(sysTrayIcon):
                 return False
 
             # If old file exits, delete it
-            r = os.path.exists(config_file)
+            r = os.path.exists(cfgdst)
             if r:
                 try:
-                    os.remove(config_file)
+                    os.remove(cfgdst)
                 except OSError:
                     show_message('Error removing old configuration', 'Error removing old configuration')
                     return False
 
             # Be sure old file is gone    
-            r = os.path.exists(config_file)
+            r = os.path.exists(cfgdst)
             if r:
                 show_message('Error removing old configuration', 'Error removing old configuration')
                 return False
 
             # Ok, file is not there anymore, copy it        
-            win32file.CopyFile(filename, config_file, 0);
+            win32file.CopyFile(filename, cfgdst, 0);
 
-            r = os.path.exists(config_file)
+            r = os.path.exists(cfgdst)
             if not r:
-                show_message('Error coping config file', 'Error copying config file')
+                show_message('Error copying config file', 'Error copying config file')
                 return False
                 
 
@@ -248,7 +250,7 @@ def handle_go_online(sysTrayIcon):
     global svcproxy
     
     # Check if config file exists
-    r = os.path.exists(config_file)
+    r = os.path.exists(os.path.join(tools.get_user_cwd(), config_file))
     if not r:
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
         return False
@@ -310,6 +312,8 @@ if __name__ == '__main__':
     import itertools, glob
     import shutil
 
+    #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
+
     start_monitor()
 
     checkurl = config_check_url(config_file)
@@ -322,6 +326,6 @@ if __name__ == '__main__':
                     ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
-    trayapp = systray.SysTrayIcon('offline.ico', hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
+    trayapp = systray.SysTrayIcon(icon_offline, hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()
