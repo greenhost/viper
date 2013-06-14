@@ -31,21 +31,31 @@ stlock = threading.RLock()
 
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
-        log("creating monitor thread...")
+        log("service - creating monitor thread...")
         self.running = True
         self.connected = False
         self.sock = None
         threading.Thread.__init__(self)
 
-    def close(self):
+    def disconnect(self):
+        """ disconnect monitoring thread from OpenVPN client """
         if self.connected:
+            # close the socket
             self.sock.shutdown(1)
             self.sock.close()
             self.connected = False
 
+    def close(self):
+        """ close OpenVPN client sending SIGTERM """
+        log("Terminating OpenVPN subprocess [SIGTERM]")
+        # send SIGTERM to openvpn
+        self.sock.send("signal SIGTERM\n")
+        time.sleep(0.5)  # half a sec
 
     def terminate(self):
+        """ stop monitoring """
         self.close()
+        self.disconnect()
         self.running = False
 
     def run(self):
@@ -53,6 +63,7 @@ class OVPNManagementThread(threading.Thread):
         while self.running:
             try:
                 if not self.connected:
+                    log("Trying to connect to OVPN management socket")
                     self.sock = socket.socket()
                     self.sock.connect(("localhost", 7505))
                     self.connected = True
@@ -61,7 +72,7 @@ class OVPNManagementThread(threading.Thread):
             except Exception, e:
                 log("Cannot connect to OVPN management socket")
                 OVPN_STATUS = {'status': "DISCONNECTED"} 
-                self.close()
+                self.disconnect()
                 print e
 
             if OVPN_STATUS: 
@@ -73,6 +84,7 @@ class OVPNManagementThread(threading.Thread):
 
     def check_status(self):
         global OVPN_STATUS
+        log("Checking status")
         self.sock.send("state\n")
         time.sleep(0.5)  # half a sec
         while 1:
@@ -178,7 +190,10 @@ class OVPNService(rpyc.Service):
         # self.connected = True
 
     def exposed_ovpn_stop(self):
-        if self.proc: self.proc.kill()
+        if self.proc: 
+            self.monitor.close()
+            self.monitor.disconnect()
+            #self.proc.kill()
 
 
 if __name__ == "__main__":

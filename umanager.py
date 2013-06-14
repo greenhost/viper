@@ -44,7 +44,7 @@ def feedback_online(sysTrayIcon):
                     
                      ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
                      ('Go offline...', None, handle_go_offline, None),
-                     ('Validate against server...', None, handle_validate_server, None)
+                     #('Validate against server...', None, handle_validate_server, None)
                     )
     sysTrayIcon.set_menu(menu_options)
 
@@ -89,11 +89,12 @@ class ServiceProxy:
     def connect(self):
         #current = os.getcwd()
         cfg = os.path.join(tools.get_user_cwd(), "__config.ovpn")
-        print "Loading config %s..." % (cfg,)
+        log( "Loading config %s..." % (cfg,) )
         r =  self.connection.root.ovpn_start(cfg)
         return r
 
     def disconnect(self):
+        log("umanager proxy - disconnect called")
         return self.connection.root.ovpn_stop()
 
     def is_connected(self):
@@ -116,9 +117,7 @@ class ConnectionMonitor(threading.Thread):
     def __init__(self):
         global svcproxy
 
-        print "Creating thread to check connection status..."
         self.running = True
-
         # open connection to windows service to monitor status
         try:
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
@@ -131,10 +130,12 @@ class ConnectionMonitor(threading.Thread):
         threading.Thread.__init__(self)
 
     def close(self):
+        log("umanager.monitor - close called")
         self.terminate()
 
 
     def terminate(self):
+        log("umanager.monitor - terminate called")
         global svcproxy
         self.running = False
         svcproxy.disconnect()
@@ -167,6 +168,8 @@ class ConnectionMonitor(threading.Thread):
                     caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
                     trayapp.set_hover_text(caption)
             except Exception, e:
+                err = "umanager.monitor main loop ({0}): {1}".format(e.errno, e.strerror)
+                log(err)
                 self.close()
                 print e
 
@@ -175,11 +178,13 @@ class ConnectionMonitor(threading.Thread):
     
 def start_monitor():
     global monitor
+    log("Creating thread to check connection status...")
     monitor = ConnectionMonitor()
     monitor.start()
 
 def stop_monitor():
     global monitor
+    log("Stopping thread that checks connection status...")
     monitor.close()
 
             
@@ -285,7 +290,8 @@ def handle_go_offline(sysTrayIcon):
 def handle_quit(sysTrayIcon):
     #handle_go_offline(sysTrayIcon)
     stop_monitor()
-    print('Bye, then.')
+    log('Bye, then.')
+    sys.exit(0)
 
 def config_check_url(cfgfile):
     try:
