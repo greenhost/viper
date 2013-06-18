@@ -25,9 +25,9 @@ management localhost 7505
 
 
 
-Greenhost directives
-
 OpenVPN Monitor Service 
+
+ovpnmon -install
 
 net stop ovpnmon
 net start ovpnmon
