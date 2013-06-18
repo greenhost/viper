@@ -34,6 +34,7 @@ checkurl = None
 icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
 icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
 icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
+icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
 
 def feedback_online(sysTrayIcon):
     global icon_online
@@ -75,6 +76,18 @@ def feedback_connecting(sysTrayIcon):
                     )
     sysTrayIcon.set_menu(menu_options)
 
+
+def feedback_starting(sysTrayIcon):
+    global icon_refresh
+    sysTrayIcon.icon = icon_refresh
+    sysTrayIcon.refresh_icon()
+
+    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                    
+                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                    )
+    sysTrayIcon.set_menu(menu_options)
 
 
 ##
@@ -266,6 +279,8 @@ def handle_go_online(sysTrayIcon):
 
     try:
         svcproxy.connect()
+        # show immediate feedback to the user
+        feedback_offline(sysTrayIcon)
     except Exception, e:
         log("Service seems to be down")
         print e
