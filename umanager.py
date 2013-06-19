@@ -31,10 +31,16 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
-icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
-icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
-icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
+# icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
+# icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
+# icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
+# icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
+
+icon_online = 'online.ico'
+icon_offline = 'offline.ico'
+icon_connecting = 'connecting.ico'
+icon_refresh = 'refresh.ico'
+
 
 def feedback_online(sysTrayIcon):
     global icon_online
@@ -65,7 +71,8 @@ def feedback_offline(sysTrayIcon):
 
 
 def feedback_connecting(sysTrayIcon):
-    global icon_connecting
+    global icon_connecting, monitor
+    monitor.isstarting = False
     sysTrayIcon.icon = icon_connecting
     sysTrayIcon.refresh_icon()
 
@@ -131,6 +138,7 @@ class ConnectionMonitor(threading.Thread):
         global svcproxy
 
         self.running = True
+        self.isstarting = False
         # open connection to windows service to monitor status
         try:
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
@@ -145,7 +153,6 @@ class ConnectionMonitor(threading.Thread):
     def close(self):
         log("umanager.monitor - close called")
         self.terminate()
-
 
     def terminate(self):
         log("umanager.monitor - terminate called")
@@ -172,7 +179,12 @@ class ConnectionMonitor(threading.Thread):
                         trayapp.set_hover_text(caption)
                         feedback_connecting(trayapp)
                 else:
-                    feedback_offline(trayapp)
+                    # it's possible proxy has not yet started remote process
+                    if self.isstarting:
+                        feedback_starting(trayapp)
+                    # proxy started the service but it is offline
+                    else:
+                        feedback_offline(trayapp)
 
                 cs = svcproxy.get_connection_settings()
                 #pprint(cs)
@@ -181,7 +193,7 @@ class ConnectionMonitor(threading.Thread):
                     caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
                     trayapp.set_hover_text(caption)
             except Exception, e:
-                err = "umanager.monitor main loop ({0}): {1}".format(e.errno, e.strerror)
+                err = "umanager.monitor main loop: {0}".format(e.message)
                 log(err)
                 self.close()
                 print e
@@ -265,7 +277,7 @@ def show_message(message, title):
     win32api.MessageBox(0, message, title)
     
 def handle_go_online(sysTrayIcon):
-    global svcproxy
+    global svcproxy, monitor
     
     # Check if config file exists
     r = os.path.exists(os.path.join(tools.get_user_cwd(), config_file))
@@ -280,7 +292,7 @@ def handle_go_online(sysTrayIcon):
     try:
         svcproxy.connect()
         # show immediate feedback to the user
-        feedback_offline(sysTrayIcon)
+        monitor.isstarting = True
     except Exception, e:
         log("Service seems to be down")
         print e
@@ -303,10 +315,17 @@ def handle_go_offline(sysTrayIcon):
     return True
 
 def handle_quit(sysTrayIcon):
-    #handle_go_offline(sysTrayIcon)
+    # if connected, disconnect
+    if svcproxy.is_connected():
+        try:
+            svcproxy.disconnect()
+        except Exception, e:
+            pass
+
+    # stop monitoring
     stop_monitor()
     log('Bye, then.')
-    sys.exit(0)
+    #sys.exit(0)
 
 def config_check_url(cfgfile):
     try:

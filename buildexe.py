@@ -26,7 +26,7 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/umanager.exe']
+RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'refresh.ico' , 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/umanager.exe']
 
 # Build byproducts to delete after build
 CLEAN = ['dist/umanager.exe']
