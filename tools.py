@@ -29,4 +29,5 @@ def get_user_cwd():
 def log(msg):
     #servicemanager.LogInfoMsg("SomeShortNameVersion - STOPPED!")
 	servicemanager.LogInfoMsg(str(msg))
+	#print(msg)
    

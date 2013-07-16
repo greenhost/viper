@@ -5,6 +5,7 @@ import win32con
 import win32ui
 import win32gui_struct
 import win32file
+from tools import log, get_openvpn_home
 
 try:
     import winxpgui as win32gui
@@ -73,6 +74,7 @@ class SysTrayIcon(object):
         self.notify_id = None
         self.refresh_icon()
         
+        # ???
         #win32gui.PumpMessages()
 
     def loop(self):
@@ -141,9 +143,15 @@ class SysTrayIcon(object):
         self.refresh_icon()
 
     def destroy(self, hwnd, msg, wparam, lparam):
-        if self.on_quit: self.on_quit(self)
+        log("Systray.destroy")
+        if self.on_quit:
+            log("Systray.destroy: calling on_quit")
+            self.on_quit(self)
+
+        log("Systray.destroy continued...")
         nid = (self.hwnd, 0)
         win32gui.Shell_NotifyIcon(win32gui.NIM_DELETE, nid)
+        log("Systray.destroy: called PostQuitMessage")
         win32gui.PostQuitMessage(0) # Terminate the app.
 
     def notify(self, hwnd, msg, wparam, lparam):

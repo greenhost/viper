@@ -84,7 +84,7 @@ class OVPNManagementThread(threading.Thread):
 
     def check_status(self):
         global OVPN_STATUS
-        log("Checking status")
+        #log("Checking status")
         self.sock.send("state\n")
         time.sleep(0.5)  # half a sec
         while 1:

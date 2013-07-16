@@ -31,15 +31,15 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-# icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
-# icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
-# icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
-# icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
+icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
+icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
+icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
+icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
 
-icon_online = 'online.ico'
-icon_offline = 'offline.ico'
-icon_connecting = 'connecting.ico'
-icon_refresh = 'refresh.ico'
+# icon_online = 'online.ico'
+# icon_offline = 'offline.ico'
+# icon_connecting = 'connecting.ico'
+# icon_refresh = 'refresh.ico'
 
 
 def feedback_online(sysTrayIcon):
@@ -315,17 +315,10 @@ def handle_go_offline(sysTrayIcon):
     return True
 
 def handle_quit(sysTrayIcon):
-    # if connected, disconnect
-    if svcproxy.is_connected():
-        try:
-            svcproxy.disconnect()
-        except Exception, e:
-            pass
-
     # stop monitoring
     stop_monitor()
     log('Bye, then.')
-    #sys.exit(0)
+    #os._exit(os.EX_OK)
 
 def config_check_url(cfgfile):
     try:
