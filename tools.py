@@ -27,9 +27,8 @@ def get_user_cwd():
 	return d.user_data_dir
 
 def log(msg):
-    #servicemanager.LogInfoMsg("SomeShortNameVersion - STOPPED!")
-	servicemanager.LogInfoMsg(str(msg))
-	#print(msg)
+	#servicemanager.LogInfoMsg(str(msg))
+	print(msg)
 
 
 def _windows_has_tap_device():

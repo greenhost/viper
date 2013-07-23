@@ -36,54 +36,56 @@ class OVPNManagementThread(threading.Thread):
         log("service - creating monitor thread...")
         self.running = True
         self.connected = False
-        #self.sock = socket.socket()
+        #self.sock = None #socket.socket()
         #self.sock.settimeout(5)
         self.delaytime = 0.5
         #self.tstamp_started_check = None
         #self.tstamp_check_timeout = 5
         threading.Thread.__init__(self)
 
-    def disconnect(self):
-        """ disconnect monitoring thread from OpenVPN client """
-        #if self.connected:
-        #    # close the socket
-        #    self.sock.shutdown(socket.SHUT_RDWR)
-        try:
-            self.sock.close()
-            self.connected = False
-            del self.sock
-        except Exception, e:
-            log("FATAL - closing the socket failed the next open operation would not work")
-            raise
+    # def disconnect(self, socket):
+    #     pass
 
     def close(self):
         """ close OpenVPN client sending SIGTERM """
         log("Terminating OpenVPN subprocess [SIGTERM]")
         # send SIGTERM to openvpn
-        self.sock.send("signal SIGTERM\n")
+        sock = socket.socket()
+        try:
+            sock.settimeout(self.delaytime)
+            sock.connect(("localhost", 7505))
+            # self.sock.setblocking(1)
+            connected = True
+            sock.send("signal SIGTERM\n")
+        except Exception, e:
+            log("Couldn't send terminate signal to OpenVPN process: %s" % e)
+        finally:
+            sock.close()
+            self.connected = False
+            del sock
 
     def terminate(self):
         """ stop monitoring """
         self.close()
-        self.disconnect()
         self.running = False
 
     def run(self):
         global OVPN_STATUS
+        log("Thread is running...")
         while self.running:
+
+            sock = socket.socket()
             try:
                 #if not self.connected:
                 log("Trying to connect to OVPN management socket")
-
-                self.sock = socket.socket()
-                self.sock.settimeout(self.delaytime)
-                self.sock.connect(("localhost", 7505))
+                sock.settimeout(self.delaytime)
+                sock.connect(("localhost", 7505))
                 # self.sock.setblocking(1)
                 self.connected = True
 
                 log("Connected successfully to management socket")
 
-                self.check_status()
+                self.check_status(sock)
             except socket.timeout:
                 log("OVPN management socket operation timed-out")
                 OVPN_STATUS = {'status': "DISCONNECTED"} 
@@ -91,58 +93,55 @@ class OVPNManagementThread(threading.Thread):
                 log("OVPN management socket error: %s" % e)
                 OVPN_STATUS = {'status': "DISCONNECTED"} 
             finally:   # always execute
-                ##self.sock.shutdown(socket.SHUT_RDWR)
-                #print("-"*60)
-                #pprint(OVPN_STATUS)
-                #print("-"*60)
-                self.disconnect()
+                try:
+                    sock.close()
+                    self.connected = False
+                    del sock
+                except Exception, e:
+                    log("FATAL - closing the socket failed the next open operation would not work")
+                    raise
 
 
-            if OVPN_STATUS: 
-                st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
-            else: 
-                st = "undefined"
+            # if OVPN_STATUS: 
+            #     st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
+            # else: 
+            #     st = "undefined"
         
         log("Exiting monitor thread main loop")
 
-    def verify_connection(self, stats):
-            # verify that the routing table matches status readings
-            if ( ('status' in stats) 
-                and (stats['status'] == 'CONNECTED') 
-                and ('gateway' in stats) ):
-                if routingtools.verify_vpn_routing_table( stats['gateway'] ):
-                    return True
 
-            else:
-                return False
-
-
-    def check_status(self):
+    def check_status(self, socket):
         global OVPN_STATUS
         #log("Checking status")
-        self.sock.makefile()
-        self.sock.send("state\n")
+        socket.send("state\n")
         time.sleep(self.delaytime) # must wait a bit otherwise we will not get a response to our request
 
-        data = self.sock.recv(1024)
+        data = socket.recv(1024)
 
         if not data:
             OVPN_STATUS = {'status': "DISCONNECTED"} 
+            log("No data received while reading socket")
         else:
             log("RECV raw: %s" % (data,) )
             resp = self.parse_status_response(data)
             #pprint(OVPN_STATUS)
             # compare status with routing table
-            with stlock:
+            if resp:
                 OVPN_STATUS = resp
-                #log( "State command response: %s" % (OVPN_STATUS['status'],) )
 
-            # verify that the routing table matches status readings
-            try:
-                if (not OVPN_STATUS or self.verify_connection(OVPN_STATUS)):
-                    OVPN_STATUS = {'status' : "DISCONNECTED"}
-            except routingtools.InconsistentRoutingTable:
-                OVPN_STATUS = {'status' : "INCONSISTENT"}
+                # verify that the routing table matches status readings
+                if OVPN_STATUS['status'] == "CONNECTED":
+                    try:
+                        if not routingtools.verify_vpn_routing_table(OVPN_STATUS['gateway']):
+                            OVPN_STATUS = {'status' : "DISCONNECTED"}
+                            log("Routing verification didn't pass")
+                    except routingtools.InconsistentRoutingTable:
+                        OVPN_STATUS = {'status' : "INCONSISTENT"}
+                        log("Routing verification is not consistent")
+
+            else:
+                OVPN_STATUS = {'status' : "DISCONNECTED"}
+                #log( "State command response: %s" % (OVPN_STATUS['status'],) )
 
 
     def parse_status_response(self, msg):
@@ -154,17 +153,19 @@ class OVPNManagementThread(threading.Thread):
         try:
             lines = string.split(msg, os.linesep)
 
-            if(len(lines) > 2):
-                parts = string.split(lines[1], ",")
+            for l in lines:
+                if ',' in l:
+                    parts = string.split(l, ",")
 
-                # get line containing status
-                if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
-                    return {'status': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
-                elif parts[1] == "ASSIGN_IP":
-                    return {'status': "CONNECTING"}
-
-            else:
-                return None
+                    # get line containing status
+                    if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
+                        return {'status': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
+                    elif parts[1] == "ASSIGN_IP":
+                        return {'status': "CONNECTING"}
+                    else:
+                        return None
+                else:
+                    continue
         except Exception, e:
             log("Failed to parse status response: %s" % e)
 
@@ -191,36 +192,42 @@ class OVPNService(rpyc.Service):
         return str(datetime.now())
 
     def exposed_is_connected(self):
+        global OVPN_STATUS
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return True
         else:
             return False
 
     def exposed_get_vpn_status(self):
+        global OVPN_STATUS
         if OVPN_STATUS:
             return OVPN_STATUS['status']
         else:
             return None
 
     def exposed_get_connection_settings(self):
+        global OVPN_STATUS
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return OVPN_STATUS
         else:
             return None
 
     def exposed_get_gateway_ip(self):
+        global OVPN_STATUS
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return OVPN_STATUS['gateway']
         else:
             return None
 
     def exposed_get_interface_ip(self):
+        global OVPN_STATUS
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return OVPN_STATUS['interface']
         else:
             return None
 
     def exposed_ovpn_start(self, cfgfile):
+        global OVPN_STATUS
         log("Start on manager thread called, ready to call OpenVPN")
         path = tools.get_openvpn_home()
         path = os.path.join(path, "openvpn")
@@ -251,9 +258,12 @@ class OVPNService(rpyc.Service):
         # self.connected = True
 
     def exposed_ovpn_stop(self):
-        if self.proc: 
-            self.monitor.close()
-            self.monitor.disconnect()
+        global OVPN_STATUS
+        self.monitor.terminate()
+
+        # if self.proc: 
+        #     self.monitor.close()
+        #     self.monitor.disconnect()
             #self.proc.kill()
 
 

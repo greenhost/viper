@@ -10,14 +10,8 @@ from pprint import pprint
 
 import routingtools
 import systray
-import tools
+#import tools
 from tools import *
-
-try:
-    import codecs
-    codecs.register(lambda name: codecs.lookup('utf-8') if name == 'cp65001' else None)
-except:
-    print("Couldn't setup codecs correctly")
 
 # dependencies
 try:
@@ -39,15 +33,15 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-icon_online = os.path.join(get_my_cwd(), 'online.ico')
-icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
-icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
-icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
+# icon_online = os.path.join(get_my_cwd(), 'online.ico')
+# icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
+# icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
+# icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
 
-# icon_online = 'online.ico'
-# icon_offline = 'offline.ico'
-# icon_connecting = 'connecting.ico'
-# icon_refresh = 'refresh.ico'
+icon_online = 'online.ico'
+icon_offline = 'offline.ico'
+icon_connecting = 'connecting.ico'
+icon_refresh = 'refresh.ico'
 
 
 def feedback_online(sysTrayIcon):
@@ -126,7 +120,7 @@ class ServiceProxy:
 
     def connect(self):
         #current = os.getcwd()
-        cfg = os.path.join(tools.get_user_cwd(), "__config.ovpn")
+        cfg = os.path.join(get_user_cwd(), "__config.ovpn")
         log( "Loading config %s..." % (cfg,) )
         r =  self.connection.root.ovpn_start(cfg)
         return r
@@ -168,9 +162,9 @@ class ConnectionMonitor(threading.Thread):
 
         threading.Thread.__init__(self)
 
-    def close(self):
-        log("umanager.monitor - close called")
-        self.terminate()
+#    def close(self):
+#        log("umanager.monitor - close called")
+#        self.terminate()
 
     def terminate(self):
         log("umanager.monitor - terminate called")
@@ -186,7 +180,7 @@ class ConnectionMonitor(threading.Thread):
                 #print("Monitoring... ")
                 # openvpn is reporting back that we are online
                 st = svcproxy.get_vpn_status()
-                #print("Status: %s" % (st,))
+                log("Status: %s" % st)
                 if st == "CONNECTED":
                     if trayapp:
                         feedback_online(trayapp)
@@ -208,8 +202,6 @@ class ConnectionMonitor(threading.Thread):
                         feedback_offline(trayapp)
 
                 cs = svcproxy.get_connection_settings()
-                #pprint(cs)
-                # @TODO check connection settings against routing table
                 if cs and trayapp: 
                     caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
                     trayapp.set_hover_text(caption)
@@ -231,7 +223,7 @@ def start_monitor():
 def stop_monitor():
     global monitor
     log("Stopping thread that checks connection status...")
-    monitor.close()
+    monitor.terminate()
 
             
 ## ###########################################################################
@@ -248,7 +240,7 @@ def handle_validate_server(sysTrayIcon):
 def handle_configure(sysTrayIcon):
     print("Starting with configuration.")
 
-    cfgdst = os.path.join(tools.get_user_cwd(), config_file)
+    cfgdst = os.path.join(get_user_cwd(), config_file)
 
     r = os.path.exists(cfgdst)
     if r:
@@ -301,7 +293,7 @@ def handle_go_online(sysTrayIcon):
     global svcproxy, monitor
     
     # Check if config file exists
-    r = os.path.exists(os.path.join(tools.get_user_cwd(), config_file))
+    r = os.path.exists(os.path.join(get_user_cwd(), config_file))
     if not r:
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
         return False
