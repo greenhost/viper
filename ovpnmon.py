@@ -111,12 +111,12 @@ class OVPNService(win32serviceutil.ServiceFramework):
 #     except Exception, x:
 #         print str(x)
 
-#
-##### TEST MODULE
-#
+
+# #### TEST MODULE
 
 
-# class OVPNServiceWrapper(Service):
+
+# class OVPNServiceWrapper(OVPNService):
 #     _svc_name_ = '_OVPNmonitor'
 #     _svc_display_name_ = 'OVPN monitor'
 #     def __init__(self, *args):

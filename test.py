@@ -1,5 +1,5 @@
-import ovpnservice
+import ovpn
 
-t = ovpnservice.OVPNManagementThread()
+t = ovpn.OVPNManagementThread()
 t.start()
 

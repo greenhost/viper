@@ -5,11 +5,19 @@ import win32con
 import win32ui
 import win32gui_struct
 import win32file
+import threading, time
+from pprint import pprint
+
+import routingtools
 import systray
 import tools
-import threading, time
-from tools import log, get_openvpn_home
-from pprint import pprint
+from tools import *
+
+try:
+    import codecs
+    codecs.register(lambda name: codecs.lookup('utf-8') if name == 'cp65001' else None)
+except:
+    print("Couldn't setup codecs correctly")
 
 # dependencies
 try:
@@ -31,10 +39,10 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-icon_online = os.path.join(tools.get_my_cwd(), 'online.ico')
-icon_offline = os.path.join(tools.get_my_cwd(), 'offline.ico')
-icon_connecting = os.path.join(tools.get_my_cwd(), 'connecting.ico')
-icon_refresh = os.path.join(tools.get_my_cwd(), 'refresh.ico')
+icon_online = os.path.join(get_my_cwd(), 'online.ico')
+icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
+icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
+icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
 
 # icon_online = 'online.ico'
 # icon_offline = 'offline.ico'
@@ -95,6 +103,16 @@ def feedback_starting(sysTrayIcon):
                      ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
                     )
     sysTrayIcon.set_menu(menu_options)
+
+def feedback_inconsistent(sysTrayIcon):
+    global svcproxy
+    win32api.MessageBox(0, "We have detected an inconsistency in the encryption of the connection\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop the connection to the VPN now. Please try again after rebooting your windows computer.\n", 'Encryption status inconsistent', 0x10)
+
+    try:
+        svcproxy.disconnect()
+    except Exception, e:
+        log("Service seems to be down")
+        print e
 
 
 ##
@@ -178,6 +196,9 @@ class ConnectionMonitor(threading.Thread):
                         caption = "Connecting, please wait..."
                         trayapp.set_hover_text(caption)
                         feedback_connecting(trayapp)
+                elif st == "INCONSISTENT":
+                    if trayapp: 
+                        feedback_inconsistent(trayapp)
                 else:
                     # it's possible proxy has not yet started remote process
                     if self.isstarting:
@@ -285,6 +306,9 @@ def handle_go_online(sysTrayIcon):
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
         return False
 
+    if not svcproxy:
+        log("SVCProxy is not properly initialized (probably disconnected)")
+
     if svcproxy.is_connected():
         show_message('VPN already active, cannot go online twice', 'Already online')
         return False
@@ -349,8 +373,8 @@ if __name__ == '__main__':
 
     start_monitor()
 
-    checkurl = config_check_url(config_file)
-    print("URL to check VPN connection %s ..." % (checkurl,))
+    #checkurl = config_check_url(config_file)
+    #print("URL to check VPN connection %s ..." % (checkurl,))
 
 
     menu_options = (('Configure ...', None, handle_configure, None),

@@ -19,10 +19,12 @@ import win32evtlogutil
 import os, sys, string, time
 import socket
 import threading, time
-import tools
 from pprint import pprint
-from tools import log
 
+import routingtools
+import tools
+from tools import log
+import traceback
 
 
 # global that keeps track of the current status
@@ -34,23 +36,31 @@ class OVPNManagementThread(threading.Thread):
         log("service - creating monitor thread...")
         self.running = True
         self.connected = False
-        self.sock = None
+        #self.sock = socket.socket()
+        #self.sock.settimeout(5)
+        self.delaytime = 0.5
+        #self.tstamp_started_check = None
+        #self.tstamp_check_timeout = 5
         threading.Thread.__init__(self)
 
     def disconnect(self):
         """ disconnect monitoring thread from OpenVPN client """
-        if self.connected:
-            # close the socket
-            self.sock.shutdown(1)
+        #if self.connected:
+        #    # close the socket
+        #    self.sock.shutdown(socket.SHUT_RDWR)
+        try:
             self.sock.close()
             self.connected = False
+            del self.sock
+        except Exception, e:
+            log("FATAL - closing the socket failed the next open operation would not work")
+            raise
 
     def close(self):
         """ close OpenVPN client sending SIGTERM """
         log("Terminating OpenVPN subprocess [SIGTERM]")
         # send SIGTERM to openvpn
         self.sock.send("signal SIGTERM\n")
-        time.sleep(0.5)  # half a sec
 
     def terminate(self):
         """ stop monitoring """
@@ -62,50 +72,101 @@ class OVPNManagementThread(threading.Thread):
         global OVPN_STATUS
         while self.running:
             try:
-                if not self.connected:
-                    log("Trying to connect to OVPN management socket")
-                    self.sock = socket.socket()
-                    self.sock.connect(("localhost", 7505))
-                    self.connected = True
+                #if not self.connected:
+                log("Trying to connect to OVPN management socket")
+
+                self.sock = socket.socket()
+                self.sock.settimeout(self.delaytime)
+                self.sock.connect(("localhost", 7505))
+                # self.sock.setblocking(1)
+                self.connected = True
+
+                log("Connected successfully to management socket")
 
                 self.check_status()
-            except Exception, e:
-                log("Cannot connect to OVPN management socket")
+            except socket.timeout:
+                log("OVPN management socket operation timed-out")
                 OVPN_STATUS = {'status': "DISCONNECTED"} 
+            except Exception, e:
+                log("OVPN management socket error: %s" % e)
+                OVPN_STATUS = {'status': "DISCONNECTED"} 
+            finally:   # always execute
+                ##self.sock.shutdown(socket.SHUT_RDWR)
+                #print("-"*60)
+                #pprint(OVPN_STATUS)
+                #print("-"*60)
                 self.disconnect()
-                print e
+
 
             if OVPN_STATUS: 
                 st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
             else: 
                 st = "undefined"
-            print( st )
-            time.sleep(0.5)
+        
+        log("Exiting monitor thread main loop")
+
+    def verify_connection(self, stats):
+            # verify that the routing table matches status readings
+            if ( ('status' in stats) 
+                and (stats['status'] == 'CONNECTED') 
+                and ('gateway' in stats) ):
+                if routingtools.verify_vpn_routing_table( stats['gateway'] ):
+                    return True
+
+            else:
+                return False
+
 
     def check_status(self):
         global OVPN_STATUS
         #log("Checking status")
+        self.sock.makefile()
         self.sock.send("state\n")
-        time.sleep(0.5)  # half a sec
-        while 1:
-            data = self.sock.recv(1024)
-            if not data:
-                OVPN_STATUS = {'status': "DISCONNECTED"} 
-                break
-            else:
-                resp = self.parse_status_response(data)
-                #pprint(OVPN_STATUS)
-                with stlock:
-                    OVPN_STATUS = resp
-                break
+        time.sleep(self.delaytime) # must wait a bit otherwise we will not get a response to our request
+
+        data = self.sock.recv(1024)
+
+        if not data:
+            OVPN_STATUS = {'status': "DISCONNECTED"} 
+        else:
+            log("RECV raw: %s" % (data,) )
+            resp = self.parse_status_response(data)
+            #pprint(OVPN_STATUS)
+            # compare status with routing table
+            with stlock:
+                OVPN_STATUS = resp
+                #log( "State command response: %s" % (OVPN_STATUS['status'],) )
+
+            # verify that the routing table matches status readings
+            try:
+                if (not OVPN_STATUS or self.verify_connection(OVPN_STATUS)):
+                    OVPN_STATUS = {'status' : "DISCONNECTED"}
+            except routingtools.InconsistentRoutingTable:
+                OVPN_STATUS = {'status' : "INCONSISTENT"}
+
 
     def parse_status_response(self, msg):
-        """ Parse messages like this: 1369378632,CONNECTED,SUCCESS,10.20.2.14,171.33.130.90 """
-        parts = string.split(msg, ",")
-        if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
-            return {'status': "CONNECTED", 'interface' : parts[3], 'gateway' : parts[4].split('\r')[0]}
-        elif parts[1] == "ASSIGN_IP":
-            return {'status': "CONNECTING"}
+        """ Parse messages like this: 
+                >INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info
+                1374575393,CONNECTED,SUCCESS,172.26.37.6,213.108.105.101
+                END
+        """
+        try:
+            lines = string.split(msg, os.linesep)
+
+            if(len(lines) > 2):
+                parts = string.split(lines[1], ",")
+
+                # get line containing status
+                if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
+                    return {'status': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
+                elif parts[1] == "ASSIGN_IP":
+                    return {'status': "CONNECTING"}
+
+            else:
+                return None
+        except Exception, e:
+            log("Failed to parse status response: %s" % e)
 
 
 class OVPNService(rpyc.Service):
