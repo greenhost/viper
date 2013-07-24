@@ -7,17 +7,8 @@ from re import match
 from tools import log
 from pprint import pprint
 
-try:
-	import psutil
-except ImportError:
-    print("psutil module is required for process tracking. Please see: https://code.google.com/p/psutil/")
-
 class InconsistentRoutingTable(Exception):
 	pass
-
-def is_openvpn_running():
-	procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
-	return procs
 
 def get_default_route():
 	rtr_table = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]

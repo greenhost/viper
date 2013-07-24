@@ -4,10 +4,20 @@ import logging
 import servicemanager
 import appdirs
 
+try:
+    import psutil
+except ImportError:
+    print("psutil module is required for process tracking. Please see: https://code.google.com/p/psutil/")
+
+
 # useful globals
 PRODUCT_NAME = "UmanViper"
 PRODUCER_NAME = "Greenhost"
 DEFAULT_OPENVPN_HOME = "./openvpn/"
+
+def is_openvpn_running():
+    procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
+    return procs
 
 def log_init():
 	logging.basicConfig(filename='ovpnmon.log',level=logging.DEBUG)

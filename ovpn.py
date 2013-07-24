@@ -51,25 +51,22 @@ class OVPNManagementThread(threading.Thread):
     def close(self):
         """ close OpenVPN client sending SIGTERM """
         log("Terminating OpenVPN subprocess [SIGTERM]")
-        # send SIGTERM to openvpn
-        sock = socket.socket()
-        try:
-            sock.settimeout( self.conntimeout )
-            sock.connect(("localhost", 7505))
-            # self.sock.setblocking(1)
-            connected = True
-            sock.send("signal SIGTERM\n")
-        except Exception, e:
-            log("Couldn't send terminate signal to OpenVPN process: %s" % e)
-        finally:
-            sock.close()
-            self.connected = False
-            del sock
+
+        # terminate openvpn processes
+        procs = tools.is_openvpn_running()
+        if procs: # process found, terminate it
+            for p in procs:
+                p.terminate()
 
     def terminate(self):
         """ stop monitoring """
-        self.close()
-        self.running = False
+        try:
+            self.close()
+        except Exception, e:
+            log("Couldn't terminate openvpn processes for some unknown reason: %s" % e)
+        finally:
+            # make sure thread loop stops checking
+            self.running = False
 
     def run(self):
         global OVPN_STATUS
