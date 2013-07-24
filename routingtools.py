@@ -50,11 +50,11 @@ def verify_vpn_routing_table(ifaceip):
 	If we find more than one of these then our routing table is corrupted, this might be from a OpenVPN 
 	run that didn't close properly.
 	"""
-	print(">"*65)
-	tab = get_iface_route(ifaceip)
-	print("Interface: %s" % ifaceip)
-	pprint(tab)
-	print(">"*65)
+	# print(">"*65)
+	# tab = get_iface_route(ifaceip)
+	# print("Interface: %s" % ifaceip)
+	# pprint(tab)
+	# print(">"*65)
 
 	route1 = filter_route("0.0.0.0", "128.0.0.0", ifaceip)
 	route2 = filter_route("128.0.0.0", "128.0.0.0", ifaceip)

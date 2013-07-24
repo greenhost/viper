@@ -34,17 +34,18 @@ stlock = threading.RLock()
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
         log("service - creating monitor thread...")
+        log("service - ctor line 1")
         self.running = True
+        log("service - ctor line 2")
         self.connected = False
+        log("service - ctor line 3")
         #self.sock = None #socket.socket()
         #self.sock.settimeout(5)
         self.delaytime = 0.5
+        log("service - ctor line 4")
         #self.tstamp_started_check = None
         #self.tstamp_check_timeout = 5
         threading.Thread.__init__(self)
-
-    # def disconnect(self, socket):
-    #     pass
 
     def close(self):
         """ close OpenVPN client sending SIGTERM """
@@ -180,8 +181,12 @@ class OVPNService(rpyc.Service):
         log("Connection from client opened...")
 
         # start monitor thread
-        self.monitor = OVPNManagementThread()
-        self.monitor.start()
+        try:
+            self.monitor = OVPNManagementThread()
+            log(">>> Trying to start thread...")
+            self.monitor.start()
+        except Exception, e:
+            log("Failed to start thread %s" % e)
 
     def on_disconnect(self):
         # code that runs when the connection has already closed
