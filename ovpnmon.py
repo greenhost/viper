@@ -13,6 +13,11 @@ import win32api
 import ovpn
 #from winservice import Service, instart
 
+import sys
+f = open("C:\ovpnmon-logall.txt", "w")
+sys.stderr = f
+sys.stdout = f
+
 # see this http://tebl.homelinux.com/view_document.php?view=6
 # for the only successful howto I could find
 class OVPNService(win32serviceutil.ServiceFramework):

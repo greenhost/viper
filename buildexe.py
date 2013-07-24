@@ -23,7 +23,7 @@ APPS = [
 	   ]
 
 # PyInstaller options
-OPTS = ['--onefile', '--noconsole']
+OPTS = ['--onefile'] #, '--noconsole']
 
 # Additional application resources
 RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'refresh.ico' , 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/umanager.exe']

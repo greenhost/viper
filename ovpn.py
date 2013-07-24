@@ -34,15 +34,16 @@ stlock = threading.RLock()
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
         log("service - creating monitor thread...")
-        log("service - ctor line 1")
+        #log("service - ctor line 1")
         self.running = True
-        log("service - ctor line 2")
+        #log("service - ctor line 2")
         self.connected = False
-        log("service - ctor line 3")
+        #log("service - ctor line 3")
         #self.sock = None #socket.socket()
         #self.sock.settimeout(5)
         self.delaytime = 0.5
-        log("service - ctor line 4")
+        self.conntimeout = 2
+        #log("service - ctor line 4")
         #self.tstamp_started_check = None
         #self.tstamp_check_timeout = 5
         threading.Thread.__init__(self)
@@ -53,7 +54,7 @@ class OVPNManagementThread(threading.Thread):
         # send SIGTERM to openvpn
         sock = socket.socket()
         try:
-            sock.settimeout(self.delaytime)
+            sock.settimeout( self.conntimeout )
             sock.connect(("localhost", 7505))
             # self.sock.setblocking(1)
             connected = True
@@ -79,7 +80,7 @@ class OVPNManagementThread(threading.Thread):
             try:
                 #if not self.connected:
                 log("Trying to connect to OVPN management socket")
-                sock.settimeout(self.delaytime)
+                sock.settimeout( self.conntimeout )
                 sock.connect(("localhost", 7505))
                 # self.sock.setblocking(1)
                 self.connected = True
@@ -87,8 +88,8 @@ class OVPNManagementThread(threading.Thread):
                 log("Connected successfully to management socket")
 
                 self.check_status(sock)
-            except socket.timeout:
-                log("OVPN management socket operation timed-out")
+            except socket.timeout, e:
+                log("OVPN management socket operation timed-out: %s" % e)
                 OVPN_STATUS = {'status': "DISCONNECTED"} 
             except Exception, e:
                 log("OVPN management socket error: %s" % e)

@@ -33,15 +33,15 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-# icon_online = os.path.join(get_my_cwd(), 'online.ico')
-# icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
-# icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
-# icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
+icon_online = os.path.join(get_my_cwd(), 'online.ico')
+icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
+icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
+icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
 
-icon_online = 'online.ico'
-icon_offline = 'offline.ico'
-icon_connecting = 'connecting.ico'
-icon_refresh = 'refresh.ico'
+# icon_online = 'online.ico'
+# icon_offline = 'offline.ico'
+# icon_connecting = 'connecting.ico'
+# icon_refresh = 'refresh.ico'
 
 
 def feedback_online(sysTrayIcon):
@@ -208,7 +208,7 @@ class ConnectionMonitor(threading.Thread):
             except Exception, e:
                 err = "umanager.monitor main loop: {0}".format(e.message)
                 log(err)
-                self.close()
+                self.terminate()
                 print e
 
             time.sleep(0.5)
