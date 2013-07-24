@@ -34,16 +34,12 @@ stlock = threading.RLock()
 class OVPNManagementThread(threading.Thread):
     def __init__(self):
         log("service - creating monitor thread...")
-        #log("service - ctor line 1")
         self.running = True
-        #log("service - ctor line 2")
         self.connected = False
-        #log("service - ctor line 3")
         #self.sock = None #socket.socket()
         #self.sock.settimeout(5)
         self.delaytime = 0.5
         self.conntimeout = 2
-        #log("service - ctor line 4")
         #self.tstamp_started_check = None
         #self.tstamp_check_timeout = 5
         threading.Thread.__init__(self)
@@ -96,6 +92,7 @@ class OVPNManagementThread(threading.Thread):
                     sock.close()
                     self.connected = False
                     del sock
+                    #time.sleep(5)
                 except Exception, e:
                     log("FATAL - closing the socket failed the next open operation would not work")
                     raise

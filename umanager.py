@@ -13,6 +13,9 @@ import systray
 #import tools
 from tools import *
 
+import codecs
+codecs.register(lambda name: codecs.lookup('utf-8') if name == 'cp65001' else None)
+
 # dependencies
 try:
     import winxpgui as win32gui
@@ -33,15 +36,15 @@ config_file = '__config.ovpn'
 hover_text = "IWPR VPN: Not connected"
 checkurl = None
 
-icon_online = os.path.join(get_my_cwd(), 'online.ico')
-icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
-icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
-icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
+# icon_online = os.path.join(get_my_cwd(), 'online.ico')
+# icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
+# icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
+# icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
 
-# icon_online = 'online.ico'
-# icon_offline = 'offline.ico'
-# icon_connecting = 'connecting.ico'
-# icon_refresh = 'refresh.ico'
+icon_online = 'online.ico'
+icon_offline = 'offline.ico'
+icon_connecting = 'connecting.ico'
+icon_refresh = 'refresh.ico'
 
 
 def feedback_online(sysTrayIcon):

@@ -37,7 +37,7 @@ def get_user_cwd():
 	return d.user_data_dir
 
 def log(msg):
-	servicemanager.LogInfoMsg(str(msg))
+	#servicemanager.LogInfoMsg(str(msg))
 	print(msg)
 
 

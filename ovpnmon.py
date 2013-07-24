@@ -11,6 +11,7 @@ import win32service
 import win32event
 import win32api
 import ovpn
+import psutil
 #from winservice import Service, instart
 
 import sys
@@ -82,66 +83,66 @@ class OVPNService(win32serviceutil.ServiceFramework):
 # a post on the installer
 # http://www.islascruz.org/html/?gadget=StaticPage&action=Page&id=6
 
-# def instart(cls, name, display_name=None, stay_alive=True):
-#     ''' Install and  Start (auto) a Service
+def instart(cls, name, display_name=None, stay_alive=True):
+    ''' Install and  Start (auto) a Service
             
-#         cls : the class (derived from Service) that implement the Service
-#         name : Service name
-#         display_name : the name displayed in the service manager
-#         stay_alive : Service will stop on logout if False
-#     '''
-#     cls._svc_name_ = name
-#     cls._svc_display_name_ = display_name or name
-#     try:
-#         module_path=modules[cls.__module__].__file__
-#     except AttributeError:
-#         # maybe py2exe went by
-#         from sys import executable
-#         module_path=executable
-#     module_file = splitext(abspath(module_path))[0]
-#     cls._svc_reg_class_ = '%s.%s' % (module_file, cls.__name__)
-#     if stay_alive: win32api.SetConsoleCtrlHandler(lambda x: True, True)
-#     try:
-#         win32serviceutil.InstallService(
-#             cls._svc_reg_class_,
-#             cls._svc_name_,
-#             cls._svc_display_name_,
-#             startType = win32service.SERVICE_AUTO_START
-#         )
-#         print 'Install ok'
-#         win32serviceutil.StartService(
-#             cls._svc_name_
-#         )
-#         print 'Start ok'
-#     except Exception, x:
-#         print str(x)
+        cls : the class (derived from Service) that implement the Service
+        name : Service name
+        display_name : the name displayed in the service manager
+        stay_alive : Service will stop on logout if False
+    '''
+    cls._svc_name_ = name
+    cls._svc_display_name_ = display_name or name
+    try:
+        module_path=modules[cls.__module__].__file__
+    except AttributeError:
+        # maybe py2exe went by
+        from sys import executable
+        module_path=executable
+    module_file = splitext(abspath(module_path))[0]
+    cls._svc_reg_class_ = '%s.%s' % (module_file, cls.__name__)
+    if stay_alive: win32api.SetConsoleCtrlHandler(lambda x: True, True)
+    try:
+        win32serviceutil.InstallService(
+            cls._svc_reg_class_,
+            cls._svc_name_,
+            cls._svc_display_name_,
+            startType = win32service.SERVICE_AUTO_START
+        )
+        print 'Install ok'
+        win32serviceutil.StartService(
+            cls._svc_name_
+        )
+        print 'Start ok'
+    except Exception, x:
+        print str(x)
 
 
-# #### TEST MODULE
+#### TEST MODULE
 
 
 
-# class OVPNServiceWrapper(OVPNService):
-#     _svc_name_ = '_OVPNmonitor'
-#     _svc_display_name_ = 'OVPN monitor'
-#     def __init__(self, *args):
-#         from rpyc.utils.server import ThreadedServer
-#         self.svc = ThreadedServer(ovpn.OVPNService, port = 18861)
-#         Service.__init__(self, *args)
+class OVPNServiceWrapper(OVPNService):
+    _svc_name_ = '_OVPNmonitor'
+    _svc_display_name_ = 'OVPN monitor'
+    def __init__(self, *args):
+        from rpyc.utils.server import ThreadedServer
+        self.svc = ThreadedServer(ovpn.OVPNService, port = 18861)
+        Service.__init__(self, *args)
 
-#     def start(self):
-#         self.log("OVPN service starting...")
-#         self.svc.start()
-#         self.runflag = True
+    def start(self):
+        self.log("OVPN service starting...")
+        self.svc.start()
+        self.runflag = True
 
-#         while self.runflag:
-#             self.sleep(10)
-#             self.log("Service is alive ...")
+        while self.runflag:
+            self.sleep(10)
+            self.log("Service is alive ...")
 
-#     def stop(self):
-#         self.runflag = False
-#         self.svc.close()
+    def stop(self):
+        self.runflag = False
+        self.svc.close()
 
 
-# if __name__ == '__main__':
-#     instart(OVPNServiceWrapper, 'ovpnmon', 'OpenVPN monitor service')
+if __name__ == '__main__':
+    instart(OVPNServiceWrapper, 'ovpnmon', 'OpenVPN monitor service')
