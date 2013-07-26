@@ -32,10 +32,10 @@ import traceback
 OVPN_STATUS = None
 # stlock = threading.RLock()
 
-import sys
-f = open("C:\ovpnmon-logall.txt", "w")
-sys.stderr = f
-sys.stdout = f
+# import sys
+# f = open("C:\ovpnmon-logall.txt", "w")
+# sys.stderr = f
+# sys.stdout = f
 
 # class OVPNManagementThread(threading.Thread):
 #     def __init__(self):
@@ -158,12 +158,12 @@ class RPCService(rpyc.Service):
         #    return None
 
     def exposed_get_connection_settings(self):
-        pass
-        # global OVPN_STATUS
-        # if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-        #     return OVPN_STATUS
-        # else:
-        #     return None
+        global OVPN_STATUS
+        OVPN_STATUS = ovpn.poll_status()
+        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
+            return OVPN_STATUS
+        else:
+            return None
 
     def exposed_get_gateway_ip(self):
         pass
@@ -194,7 +194,12 @@ class RPCService(rpyc.Service):
         self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
 
     def exposed_ovpn_stop(self):
-        pass
+        log("Terminating OpenVPN subprocess")
+        # terminate openvpn processes
+        procs = is_openvpn_running()
+        if procs: # process found, terminate it
+            for p in procs:
+                p.terminate()
         # global OVPN_STATUS
         # #self.monitor.terminate()
 
@@ -267,27 +272,27 @@ class OVPNService(win32serviceutil.ServiceFramework):
         self.runflag = False
 
 
-class OVPNServiceWrapper(OVPNService):
-    _svc_name_ = '_OVPNmonitor'
-    _svc_display_name_ = 'OVPN monitor'
-    def __init__(self, *args):
-        from rpyc.utils.server import ThreadedServer
-        self.svc = ThreadedServer(RPCService, port = 18861)
-        Service.__init__(self, *args)
+# class OVPNServiceWrapper(OVPNService):
+#     _svc_name_ = '_OVPNmonitor'
+#     _svc_display_name_ = 'OVPN monitor'
+#     def __init__(self, *args):
+#         from rpyc.utils.server import ThreadedServer
+#         self.svc = ThreadedServer(RPCService, port = 18861)
+#         Service.__init__(self, *args)
 
-    def start(self):
-        self.log("OVPN service starting...")
-        self.svc.start()
-        self.runflag = True
+#     def start(self):
+#         self.log("OVPN service starting...")
+#         self.svc.start()
+#         self.runflag = True
 
-        while self.runflag:
-            self.sleep(10)
-            self.log("Service is alive ...")
+#         while self.runflag:
+#             self.sleep(10)
+#             self.log("Service is alive ...")
 
-    def stop(self):
-        self.runflag = False
-        self.svc.close()
+#     def stop(self):
+#         self.runflag = False
+#         self.svc.close()
 
 
-if __name__ == '__main__':
-    service.instart(OVPNServiceWrapper, 'ovpnmon', 'OpenVPN monitor service')
+# if __name__ == '__main__':
+#     service.instart(OVPNServiceWrapper, 'ovpnmon', 'OpenVPN monitor service')
