@@ -17,14 +17,13 @@ import socket
 import threading, time
 from pprint import pprint
 
-import win.routing
-import win.tools
-from win.tools import log
+from win import routing 
+from win.tools import *
 import traceback
 
 
 
-def poll_status(self, connection_timeout = 2, response_delay = .5):
+def poll_status(connection_timeout = 2, response_delay = .5):
     """ 
     Open connection to management socket and query the current status of OpenVPN 
     @param connection_timeout seconds that elapse before a socket.timeout exception is raised upon connection
@@ -33,14 +32,15 @@ def poll_status(self, connection_timeout = 2, response_delay = .5):
 
     log("Polling OpenVPN for vpn status...")
     retval = None
+    connected = False
     sock = socket.socket()
 
     try:
         log("Trying to connect to OVPN management socket")
         sock.settimeout( connection_timeout )
         sock.connect(("localhost", 7505))
-        # self.sock.setblocking(1)
-        self.connected = True
+        # sock.setblocking(1)
+        connected = True
 
         log("Connected successfully to management socket")
 
@@ -54,7 +54,7 @@ def poll_status(self, connection_timeout = 2, response_delay = .5):
             log("No data received while reading socket")
         else:
             log("RECV raw: %s" % (data,) )
-            resp = self.parse_status_response(data)
+            resp = parse_status_response(data)
             #pprint(OVPN_STATUS)
             # compare status with routing table
             if resp:
@@ -82,7 +82,7 @@ def poll_status(self, connection_timeout = 2, response_delay = .5):
     finally:   # always execute
         try:
             sock.close()
-            self.connected = False
+            connected = False
             del sock
         except Exception, e:
             log("FATAL - closing the socket failed the next open operation would not work")
@@ -91,7 +91,7 @@ def poll_status(self, connection_timeout = 2, response_delay = .5):
     return retval
 
 
-def parse_status_response(self, msg):
+def parse_status_response(msg):
     """ Parse OpenVPN management interface messages like this: 
             >INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info
             1374575393,CONNECTED,SUCCESS,172.26.37.6,213.108.105.101
