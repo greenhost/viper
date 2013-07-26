@@ -40,3 +40,8 @@ sc delete ovpnmon
 C:\openvpnd>net start ovpnmon
 #check-url <url>
    URL to open after connection is initialized, so that it is possible to check status from the user's browser
+
+### Starting openvpn manually
+
+c:\openvpnd\openvpn\openvpn C:\Users\Mart\AppData\Local\Greenhost\UmanViper\__config.ovpn
+

@@ -9,6 +9,22 @@ try:
 except ImportError:
     print("psutil module is required for process tracking. Please see: https://code.google.com/p/psutil/")
 
+## logging
+# import logging
+# from logging.handlers import NTEventLogHandler
+# logger = logging.getLogger("test")
+# wh = NTEventLogHandler("test")
+
+# logger.addHandler(wh)
+# logger.setLevel(logging.INFO)
+# logger.info("This is just a test")
+
+# if "python.exe" in sys.executable:
+#     use print
+# else:
+#     use logging
+
+
 
 # useful globals
 PRODUCT_NAME = "UmanViper"

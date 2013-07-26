@@ -8,13 +8,10 @@ import win32file
 import threading, time
 from pprint import pprint
 
-import routingtools
-import systray
+from win import routing 
+from  win import systray
 #import tools
-from tools import *
-
-import codecs
-codecs.register(lambda name: codecs.lookup('utf-8') if name == 'cp65001' else None)
+from win.tools import *
 
 # dependencies
 try:
