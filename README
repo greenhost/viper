@@ -2,6 +2,8 @@
 
 To build a binary distribution:
 
+Execute build.bat, it will perform the following actions:
+
 ###### Windows Service
 c:\> python setup.py py2exe
 
@@ -18,7 +20,7 @@ Remember to copy the doc folder to the distribution too.
 
 ###### The OpenVPN configuration file must contain the following directives
 
-log on all
+log filename.log
 management localhost 7505
 
 
