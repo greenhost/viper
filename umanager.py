@@ -30,7 +30,7 @@ monitor = None
 trayapp = None
 svcproxy = None
 config_file = '__config.ovpn'
-hover_text = "IWPR VPN: Not connected"
+hover_text = "Not connected to VPN"
 checkurl = None
 
 icon_online = os.path.join(get_my_cwd(), 'online.ico')
@@ -69,7 +69,7 @@ def feedback_offline(sysTrayIcon):
     sysTrayIcon.set_menu(menu_options)
 
     if trayapp:
-        trayapp.set_hover_text("IWPR VPN: Not connected")
+        trayapp.set_hover_text("Not connected to VPN")
 
 
 def feedback_connecting(sysTrayIcon):
@@ -105,7 +105,7 @@ def feedback_inconsistent(sysTrayIcon):
     try:
         svcproxy.disconnect()
     except Exception, e:
-        log("Service seems to be down")
+        logging.critical("Service seems to be down")
         print e
 
 
@@ -121,12 +121,12 @@ class ServiceProxy:
     def connect(self):
         #current = os.getcwd()
         cfg = os.path.join(get_user_cwd(), "__config.ovpn")
-        log( "Loading config %s..." % (cfg,) )
+        logging.info( "Loading config %s..." % (cfg,) )
         r =  self.connection.root.ovpn_start(cfg)
         return r
 
     def disconnect(self):
-        log("umanager proxy - disconnect called")
+        logging.info("umanager proxy - disconnect called")
         return self.connection.root.ovpn_stop()
 
     def is_connected(self):
@@ -167,7 +167,7 @@ class ConnectionMonitor(threading.Thread):
 #        self.terminate()
 
     def terminate(self):
-        log("umanager.monitor - terminate called")
+        logging.debug("umanager.monitor - terminate called")
         global svcproxy
         self.running = False
         svcproxy.disconnect()
@@ -180,7 +180,7 @@ class ConnectionMonitor(threading.Thread):
                 #print("Monitoring... ")
                 # openvpn is reporting back that we are online
                 st = svcproxy.get_vpn_status()
-                log("Status: %s" % st)
+                logging.debug("Status: %s" % st)
                 if st == "CONNECTED":
                     if trayapp:
                         feedback_online(trayapp)
@@ -207,7 +207,7 @@ class ConnectionMonitor(threading.Thread):
                     trayapp.set_hover_text(caption)
             except Exception, e:
                 err = "umanager.monitor main loop: {0}".format(e.message)
-                log(err)
+                logging.critical(err)
                 self.terminate()
                 print e
 
@@ -216,13 +216,13 @@ class ConnectionMonitor(threading.Thread):
     
 def start_monitor():
     global monitor
-    log("Creating thread to check connection status...")
+    logging.info("Creating thread to check connection status...")
     monitor = ConnectionMonitor()
     monitor.start()
 
 def stop_monitor():
     global monitor
-    log("Stopping thread that checks connection status...")
+    logging.info("Stopping thread that checks connection status...")
     monitor.terminate()
 
             
@@ -238,7 +238,7 @@ def handle_validate_server(sysTrayIcon):
     return True
 
 def handle_configure(sysTrayIcon):
-    print("Starting with configuration.")
+    logging.info("Starting with configuration.")
 
     cfgdst = os.path.join(get_user_cwd(), config_file)
 
@@ -299,7 +299,7 @@ def handle_go_online(sysTrayIcon):
         return False
 
     if not svcproxy:
-        log("SVCProxy is not properly initialized (probably disconnected)")
+        logging.error("SVCProxy is not properly initialized (probably disconnected)")
 
     if svcproxy.is_connected():
         show_message('VPN already active, cannot go online twice', 'Already online')
@@ -310,7 +310,7 @@ def handle_go_online(sysTrayIcon):
         # show immediate feedback to the user
         monitor.isstarting = True
     except Exception, e:
-        log("Service seems to be down")
+        logging.critical("Service seems to be down")
         print e
 
     return True
@@ -325,7 +325,7 @@ def handle_go_offline(sysTrayIcon):
     try:
         svcproxy.disconnect()
     except Exception, e:
-        log("Service seems to be down")
+        logging.critical("Service seems to be down")
         print e
         
     return True
@@ -333,7 +333,7 @@ def handle_go_offline(sysTrayIcon):
 def handle_quit(sysTrayIcon):
     # stop monitoring
     stop_monitor()
-    log('Bye, then.')
+    logging.info('Bye, then.')
     #os._exit(os.EX_OK)
 
 def config_check_url(cfgfile):
@@ -361,6 +361,7 @@ if __name__ == '__main__':
     import itertools, glob
     import shutil
 
+    log_init_app()
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
     start_monitor()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, re
+import os, sys, re, logging
 import win32api
 import win32con
 import win32ui
@@ -111,7 +111,7 @@ class SysTrayIcon(object):
                                        0,
                                        icon_flags)
         else:
-            print("Can't find icon file - using default.")
+            logging.warning("Can't find icon file - using default.")
             self.hicon = win32gui.LoadIcon(0, win32con.IDI_APPLICATION)
 
         self.set_hover_text(self.hover_text)
@@ -143,15 +143,15 @@ class SysTrayIcon(object):
         self.refresh_icon()
 
     def destroy(self, hwnd, msg, wparam, lparam):
-        log("Systray.destroy")
+        logging.debug("Systray.destroy")
         if self.on_quit:
-            log("Systray.destroy: calling on_quit")
+            logging.debug("Systray.destroy: calling on_quit")
             self.on_quit(self)
 
-        log("Systray.destroy continued...")
+        logging.debug("Systray.destroy continued...")
         nid = (self.hwnd, 0)
         win32gui.Shell_NotifyIcon(win32gui.NIM_DELETE, nid)
-        log("Systray.destroy: called PostQuitMessage")
+        logging.debug("Systray.destroy: called PostQuitMessage")
         win32gui.PostQuitMessage(0) # Terminate the app.
 
     def notify(self, hwnd, msg, wparam, lparam):

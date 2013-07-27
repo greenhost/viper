@@ -8,7 +8,7 @@ Usage : python aservice.py install (or / then start, stop, remove)
 """
 import rpyc
 import subprocess
-import os, sys
+import os, sys, logging
 from datetime import datetime
 import win32service
 import win32serviceutil
@@ -121,7 +121,7 @@ class RPCService(rpyc.Service):
         self.proc = None
         #self.monitor = None
         self.connected = False
-        log("Connection from client opened...")
+        logging.info("Connection from client opened...")
 
         # # start monitor thread
         # try:
@@ -134,7 +134,7 @@ class RPCService(rpyc.Service):
     def on_disconnect(self):
         # code that runs when the connection has already closed
         # (to finalize the service, if needed)
-        log("Connection from client closed")
+        logging.info("Connection from client closed")
 
     def exposed_heartbeat(self):
         return str(datetime.now())
@@ -183,18 +183,18 @@ class RPCService(rpyc.Service):
 
     def exposed_ovpn_start(self, cfgfile):
         global OVPN_STATUS
-        log("Start on manager thread called, ready to call OpenVPN")
+        logging.debug("Start on manager thread called, ready to call OpenVPN")
         path = get_openvpn_home()
         path = os.path.join(path, "openvpn")
 
         cmd = "%s %s" % (path, cfgfile)
-        log("Trying to execute OpenVPN client %s" % (cmd,))
+        logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
         f = open(os.devnull, 'w')
 
         self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
 
     def exposed_ovpn_stop(self):
-        log("Terminating OpenVPN subprocess")
+        logging.debug("Terminating OpenVPN subprocess")
         # terminate openvpn processes
         procs = is_openvpn_running()
         if procs: # process found, terminate it
@@ -218,18 +218,15 @@ class OVPNService(win32serviceutil.ServiceFramework):
     _svc_description_ = 'Monitor the OpenVPN client on this machine'
 
     def __init__(self, *args):
+        log_init_service()
         win32serviceutil.ServiceFramework.__init__(self, *args)
-        self.log('init')
+        logging.info('init')
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
         self.runflag = False
 
         from rpyc.utils.server import ThreadedServer
         self.svc = ThreadedServer(RPCService, port = 18861)
         #Service.__init__(self, *args)
-
-    def log(self, msg):
-        import servicemanager
-        servicemanager.LogInfoMsg(str(msg))
 
     def sleep(self, sec):
         win32api.Sleep(sec*1000, True)
@@ -238,36 +235,36 @@ class OVPNService(win32serviceutil.ServiceFramework):
         self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
         try:
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
-            self.log('start')
+            logging.info('start')
             self.start()
-            self.log('wait')
+            logging.info('wait')
             win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
-            self.log('done')
+            logging.info('done')
         except Exception, x:
-            self.log('Exception : %s' % x)
+            logging.warning('Exception : %s' % x)
             self.SvcStop()
 
     def SvcStop(self):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        self.log('stopping')
+        logging.info('stopping')
         self.stop()
-        self.log('stopped')
+        logging.info('stopped')
         win32event.SetEvent(self.stop_event)
         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     # to be overridden
     def start(self):        
-        self.log("OVPN monitoring service starting...")
+        logging.info("OVPN monitoring service starting...")
         self.svc.start()
         self.runflag = True
 
         while self.runflag:
             self.sleep(10)
-            self.log("Service is alive ...")
+            logging.debug"Service is alive ...")
 
     # to be overridden
     def stop(self):
-        self.log("OVPN monitoring service shutting down...")
+        logging.info("OVPN monitoring service shutting down...")
         self.svc.close()
         self.runflag = False
 

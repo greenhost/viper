@@ -3,7 +3,7 @@ __DOC__ = """
 Helper code for OpenVPN status on windows
 (c) Luis Rodil-Fernandez <luis@greenhost.nl>
 """
-import subprocess
+import subprocess, logging
 import os, sys
 from datetime import datetime
 import win32service
@@ -30,19 +30,19 @@ def poll_status(connection_timeout = 2, response_delay = .5):
     @param response_delay seconds to wait to get a response from the 'state' management command
     """
 
-    log("Polling OpenVPN for vpn status...")
+    logging.debug("Polling OpenVPN for vpn status...")
     retval = None
     connected = False
     sock = socket.socket()
 
     try:
-        log("Trying to connect to OVPN management socket")
+        logging.debug("Trying to connect to OVPN management socket")
         sock.settimeout( connection_timeout )
         sock.connect(("localhost", 7505))
         # sock.setblocking(1)
         connected = True
 
-        log("Connected successfully to management socket")
+        logging.debug("Connected successfully to management socket")
 
         sock.send("state\n")
         time.sleep( response_delay ) # must wait a bit otherwise we will not get a response to our request
@@ -51,9 +51,9 @@ def poll_status(connection_timeout = 2, response_delay = .5):
 
         if not data:
             retval = {'status': "DISCONNECTED"} 
-            log("No data received while reading socket")
+            logging.debug("No data received while reading socket")
         else:
-            log("RECV raw: %s" % (data,) )
+            logging.debug("RECV raw: %s" % data )
             resp = parse_status_response(data)
             #pprint(OVPN_STATUS)
             # compare status with routing table
@@ -65,19 +65,19 @@ def poll_status(connection_timeout = 2, response_delay = .5):
                     try:
                         if not routing.verify_vpn_routing_table(retval['gateway']):
                             retval = {'status' : "DISCONNECTED"}
-                            log("Routing verification didn't pass")
+                            logging.debug("Routing verification didn't pass")
                     except routing.InconsistentRoutingTable:
                         retval = {'status' : "INCONSISTENT"}
-                        log("Routing verification is not consistent")
+                        logging.debug("Routing verification is not consistent")
 
             else:
                 retval = {'status' : "DISCONNECTED"}
 
     except socket.timeout, e:
-        log("OVPN management socket operation timed-out: %s" % e)
+        logging.debug("OVPN management socket operation timed-out: %s" % e)
         retval = {'status': "DISCONNECTED"} 
     except Exception, e:
-        log("OVPN management socket error: %s" % e)
+        logging.warning("OVPN management socket error: %s" % e)
         retval = {'status': "DISCONNECTED"} 
     finally:   # always execute
         try:
@@ -85,7 +85,7 @@ def poll_status(connection_timeout = 2, response_delay = .5):
             connected = False
             del sock
         except Exception, e:
-            log("FATAL - closing the socket failed the next open operation would not work")
+            logging.warning("FATAL - closing the socket failed the next open operation would not work")
             raise
 
     return retval
@@ -114,4 +114,4 @@ def parse_status_response(msg):
             else:
                 continue
     except Exception, e:
-        log("Failed to parse status response: %s" % e)
+        logging.warning("Failed to parse status response: %s" % e)

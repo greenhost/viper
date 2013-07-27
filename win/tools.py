@@ -35,8 +35,11 @@ def is_openvpn_running():
     procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
     return procs
 
-def log_init():
-	logging.basicConfig(filename='ovpnmon.log',level=logging.DEBUG)
+def log_init_app(level=logging.DEBUG):
+    logging.basicConfig(filename='umanviper.log', level)
+
+def log_init_service(level=logging.DEBUG):
+	logging.basicConfig(filename='c:\ovpnmon.log', level)
 
 def get_openvpn_home():
 	return os.getenv('OPENVPN_HOME', DEFAULT_OPENVPN_HOME)
