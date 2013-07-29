@@ -20,6 +20,7 @@ import os, sys, string, time
 import socket
 import threading, time
 from pprint import pprint
+import psutils
 
 from win import routing
 from win import service
@@ -196,10 +197,13 @@ class RPCService(rpyc.Service):
     def exposed_ovpn_stop(self):
         logging.debug("Terminating OpenVPN subprocess")
         # terminate openvpn processes
-        procs = is_openvpn_running()
-        if procs: # process found, terminate it
-            for p in procs:
-                p.terminate()
+        try:
+            procs = is_openvpn_running()
+            if procs: # process found, terminate it
+                for p in procs:
+                    p.terminate()  # NoSuchProcess: process no longer exists (pid=2476)
+        except (psutil.NoSuchProcess, psutil.AccessDenied), err:
+            logging.error("exception while trying to shut down OpenVPN process for pid:%s, reason:%s" % (err.pid, err.msg))
         # global OVPN_STATUS
         # #self.monitor.terminate()
 
@@ -260,7 +264,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
 
         while self.runflag:
             self.sleep(10)
-            logging.debug"Service is alive ...")
+            logging.debug("Service is alive ...")
 
     # to be overridden
     def stop(self):
