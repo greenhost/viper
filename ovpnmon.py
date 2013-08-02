@@ -260,7 +260,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
 
         while self.runflag:
             self.sleep(10)
-            logging.debug"Service is alive ...")
+            logging.debug("Service is alive ...")
 
     # to be overridden
     def stop(self):

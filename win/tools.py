@@ -36,10 +36,11 @@ def is_openvpn_running():
     return procs
 
 def log_init_app(level=logging.DEBUG):
-    logging.basicConfig(filename='umanviper.log', level)
+    logging.basicConfig(filename='umanviper.log', level=level)
 
 def log_init_service(level=logging.DEBUG):
-	logging.basicConfig(filename='c:\ovpnmon.log', level)
+    fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"
+    logging.basicConfig(filename='c:\ovpnmon.log', format=fmt, level=level)
 
 def get_openvpn_home():
 	return os.getenv('OPENVPN_HOME', DEFAULT_OPENVPN_HOME)
