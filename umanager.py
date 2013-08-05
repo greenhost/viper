@@ -10,6 +10,7 @@ from pprint import pprint
 
 from win import routing 
 from  win import systray
+from win import balloon
 #import tools
 from win.tools import *
 
@@ -151,6 +152,8 @@ class ConnectionMonitor(threading.Thread):
 
         self.running = True
         self.isstarting = False
+        self.state = None
+        self.last_state = None
         # open connection to windows service to monitor status
         try:
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
@@ -179,18 +182,25 @@ class ConnectionMonitor(threading.Thread):
             try:
                 #print("Monitoring... ")
                 # openvpn is reporting back that we are online
-                st = svcproxy.get_vpn_status()
-                logging.debug("Status: %s" % st)
-                if st == "CONNECTED":
+                self.last_state = self.state
+                self.state = svcproxy.get_vpn_status()
+                logging.debug("Status: %s" % self.state)
+
+                # immediately report it with a popup when the connection is lost
+                if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
+                    balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
+
+                # report state on the systray
+                if self.state == "CONNECTED":
                     if trayapp:
                         feedback_online(trayapp)
-                elif st == "CONNECTING":
+                elif self.state == "CONNECTING":
                     if trayapp: 
                         #print("connecting.........")
                         caption = "Connecting, please wait..."
                         trayapp.set_hover_text(caption)
                         feedback_connecting(trayapp)
-                elif st == "INCONSISTENT":
+                elif self.state == "INCONSISTENT":
                     if trayapp: 
                         feedback_inconsistent(trayapp)
                 else:
@@ -288,13 +298,15 @@ def handle_configure(sysTrayIcon):
 
 def show_message(message, title):
     win32api.MessageBox(0, message, title)
-    
+
+def config_exists():
+    return os.path.exists(os.path.join(get_user_cwd(), config_file))
+
 def handle_go_online(sysTrayIcon):
     global svcproxy, monitor
     
     # Check if config file exists
-    r = os.path.exists(os.path.join(get_user_cwd(), config_file))
-    if not r:
+    if not config_exists():
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
         return False
 
@@ -364,11 +376,16 @@ if __name__ == '__main__':
     log_init_app()
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
+    # make sure that TAP is installed
+    if not windows_has_tap_device():
+        logging.critical("TAP driver is not installed, please install.")
+        win32api.MessageBox(0, "I couldn't find the TAP/TUN driver for Windows.\n\nPlease install TAP for windows and try running this program again.\n\nhttp://openvpn.net/index.php/open-source/downloads.html", 'TAP/TUN driver missing', 0x10)
+        sys.exit(1)
+
     start_monitor()
 
     #checkurl = config_check_url(config_file)
     #print("URL to check VPN connection %s ..." % (checkurl,))
-
 
     menu_options = (('Configure ...', None, handle_configure, None),
                     
@@ -377,5 +394,12 @@ if __name__ == '__main__':
                    )
     
     trayapp = systray.SysTrayIcon(icon_offline, hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
+
+    # if we have an openVPN config file available, go online immediately
+    if config_exists():
+        handle_go_online(trayapp)
+        logging.debug("Config file found on startup, trying to auto-connect...")
+        balloon.balloon_tip("Connecting...", "A default configuration was found, trying to connect automatically.")
+
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()

@@ -36,7 +36,8 @@ def is_openvpn_running():
     return procs
 
 def log_init_app(level=logging.DEBUG):
-    logging.basicConfig(filename='umanviper.log', level=level)
+    fn = os.path.join(get_user_cwd(), 'umanviper.log')
+    logging.basicConfig(filename=fn, level=level)
 
 def log_init_service(level=logging.DEBUG):
     fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"
@@ -61,7 +62,7 @@ def log(msg):
 	#print(msg)
 
 
-def _windows_has_tap_device():
+def windows_has_tap_device():
     """
     Loops over the windows registry trying to find if the tap0901 tap driver
     has been installed on this machine.
