@@ -20,7 +20,7 @@ import os, sys, string, time
 import socket
 import threading, time
 from pprint import pprint
-import psutils
+import psutil
 
 from win import routing
 from win import service
