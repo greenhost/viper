@@ -31,88 +31,6 @@ import traceback
 
 # global that keeps track of the current status
 OVPN_STATUS = None
-# stlock = threading.RLock()
-
-# import sys
-# f = open("C:\ovpnmon-logall.txt", "w")
-# sys.stderr = f
-# sys.stdout = f
-
-# class OVPNManagementThread(threading.Thread):
-#     def __init__(self):
-#         log("service - creating monitor thread...")
-#         self.running = True
-#         self.connected = False
-#         #self.sock = None #socket.socket()
-#         #self.sock.settimeout(5)
-#         self.delaytime = 0.5
-#         self.conntimeout = 2
-#         #self.tstamp_started_check = None
-#         #self.tstamp_check_timeout = 5
-#         threading.Thread.__init__(self)
-
-#     def close(self):
-#         """ close OpenVPN client sending SIGTERM """
-#         log("Terminating OpenVPN subprocess [SIGTERM]")
-
-#         # terminate openvpn processes
-#         procs = tools.is_openvpn_running()
-#         if procs: # process found, terminate it
-#             for p in procs:
-#                 p.terminate()
-
-#     def terminate(self):
-#         """ stop monitoring """
-#         try:
-#             self.close()
-#         except Exception, e:
-#             log("Couldn't terminate openvpn processes for some unknown reason: %s" % e)
-#         finally:
-#             # make sure thread loop stops checking
-#             self.running = False
-
-#     def run(self):
-#         global OVPN_STATUS
-#         log("Thread is running...")
-#         while self.running:
-
-#             sock = socket.socket()
-#             try:
-#                 #if not self.connected:
-#                 log("Trying to connect to OVPN management socket")
-#                 sock.settimeout( self.conntimeout )
-#                 sock.connect(("localhost", 7505))
-#                 # self.sock.setblocking(1)
-#                 self.connected = True
-
-#                 log("Connected successfully to management socket")
-
-#                 self.check_status(sock)
-#             except socket.timeout, e:
-#                 log("OVPN management socket operation timed-out: %s" % e)
-#                 OVPN_STATUS = {'status': "DISCONNECTED"} 
-#             except Exception, e:
-#                 log("OVPN management socket error: %s" % e)
-#                 OVPN_STATUS = {'status': "DISCONNECTED"} 
-#             finally:   # always execute
-#                 try:
-#                     sock.close()
-#                     self.connected = False
-#                     del sock
-#                     #time.sleep(5)
-#                 except Exception, e:
-#                     log("FATAL - closing the socket failed the next open operation would not work")
-#                     raise
-
-
-#             # if OVPN_STATUS: 
-#             #     st = OVPN_STATUS['status'] if 'status' in OVPN_STATUS else "undefined"
-#             # else: 
-#             #     st = "undefined"
-        
-#         log("Exiting monitor thread main loop")
-
-
 
 
 class RPCService(rpyc.Service):
@@ -123,14 +41,6 @@ class RPCService(rpyc.Service):
         #self.monitor = None
         self.connected = False
         logging.info("Connection from client opened...")
-
-        # # start monitor thread
-        # try:
-        #     self.monitor = OVPNManagementThread()
-        #     log(">>> Trying to start thread...")
-        #     self.monitor.start()
-        # except Exception, e:
-        #     log("Failed to start thread %s" % e)
 
     def on_disconnect(self):
         # code that runs when the connection has already closed
@@ -144,19 +54,11 @@ class RPCService(rpyc.Service):
         global OVPN_STATUS
         OVPN_STATUS = ovpn.poll_status()
         return (OVPN_STATUS['status'] == "CONNECTED")
-        # if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-        #     return True
-        # else:
-        #     return False
 
     def exposed_get_vpn_status(self):
         global OVPN_STATUS
         OVPN_STATUS = ovpn.poll_status()
         return OVPN_STATUS['status']
-        #if OVPN_STATUS:
-        #    return OVPN_STATUS['status']
-        #else:
-        #    return None
 
     def exposed_get_connection_settings(self):
         global OVPN_STATUS
@@ -168,19 +70,9 @@ class RPCService(rpyc.Service):
 
     def exposed_get_gateway_ip(self):
         pass
-        # global OVPN_STATUS
-        # if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-        #     return OVPN_STATUS['gateway']
-        # else:
-        #     return None
 
     def exposed_get_interface_ip(self):
         pass
-        # global OVPN_STATUS
-        # if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-        #     return OVPN_STATUS['interface']
-        # else:
-        #     return None
 
     def exposed_ovpn_start(self, cfgfile):
         global OVPN_STATUS
@@ -204,15 +96,7 @@ class RPCService(rpyc.Service):
                     p.terminate()  # NoSuchProcess: process no longer exists (pid=2476)
         except (psutil.NoSuchProcess, psutil.AccessDenied), err:
             logging.error("exception while trying to shut down OpenVPN process for pid:%s, reason:%s" % (err.pid, err.msg))
-        # global OVPN_STATUS
-        # #self.monitor.terminate()
 
-
-# if __name__ == "__main__":
-#     from rpyc.utils.server import ThreadedServer
-#     t = ThreadedServer(RPCService, port = 18861)
-#     log("OVPN service starting...")
-#     t.start()
 
 # see this http://tebl.homelinux.com/view_document.php?view=6
 # for the only successful howto I could find
@@ -230,7 +114,6 @@ class OVPNService(win32serviceutil.ServiceFramework):
 
         from rpyc.utils.server import ThreadedServer
         self.svc = ThreadedServer(RPCService, port = 18861)
-        #Service.__init__(self, *args)
 
     def sleep(self, sec):
         win32api.Sleep(sec*1000, True)
@@ -271,29 +154,3 @@ class OVPNService(win32serviceutil.ServiceFramework):
         logging.info("OVPN monitoring service shutting down...")
         self.svc.close()
         self.runflag = False
-
-
-# class OVPNServiceWrapper(OVPNService):
-#     _svc_name_ = '_OVPNmonitor'
-#     _svc_display_name_ = 'OVPN monitor'
-#     def __init__(self, *args):
-#         from rpyc.utils.server import ThreadedServer
-#         self.svc = ThreadedServer(RPCService, port = 18861)
-#         Service.__init__(self, *args)
-
-#     def start(self):
-#         self.log("OVPN service starting...")
-#         self.svc.start()
-#         self.runflag = True
-
-#         while self.runflag:
-#             self.sleep(10)
-#             self.log("Service is alive ...")
-
-#     def stop(self):
-#         self.runflag = False
-#         self.svc.close()
-
-
-# if __name__ == '__main__':
-#     service.instart(OVPNServiceWrapper, 'ovpnmon', 'OpenVPN monitor service')

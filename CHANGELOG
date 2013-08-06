@@ -1,0 +1,8 @@
+CHANGELOG
+
+== R5
+* Added auto-connect when client is already configured
+* Check for TAP/TUN drivers on startup
+* Report with a baloon tooltip when the status goes from CONNECTED to DISCONNECTED so users are aware that they are no longer under a secure connection.
+* Installer no includes a third party TAP/TUN driver for windows
+* Removed console window from systray client (was used for debugging only)

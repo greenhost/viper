@@ -7,12 +7,13 @@ import win32gui_struct
 import win32file
 import threading, time
 from pprint import pprint
-
+import logging
 from win import routing 
 from  win import systray
 from win import balloon
 #import tools
 from win.tools import *
+import getopt
 
 # dependencies
 try:
@@ -33,6 +34,7 @@ svcproxy = None
 config_file = '__config.ovpn'
 hover_text = "Not connected to VPN"
 checkurl = None
+debug_level = logging.DEBUG
 
 icon_online = os.path.join(get_my_cwd(), 'online.ico')
 icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
@@ -122,7 +124,7 @@ class ServiceProxy:
     def connect(self):
         #current = os.getcwd()
         cfg = os.path.join(get_user_cwd(), "__config.ovpn")
-        logging.info( "Loading config %s..." % (cfg,) )
+        logging.info( "Trying to connect with config %s..." % (cfg,) )
         r =  self.connection.root.ovpn_start(cfg)
         return r
 
@@ -373,7 +375,18 @@ if __name__ == '__main__':
     import itertools, glob
     import shutil
 
-    log_init_app()
+    global debug_enabled
+
+    try:                                
+        opts, args = getopt.getopt(sys.argv, "d", ["debug"])
+    except getopt.GetoptError:
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ('-d', '--debug'):
+            debug_level = logging.DEBUG
+
+    log_init_app(debug_level)
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
     # make sure that TAP is installed
@@ -395,11 +408,11 @@ if __name__ == '__main__':
     
     trayapp = systray.SysTrayIcon(icon_offline, hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
 
-    # if we have an openVPN config file available, go online immediately
-    if config_exists():
-        handle_go_online(trayapp)
-        logging.debug("Config file found on startup, trying to auto-connect...")
-        balloon.balloon_tip("Connecting...", "A default configuration was found, trying to connect automatically.")
+    # # if we have an openVPN config file available, go online immediately
+    # if config_exists():
+    #     handle_go_online(trayapp)
+    #     logging.debug("Config file found on startup, trying to auto-connect...")
+    #     balloon.balloon_tip("Connecting...", "A default configuration was found, trying to connect automatically.")
 
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()
