@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-""" 
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2013 Greenhost vof
+"""
 Service to manage and monitor OpenVPN on windows
-(c) Luis Rodil-Fernandez <luis@greenhost.nl>
-
-Run Python scripts as a service example (ryrobes.com)
-Usage : python aservice.py install (or / then start, stop, remove)
 """
 import rpyc
 import subprocess
@@ -101,6 +100,10 @@ class RPCService(rpyc.Service):
 # see this http://tebl.homelinux.com/view_document.php?view=6
 # for the only successful howto I could find
 class OVPNService(win32serviceutil.ServiceFramework):
+    """Windows Service implementation. Starts a RPyC server listening to
+    connections on port 18861 from localhost only.
+
+    """
     _svc_name_ = 'ovpnmon'
     _svc_display_name_ = 'OVPN monitor'
     _svc_description_ = 'Monitor the OpenVPN client on this machine'
@@ -113,7 +116,8 @@ class OVPNService(win32serviceutil.ServiceFramework):
         self.runflag = False
 
         from rpyc.utils.server import ThreadedServer
-        self.svc = ThreadedServer(RPCService, port = 18861)
+        # make sure only connections from localhost are accepted
+        self.svc = ThreadedServer(RPCService, hostname = 'localhost', port = 18861)
 
     def sleep(self, sec):
         win32api.Sleep(sec*1000, True)

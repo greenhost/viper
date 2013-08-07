@@ -1,0 +1,4 @@
+
+* Auto-connect on start-up
+* Decouple from OpenVPN so that the underlaying VPN software can be swapped any time.
+* Check for updates
