@@ -85,6 +85,10 @@ class RPCService(rpyc.Service):
 
         self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
 
+        # check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
+        if self.proc.returncode != 0:
+            logging.error("Executing external OpenVPN process failed returning %s" % (self.proc.returncode,))
+
     def exposed_ovpn_stop(self):
         logging.debug("Terminating OpenVPN subprocess")
         # terminate openvpn processes
