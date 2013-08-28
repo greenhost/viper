@@ -67,6 +67,7 @@ def poll_status(connection_timeout = 2, response_delay = .5):
                             retval = {'status' : "DISCONNECTED"}
                             logging.debug("Routing verification didn't pass")
                     except routing.InconsistentRoutingTable:
+                        # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
                         retval = {'status' : "INCONSISTENT"}
                         logging.debug("Routing verification is not consistent")
 

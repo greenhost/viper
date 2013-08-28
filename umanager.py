@@ -110,7 +110,7 @@ def feedback_starting(sysTrayIcon):
 
 def feedback_inconsistent(sysTrayIcon):
     global svcproxy
-    win32api.MessageBox(0, "We have detected an inconsistency in the encryption of the connection\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop the connection to the VPN now. Please try again after rebooting your windows computer.\n", 'Encryption status inconsistent', 0x10)
+    win32api.MessageBox(0, "We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop the connection to the VPN now. Please try again after rebooting your windows computer.\n", 'Traffic routing inconsistent', 0x10)
 
     try:
         svcproxy.disconnect()

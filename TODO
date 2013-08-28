@@ -2,3 +2,9 @@
 * Auto-connect on start-up
 * Decouple from OpenVPN so that the underlaying VPN software can be swapped any time.
 * Check for updates
+
+
+TEST
+* put computer to sleep, see what happens when it comes back
+	the desired behaviour would be that openVPN continues to run and the viper client reports the connection as locked.
+
