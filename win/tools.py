@@ -15,6 +15,21 @@ PRODUCT_NAME = "Viper"
 PRODUCER_NAME = "Greenhost"
 DEFAULT_OPENVPN_HOME = "./openvpn/"
 
+def is_viper_running():
+    lockfile = os.path.join(get_user_cwd(), 'pidlock')
+    logging.debug("Check if we are already running '%s'" % (lockfile,))
+    return os.path.isfile( lockfile )
+
+def run_unique(fn):
+    lockfile = os.path.join(get_user_cwd(), 'pidlock')
+    try:
+        with file(lockfile, 'w') as flock:
+            flock.write( str(os.getpid()) )
+        # execute main loop
+        fn()
+    finally:
+        os.unlink(lockfile)
+
 def is_openvpn_running():
     procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
     return procs

@@ -36,70 +36,77 @@ hover_text = "Not connected to VPN"
 checkurl = None
 debug_level = logging.DEBUG
 
-icon_online = os.path.join(get_my_cwd(), 'online.ico')
-icon_offline = os.path.join(get_my_cwd(), 'offline.ico')
-icon_connecting = os.path.join(get_my_cwd(), 'connecting.ico')
-icon_refresh = os.path.join(get_my_cwd(), 'refresh.ico')
+# ICONS = {
+#     'online' : os.path.join(get_my_cwd(), 'online.ico'),
+#     'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
+#     'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
+#     'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
+# }
 
-# icon_online = 'online.ico'
-# icon_offline = 'offline.ico'
-# icon_connecting = 'connecting.ico'
-# icon_refresh = 'refresh.ico'
-
+ICONS = {
+    'online' : 'online.ico',
+    'offline' : 'offline.ico',
+    'connecting' : 'connecting.ico',
+    'refresh' : 'refresh.ico'
+}
 
 def feedback_online(sysTrayIcon):
-    global icon_online
-    sysTrayIcon.icon = icon_online
-    sysTrayIcon.refresh_icon()
+    global ICONS
+    if sysTrayIcon:
+        sysTrayIcon.icon = ICONS['online']
+        sysTrayIcon.refresh_icon()
 
-    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
-                    
-                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                     ('Go offline...', None, handle_go_offline, None),
-                     #('Validate against server...', None, handle_validate_server, None)
-                    )
-    sysTrayIcon.set_menu(menu_options)
+        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                        
+                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                         ('Go offline...', None, handle_go_offline, None),
+                         #('Validate against server...', None, handle_validate_server, None)
+                        )
+        sysTrayIcon.set_menu(menu_options)
 
 def feedback_offline(sysTrayIcon):
-    global icon_offline
-    sysTrayIcon.icon = icon_offline
-    sysTrayIcon.refresh_icon()
-    menu_options = (('Configure...', None, handle_configure, None),
-                    
-                     ('Go online...', None, handle_go_online, None),
-                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
-                    )
-    sysTrayIcon.set_menu(menu_options)
+    global ICONS, trayapp
+    if sysTrayIcon:
+        sysTrayIcon.icon = ICONS['offline']
+        sysTrayIcon.refresh_icon()
+        menu_options = (('Configure...', None, handle_configure, None),
+                        
+                         ('Go online...', None, handle_go_online, None),
+                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                        )
+        sysTrayIcon.set_menu(menu_options)
 
-    if trayapp:
-        trayapp.set_hover_text("Not connected to VPN")
+        if trayapp:
+            trayapp.set_hover_text("Not connected to VPN")
 
 
 def feedback_connecting(sysTrayIcon):
-    global icon_connecting, monitor
-    monitor.isstarting = False
-    sysTrayIcon.icon = icon_connecting
-    sysTrayIcon.refresh_icon()
+    global ICONS, monitor
+    if sysTrayIcon:
+        sysTrayIcon.icon = ICONS['connecting']
+        monitor.isstarting = False
+        sysTrayIcon.refresh_icon()
 
-    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
-                    
-                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
-                    )
-    sysTrayIcon.set_menu(menu_options)
+        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                        
+                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                        )
+        sysTrayIcon.set_menu(menu_options)
 
 
 def feedback_starting(sysTrayIcon):
-    global icon_refresh
-    sysTrayIcon.icon = icon_refresh
-    sysTrayIcon.refresh_icon()
+    global ICONS
+    if sysTrayIcon:
+        sysTrayIcon.icon = ICONS['refresh']
+        sysTrayIcon.refresh_icon()
 
-    menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
-                    
-                     ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                     ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
-                    )
-    sysTrayIcon.set_menu(menu_options)
+        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+                        
+                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
+                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                        )
+        sysTrayIcon.set_menu(menu_options)
 
 def feedback_inconsistent(sysTrayIcon):
     global svcproxy
@@ -371,12 +378,13 @@ def config_check_url(cfgfile):
 
 
 
-if __name__ == '__main__':
+def main():
+    global debug_level, trayapp
+
     import itertools, glob
     import shutil
 
-    global debug_enabled
-
+    # read command line to determine debug level
     try:                                
         opts, args = getopt.getopt(sys.argv, "d", ["debug"])
     except getopt.GetoptError:
@@ -386,7 +394,9 @@ if __name__ == '__main__':
         if opt in ('-d', '--debug'):
             debug_level = logging.DEBUG
 
+    # init logging capabilities
     log_init_app(debug_level)
+
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
     # make sure that TAP is installed
@@ -406,7 +416,7 @@ if __name__ == '__main__':
                     ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
-    trayapp = systray.SysTrayIcon(icon_offline, hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
+    trayapp = systray.SysTrayIcon(ICONS['offline'], hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
 
     # # if we have an openVPN config file available, go online immediately
     # if config_exists():
@@ -416,3 +426,10 @@ if __name__ == '__main__':
 
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()
+
+if __name__ == '__main__':
+    # run the main loop on the condition that it's not already running
+    if is_viper_running():
+        sys.exit(3) # already running
+    else:
+        run_unique( main )
