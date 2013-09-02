@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-__DOC__ = """ 
-Helper code for OpenVPN status on windows
-(c) Luis Rodil-Fernandez <luis@greenhost.nl>
+# -*- coding: utf-8 -*-
+"""
+Polls status of OpenVPN using the management socket interface.
 """
 import subprocess, logging
 import os, sys
@@ -17,8 +17,8 @@ import socket
 import threading, time
 from pprint import pprint
 
-from win import routing 
-from win.tools import *
+from viper import routing 
+from viper.tools import *
 import traceback
 
 

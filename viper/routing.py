@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""Routing Table Tools for windows
+# -*- coding: utf-8 -*-
+"""
+Routing Table Tools for windows
 """
 
 from os import popen
@@ -27,9 +29,6 @@ def filter_route(destination, netmask, iface):
 	retval = [row for row in tab if ( (row[0] == destination) and (row[1] == netmask))]
 	return retval
 
-# >>> routingtools.filter('0.0.0.0', '128.0.0.0', '172.26.37.6')
-# [['0.0.0.0', '128.0.0.0', '172.26.37.5', '172.26.37.6', '30']]
-# >>> routingtools.filter('128.0.0.0', '128.0.0.0', '172.26.37.6')
 def verify_vpn_routing_table(ifaceip):
 	""" 
 	Given an interface address that we obtain from querying OpenVPN, we should check for the existence of
@@ -41,12 +40,6 @@ def verify_vpn_routing_table(ifaceip):
 	If we find more than one of these then our routing table is corrupted, this might be from a OpenVPN 
 	run that didn't close properly.
 	"""
-	# print(">"*65)
-	# tab = get_iface_route(ifaceip)
-	# print("Interface: %s" % ifaceip)
-	# pprint(tab)
-	# print(">"*65)
-
 	route1 = filter_route("0.0.0.0", "128.0.0.0", ifaceip)
 	route2 = filter_route("128.0.0.0", "128.0.0.0", ifaceip)
 

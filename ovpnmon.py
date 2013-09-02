@@ -21,84 +21,12 @@ import threading, time
 from pprint import pprint
 import psutil
 
-from win import routing
-from win import service
-from win.tools import *
+from viper import routing
+from viper import service
+from viper.openvpn import monitor
+from viper.tools import *
 import ovpn
 import traceback
-
-
-# global that keeps track of the current status
-OVPN_STATUS = None
-
-
-class RPCService(rpyc.Service):
-    def on_connect(self):
-        # code that runs when a connection is created
-        # (to init the service, if needed)
-        self.proc = None
-        #self.monitor = None
-        self.connected = False
-        logging.info("Connection from client opened...")
-
-    def on_disconnect(self):
-        # code that runs when the connection has already closed
-        # (to finalize the service, if needed)
-        logging.info("Connection from client closed")
-
-    def exposed_heartbeat(self):
-        return str(datetime.now())
-
-    def exposed_is_connected(self):
-        global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
-        return (OVPN_STATUS['status'] == "CONNECTED")
-
-    def exposed_get_vpn_status(self):
-        global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
-        return OVPN_STATUS['status']
-
-    def exposed_get_connection_settings(self):
-        global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
-        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-            return OVPN_STATUS
-        else:
-            return None
-
-    def exposed_get_gateway_ip(self):
-        pass
-
-    def exposed_get_interface_ip(self):
-        pass
-
-    def exposed_ovpn_start(self, cfgfile):
-        global OVPN_STATUS
-        logging.debug("Start on manager thread called, ready to call OpenVPN")
-        path = get_openvpn_home()
-        path = os.path.join(path, "openvpn")
-
-        cmd = "%s %s" % (path, cfgfile)
-        logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
-        f = open(os.devnull, 'w')
-
-        self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
-
-        # check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
-        if self.proc.returncode != 0:
-            logging.error("Executing external OpenVPN process failed returning %s" % (self.proc.returncode,))
-
-    def exposed_ovpn_stop(self):
-        logging.debug("Terminating OpenVPN subprocess")
-        # terminate openvpn processes
-        try:
-            procs = is_openvpn_running()
-            if procs: # process found, terminate it
-                for p in procs:
-                    p.terminate()  # NoSuchProcess: process no longer exists (pid=2476)
-        except (psutil.NoSuchProcess, psutil.AccessDenied), err:
-            logging.error("exception while trying to shut down OpenVPN process for pid:%s, reason:%s" % (err.pid, err.msg))
 
 
 # see this http://tebl.homelinux.com/view_document.php?view=6

@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Simple implementation of Balloon tips for windows. Balloon tooltips are used for 
+non-modal feedback to the user.
+"""
 from win32api import *
 from win32gui import *
 import win32con

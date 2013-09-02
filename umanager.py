@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os, sys, re
 import win32api
 import win32con
@@ -8,12 +9,11 @@ import win32file
 import threading, time
 from pprint import pprint
 import logging
-from win import routing 
-from  win import systray
-from win import balloon
-#import tools
-from win.tools import *
 import getopt
+
+from viper import routing 
+from viper.tools import *
+from viper.windows import systray, balloon
 
 # dependencies
 try:
@@ -36,18 +36,11 @@ hover_text = "Not connected to VPN"
 checkurl = None
 debug_level = logging.DEBUG
 
-# ICONS = {
-#     'online' : os.path.join(get_my_cwd(), 'online.ico'),
-#     'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
-#     'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
-#     'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
-# }
-
 ICONS = {
-    'online' : 'online.ico',
-    'offline' : 'offline.ico',
-    'connecting' : 'connecting.ico',
-    'refresh' : 'refresh.ico'
+    'online' : os.path.join(get_my_cwd(), 'online.ico'),
+    'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
+    'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
+    'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
 }
 
 def feedback_online(sysTrayIcon):

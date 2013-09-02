@@ -1,3 +1,5 @@
+* How to implement a timeout callback, like in javascript?
+* Is there some simple signal library in python?
 
 * Auto-connect on start-up
 * Decouple from OpenVPN so that the underlaying VPN software can be swapped any time.

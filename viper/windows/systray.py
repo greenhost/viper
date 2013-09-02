@@ -1,11 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Wrapper for an application that sits in the Windows systray.
+"""
 import os, sys, re, logging
 import win32api
 import win32con
 import win32ui
 import win32gui_struct
 import win32file
-from tools import log, get_openvpn_home
+
+from viper.tools import log, get_openvpn_home
 
 try:
     import winxpgui as win32gui
@@ -42,7 +47,7 @@ class SysTrayIcon(object):
         
         
         self.default_menu_index = (default_menu_index or 0)
-        self.window_class_name = window_class_name or "SysTrayIconPy"
+        self.windowsdow_class_name = window_class_name or "SysTrayIconPy"
         
         message_map = {win32gui.RegisterWindowMessage("TaskbarCreated"): self.restart,
                        win32con.WM_DESTROY: self.destroy,
@@ -51,7 +56,7 @@ class SysTrayIcon(object):
         # Register the Window class.
         window_class = win32gui.WNDCLASS()
         hinst = window_class.hInstance = win32gui.GetModuleHandle(None)
-        window_class.lpszClassName = self.window_class_name
+        window_class.lpszClassName = self.windowsdow_class_name
         window_class.style = win32con.CS_VREDRAW | win32con.CS_HREDRAW;
         window_class.hCursor = win32gui.LoadCursor(0, win32con.IDC_ARROW)
         window_class.hbrBackground = win32con.COLOR_WINDOW
@@ -60,7 +65,7 @@ class SysTrayIcon(object):
         # Create the Window.
         style = win32con.WS_OVERLAPPED | win32con.WS_SYSMENU
         self.hwnd = win32gui.CreateWindow(classAtom,
-                                          self.window_class_name,
+                                          self.windowsdow_class_name,
                                           style,
                                           0,
                                           0,

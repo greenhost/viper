@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
+"""
+Install and autostart a ser vice on windows.
+"""
 ## {{{ http://code.activestate.com/recipes/551780/ (r3)
 # winservice.py
 
@@ -10,7 +13,7 @@ import win32serviceutil
 import win32service
 import win32event
 import win32api
-import ovpn
+import viper.openvpn
 import psutil
 
 # a post on the installer

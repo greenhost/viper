@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import os, sys, re
-#!/usr/bin/env python
+
 """This script is meant to be run from the command line on windows, not as an executable"""
 import logging
-from win.tools import *
+from viper.tools import *
 from umanager import *
 
 ICONS = {

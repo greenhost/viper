@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os, sys
 import logging
 import servicemanager
@@ -58,7 +59,6 @@ def get_user_cwd():
 
 def log(msg):
 	servicemanager.LogInfoMsg(str(msg))
-	#print(msg)
 
 
 def windows_has_tap_device():
