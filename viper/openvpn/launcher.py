@@ -35,7 +35,7 @@ class OpenVPNLauncher:
 
         cmd = "%s %s" % (path, cfgfile)
         logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
-        # redirect stdout and stderr to /dev/null
+        # @todo redirect stdout and stderr to /dev/null, perhaps we want to send this output somewhere else?
         f = open(os.devnull, 'w')
         try:
             self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)

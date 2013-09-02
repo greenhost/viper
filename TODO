@@ -1,3 +1,5 @@
+* Write parser for "status" response from the management socket so that we can tell the
+  user about usage and other metrics.
 * How to implement a timeout callback, like in javascript?
 * Is there some simple signal library in python?
 
@@ -7,6 +9,27 @@
 
 
 TEST
-* put computer to sleep, see what happens when it comes back
-	the desired behaviour would be that openVPN continues to run and the viper client reports the connection as locked.
+* start viper, stop windows service
+	questions: what is reported to the user? 
 
+* kill the openvpn process while Viper is running
+	questions:
+		does Viper report the connection status correctly?
+
+* shut down computer without exiting Viper
+	questions:
+		is the lock file still in the user directory?
+
+* put computer to sleep, see what happens when it comes back
+	what should happen: 
+		openVPN continues to run and the viper client reports the connection as locked.
+
+* while running viper, disconnect computer from network
+	questions: 
+		1. what is reported to the user?
+		2. what happens when we put the cable back in and how is that reported to the user?
+
+* disconnect computer from network, start viper.
+	what should happen: 
+		1. user is warned that no network connection is active
+		2. openvpn isn't started (otherwise it will stall)? (unless it kicks right in after a network connection is opened)
