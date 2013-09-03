@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# vim: autoindent tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python
 #
 # Copyright (C) 2013 Greenhost vof
 """
@@ -14,7 +15,7 @@ import psutil
 from viper import routing
 from viper.windows import service
 from viper.tools import *
-from viper.openvpn import ovpn
+from viper.openvpn import management
 import traceback
 
 
@@ -26,10 +27,10 @@ class OpenVPNNotFoundException(VPNLauncherException):
 
 
 class OpenVPNLauncher:
-	def __init__(self):
-		self.proc = None
+    def __init__(self):
+        self.proc = None
 
-	def launch(self, cfgfile):
+    def launch(self, cfgfile):
         path = get_openvpn_home()
         path = os.path.join(path, "openvpn")
 
@@ -42,8 +43,8 @@ class OpenVPNLauncher:
             # @todo check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
             logging.debug("OpenVPN process returned exit code = %s" % (self.proc.returncode,) )
             if self.proc.returncode != 0:
-            	msg = "Executing external OpenVPN process failed returning %s" % (self.proc.returncode,)
-            	# log error and propagate condition
+                msg = "Executing external OpenVPN process failed returning %s" % (self.proc.returncode,)
+                # log error and propagate condition
                 logging.error(msg)
                 raise VPNLauncherException(msg)
         except EnvironmentError, e:

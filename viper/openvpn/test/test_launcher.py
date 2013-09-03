@@ -19,12 +19,12 @@ class LauncherTest(unittest.TestCase):
     	pass
 
     def test_launch(self):
-    	launcher = OpenVpnLauncher()
-        launcher.launch(self.cfgfile)
+    	ovpn = launcher.OpenVPNLauncher()
+        ovpn.launch(self.cfgfile)
 
     def test_terminate(self):
-        launcher = OpenVpnLauncher()
-        launcher.terminate()
+        ovpn = launcher.OpenVPNLauncher()
+        ovpn.terminate()
 
 if __name__ == "__main__":
     unittest.main()
