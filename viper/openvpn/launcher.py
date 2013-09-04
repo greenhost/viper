@@ -39,15 +39,16 @@ class OpenVPNLauncher:
         # @todo redirect stdout and stderr to /dev/null, perhaps we want to send this output somewhere else?
         f = open(os.devnull, 'w')
         try:
-            self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
+            self.proc = subprocess.Popen([path, cfgfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # @todo check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
-            logging.debug("OpenVPN process returned exit code = %s" % (self.proc.returncode,) )
-            if self.proc.returncode != 0:
+            time.sleep(0.3)
+            self.proc.poll()
+            if self.proc.returncode:#   != 0:
                 msg = "Executing external OpenVPN process failed returning %s" % (self.proc.returncode,)
                 # log error and propagate condition
                 logging.error(msg)
                 raise VPNLauncherException(msg)
-        except EnvironmentError, e:
+        except OSError, e:
             # @todo check if the exception above is actually raised by subprocess.Popen
             msg = "Couldn't execute subprocess '%s'" % (path,)
             # log and propagate

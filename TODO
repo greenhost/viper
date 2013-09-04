@@ -1,49 +1,5 @@
 * I can't see the log at the moment. At least not from the menu.
-
-
-* Write parser for "status" response from the management socket so that we can tell the
-  user about usage and other metrics.
-
-Sample output from the "status" command:
-================
-OpenVPN STATISTICS
-Updated,Tue Sep 03 16:41:31 2013
-TUN/TAP read bytes,5218
-TUN/TAP write bytes,0
-TCP/UDP read bytes,12724
-TCP/UDP write bytes,20509
-Auth read bytes,16
-pre-compress bytes,914
-post-compress bytes,849
-pre-decompress bytes,0
-post-decompress bytes,0
-TAP-WIN32 driver status,"State=AT0c Err=[(null)/0] #O=2 Tx=[70,0] Rx=[0,0] IrpQ=[1,1,16] PktQ=[0,2,64] InjQ=[0,1,16]"
-END
-================
-
-* How to implement a timeout callback, like in javascript?
-		import threading
-
-		def hello(arg):
-		    print arg
-
-		t = threading.Timer(2, hello, ["bb"])
-		t.start()
-
-		while 1:
-		    pass
-		You're seeing "b" because you're not giving it an array, so it treats "bb" an an iterable; it's essentially as if you gave it ["b", "b"].
-
-		kwargs is for keyword arguments, eg:
-
-		t = threading.Timer(2, hello, ["bb"], {arg: 1})
-		See http://docs.python.org/release/1.5.1p1/tut/keywordArgs.html for information about keyword arguments.
-
-
-* Is there some simple signal library in python?
-	http://www.emptypage.jp/notes/pyevent.en.html
-
-
+* Write parser for "status" response from the management socket so that we can tell the user about usage and other metrics.
 * Auto-connect on start-up
 * Decouple from OpenVPN so that the underlaying VPN software can be swapped any time.
 * Check for updates
