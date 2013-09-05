@@ -18,8 +18,24 @@ DEFAULT_OPENVPN_HOME = "./openvpn/"
 
 def is_viper_running():
     lockfile = os.path.join(get_user_cwd(), 'pidlock')
-    logging.debug("Check if we are already running '%s'" % (lockfile,))
-    return os.path.isfile( lockfile )
+    logging.debug("Check if we are already running...")
+    if os.path.isfile( lockfile ):
+        # open file and read PID from it
+        with open(lockfile, 'r') as f:
+            content = f.read()
+            pid = int(content)
+            try:
+                # if process is found with the PID, there's another instance running
+                proc = psutil.Process(pid)
+                return True
+            except psutil.NoSuchProcess, e:
+                # pidfile is tale, delete it
+                # we can now assume there's not another version of viper running
+                f.close()
+                os.unlink(lockfile)
+                return False
+    else:
+        return False
 
 def run_unique(fn):
     lockfile = os.path.join(get_user_cwd(), 'pidlock')
