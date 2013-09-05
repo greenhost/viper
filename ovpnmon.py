@@ -22,10 +22,9 @@ from pprint import pprint
 import psutil
 
 from viper import routing
-from viper import service
+from viper.windows import service
 from viper.openvpn import monitor
 from viper.tools import *
-import ovpn
 import traceback
 
 
@@ -49,7 +48,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
 
         from rpyc.utils.server import ThreadedServer
         # make sure only connections from localhost are accepted
-        self.svc = ThreadedServer(RPCService, hostname = 'localhost', port = 18861)
+        self.svc = ThreadedServer(monitor.RPCService, hostname = 'localhost', port = 18861)
 
     def sleep(self, sec):
         win32api.Sleep(sec*1000, True)
