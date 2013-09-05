@@ -423,6 +423,8 @@ def main():
 if __name__ == '__main__':
     # run the main loop on the condition that it's not already running
     if is_viper_running():
+        win32api.MessageBox(0, "Viper can only run once. I found another instance running, so I will stop now.", 'Viper can only run once', 0x10)
+        logging.warning("Another instance was running, will exit now.")
         sys.exit(3) # already running
     else:
         run_unique( main )
