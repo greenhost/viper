@@ -32,6 +32,7 @@ import traceback
 
 # global that keeps track of the current status
 OVPN_STATUS = None
+isstarting = False
 
 
 class RPCService(rpyc.Service):
@@ -53,17 +54,17 @@ class RPCService(rpyc.Service):
 
     def exposed_is_connected(self):
         global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
+        OVPN_STATUS = management.poll_status()
         return (OVPN_STATUS['status'] == "CONNECTED")
 
     def exposed_get_vpn_status(self):
         global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
+        OVPN_STATUS = management.poll_status()
         return OVPN_STATUS['status']
 
     def exposed_get_connection_settings(self):
         global OVPN_STATUS
-        OVPN_STATUS = ovpn.poll_status()
+        OVPN_STATUS = management.poll_status()
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return OVPN_STATUS
         else:

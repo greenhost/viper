@@ -19,17 +19,17 @@ PYINST_DEFAULT_PATH = 'C:\pyinstaller-2.0'
 # Apps to build, specifying the entry point script and the icon to 
 # embed in the executable file as a resource
 APPS = [
-		{'script': 'viper.py', 'icon': 'online.ico'}
+		{'script': 'viperclient.py', 'icon': 'online.ico'}
 	   ]
 
 # PyInstaller options
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'refresh.ico' , 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/viper.exe']
+RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'refresh.ico' , 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/viperclient.exe']
 
 # Build byproducts to delete after build
-CLEAN = ['dist/viper.exe']
+CLEAN = ['dist/viperclient.exe']
 
 # relative to the CWD
 def get_build_path():

@@ -129,7 +129,7 @@ class ServiceProxy:
         return r
 
     def disconnect(self):
-        logging.info("umanager proxy - disconnect called")
+        logging.info("proxy - disconnect called")
         return self.connection.root.ovpn_stop()
 
     def is_connected(self):
@@ -161,18 +161,18 @@ class ConnectionMonitor(threading.Thread):
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
             svcproxy = ServiceProxy(host="localhost", port=18861)
         except:
-            win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the umanager again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
+            win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
             print("Please run the OVPN service to continue")
             sys.exit(1)
 
         threading.Thread.__init__(self)
 
 #    def close(self):
-#        log("umanager.monitor - close called")
+#        log("viper - close called")
 #        self.terminate()
 
     def terminate(self):
-        logging.debug("umanager.monitor - terminate called")
+        logging.debug("viper - terminate called")
         global svcproxy
         self.running = False
         svcproxy.disconnect()
@@ -218,7 +218,7 @@ class ConnectionMonitor(threading.Thread):
                     caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
                     trayapp.set_hover_text(caption)
             except Exception, e:
-                err = "umanager.monitor main loop: {0}".format(e.message)
+                err = "viper main loop: {0}".format(e.message)
                 logging.critical(err)
                 self.terminate()
                 print e

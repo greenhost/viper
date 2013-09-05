@@ -3,8 +3,8 @@ import os, sys, re
 
 """This script is meant to be run from the command line on windows, not as an executable"""
 import logging
-from viper.tools import *
-from umanager import *
+from viper import tools
+from viperclient import *
 
 ICONS = {
     'online' : 'online.ico',
@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	# init logging capabilities
 	logging.basicConfig(level=logging.DEBUG)
 
-	if is_viper_running():
+	if tools.is_viper_running():
 		sys.exit(3) # already running
 	else:
-		run_unique( main )
+		tools.run_unique( main )
