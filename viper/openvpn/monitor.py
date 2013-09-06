@@ -42,6 +42,7 @@ class RPCService(rpyc.Service):
         self.proc = None
         #self.monitor = None
         self.connected = False
+        self.launcher = launcher.OpenVPNLauncher()
         logging.info("Connection from client opened...")
 
     def on_disconnect(self):
@@ -77,34 +78,15 @@ class RPCService(rpyc.Service):
         pass
 
     def exposed_ovpn_start(self, cfgfile):
-        global OVPN_STATUS
-        logging.debug("Start on manager thread called, ready to call OpenVPN")
-        path = get_openvpn_home()
-        path = os.path.join(path, "openvpn")
-
-        cmd = "%s %s" % (path, cfgfile)
-        logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
-        f = open(os.devnull, 'w')
-
-        try:
-            self.proc = subprocess.Popen([path, cfgfile], stdout=f, stderr=f)
-            # check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
-            if self.proc.returncode != 0:
-                logging.error("Executing external OpenVPN process failed returning %s" % (self.proc.returncode,))
-        except EnvironmentError, e:
-            # @todo check if the exception above is actually raised by subprocess.Popen
-            logging.critical("Couldn't execute subprocess '%s'" % (path,))
+        """Use launcher to start the OpenVPN instance
+        an exception of type VPNLauncherException may be raised
+        it's best not to handle it here but in the client so that
+        we can notify the user.
+        """
+        self.launcher.launch(cfgfile)
 
 
     def exposed_ovpn_stop(self):
-        logging.debug("Terminating OpenVPN subprocess")
-        # terminate openvpn processes
-        try:
-            procs = is_openvpn_running()
-            if procs: # process found, terminate it
-                for p in procs:
-                    p.terminate()  # NoSuchProcess: process no longer exists (pid=2476)
-        except (psutil.NoSuchProcess, psutil.AccessDenied), err:
-            logging.error("exception while trying to shut down OpenVPN process for pid:%s, reason:%s" % (err.pid, err.msg))
-
+        """Use launcher to stop the OpenVPN process"""
+        self.launcher.terminate()
 

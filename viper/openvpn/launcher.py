@@ -31,6 +31,7 @@ class OpenVPNLauncher:
         self.proc = None
 
     def launch(self, cfgfile):
+        """Start the OpenVPN process """
         path = get_openvpn_home()
         path = os.path.join(path, "openvpn")
 
@@ -56,6 +57,7 @@ class OpenVPNLauncher:
             raise OpenVPNNotFoundException(msg)
 
     def terminate(self):
+        """Terminate all OpenVPN processes that might be running"""
         logging.debug("Terminating OpenVPN subprocess")
         # terminate openvpn processes
         try:

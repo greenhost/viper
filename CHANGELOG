@@ -1,5 +1,11 @@
 CHANGELOG
 
+== b7 (mamba)
+* Disable IPv6 support upon installation
+* Prevent the execution of multiple instances
+* Acknowledge false OpenVPN starts due to bad configuration
+
+
 == b6
 * Added auto-connect when client is already configured
 * Check for TAP/TUN drivers on startup

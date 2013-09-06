@@ -11,6 +11,7 @@ from pprint import pprint
 import logging
 import getopt
 
+import viper
 from viper import routing 
 from viper.tools import *
 from viper.windows import systray, balloon
@@ -36,17 +37,9 @@ hover_text = "Not connected to VPN"
 checkurl = None
 debug_level = logging.DEBUG
 
-ICONS = {
-    'online' : os.path.join(get_my_cwd(), 'online.ico'),
-    'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
-    'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
-    'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
-}
-
 def feedback_online(sysTrayIcon):
-    global ICONS
     if sysTrayIcon:
-        sysTrayIcon.icon = ICONS['online']
+        sysTrayIcon.icon = viper.ICONS['online']
         sysTrayIcon.refresh_icon()
 
         menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
@@ -58,9 +51,9 @@ def feedback_online(sysTrayIcon):
         sysTrayIcon.set_menu(menu_options)
 
 def feedback_offline(sysTrayIcon):
-    global ICONS, trayapp
+    global trayapp
     if sysTrayIcon:
-        sysTrayIcon.icon = ICONS['offline']
+        sysTrayIcon.icon = viper.ICONS['offline']
         sysTrayIcon.refresh_icon()
         menu_options = (('Configure...', None, handle_configure, None),
                         
@@ -74,9 +67,9 @@ def feedback_offline(sysTrayIcon):
 
 
 def feedback_connecting(sysTrayIcon):
-    global ICONS, monitor
+    global monitor
     if sysTrayIcon:
-        sysTrayIcon.icon = ICONS['connecting']
+        sysTrayIcon.icon = viper.ICONS['connecting']
         monitor.isstarting = False
         sysTrayIcon.refresh_icon()
 
@@ -89,9 +82,8 @@ def feedback_connecting(sysTrayIcon):
 
 
 def feedback_starting(sysTrayIcon):
-    global ICONS
     if sysTrayIcon:
-        sysTrayIcon.icon = ICONS['refresh']
+        sysTrayIcon.icon = viper.ICONS['refresh']
         sysTrayIcon.refresh_icon()
 
         menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
@@ -409,7 +401,7 @@ def main():
                     ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
-    trayapp = systray.SysTrayIcon(ICONS['offline'], hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
+    trayapp = systray.SysTrayIcon(viper.ICONS['offline'], hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
 
     # # if we have an openVPN config file available, go online immediately
     # if config_exists():
@@ -421,6 +413,13 @@ def main():
     trayapp.loop()
 
 if __name__ == '__main__':
+    viper.ICONS = {
+        'online' : os.path.join(get_my_cwd(), 'online.ico'),
+        'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
+        'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
+        'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
+    }
+
     # run the main loop on the condition that it's not already running
     if is_viper_running():
         win32api.MessageBox(0, "Viper can only run once. I found another instance running, so I will stop now.", 'Viper can only run once', 0x10)
