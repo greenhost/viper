@@ -14,7 +14,7 @@ import getopt
 import viper
 from viper import routing 
 from viper.tools import *
-from viper.windows import systray, balloon
+from viper.windows import systray, balloon, firewall
 
 # dependencies
 try:
@@ -95,7 +95,7 @@ def feedback_starting(sysTrayIcon):
 
 def feedback_inconsistent(sysTrayIcon):
     global svcproxy
-    win32api.MessageBox(0, "We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop the connection to the VPN now. Please try again after rebooting your windows computer.\n", 'Traffic routing inconsistent', 0x10)
+    win32api.MessageBox(0, "We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop now. Please try again after rebooting your windows computer.\n", 'Traffic routing inconsistent', 0x10)
 
     try:
         svcproxy.disconnect()
@@ -384,6 +384,10 @@ def main():
 
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
+    if not firewall.is_firewall_enabled():
+        logging.warning("Firewall is not enabled.")
+        win32api.MessageBox(0, "I see that your Windows Firewall is not enabled. I recommend that you enable it before running Viper, that way I can configure it to add additional protection while you are connected.", 'Your Windows Firewall is disabled', 0x30)
+
     # make sure that TAP is installed
     if not windows_has_tap_device():
         logging.critical("TAP driver is not installed, please install.")
@@ -414,13 +418,13 @@ def main():
 
 if __name__ == '__main__':
     viper.ICONS = {
-        'online' : os.path.join(get_my_cwd(), 'online.ico'),
-        'offline' : os.path.join(get_my_cwd(), 'offline.ico'),
-        'connecting' : os.path.join(get_my_cwd(), 'connecting.ico'),
-        'refresh' : os.path.join(get_my_cwd(), 'refresh.ico')
+        'online' : get_resource_path('icons/online.ico'),
+        'offline' : get_resource_path('icons/offline.ico'),
+        'connecting' : get_resource_path('icons/connecting.ico'),
+        'refresh' : get_resource_path('icons/refresh.ico')
     }
 
-    # run the main loop on the condition that it's not already running
+    # run the main loop if it's not already running otherwise tell the user
     if is_viper_running():
         win32api.MessageBox(0, "Viper can only run once. I found another instance running, so I will stop now.", 'Viper can only run once', 0x10)
         logging.warning("Another instance was running, will exit now.")

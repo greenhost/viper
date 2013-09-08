@@ -19,14 +19,14 @@ PYINST_DEFAULT_PATH = 'C:\pyinstaller-2.0'
 # Apps to build, specifying the entry point script and the icon to 
 # embed in the executable file as a resource
 APPS = [
-		{'script': 'viperclient.py', 'icon': 'online.ico'}
+		{'script': 'viperclient.py', 'icon': 'resources/icons/online.ico'}
 	   ]
 
 # PyInstaller options
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'online.ico', 'connecting.ico', 'refresh.ico' , 'offline.ico', 'README', 'tap-windows', 'openvpn', 'dist/viperclient.exe']
+RES  = ['__config.ovpn', 'README', 'resources', 'third-party/tap-windows', 'third-party/openvpn', 'dist/viperclient.exe']
 
 # Build byproducts to delete after build
 CLEAN = ['dist/viperclient.exe']

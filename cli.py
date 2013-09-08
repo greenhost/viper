@@ -8,13 +8,20 @@ import viper
 from viper import tools
 from viperclient import *
 
+def cwd():
+	return os.path.dirname(os.path.realpath(__file__))
+
+def icon_path():
+	return os.path.join(cwd(), "resources/icons")
+
 if __name__ == '__main__':
 	viper.ICONS = {
-	    'online' : 'online.ico',
-	    'offline' : 'offline.ico',
-	    'connecting' : 'connecting.ico',
-	    'refresh' : 'refresh.ico'
+	    'online' : os.path.join(icon_path(), 'online.ico'),
+	    'offline' : os.path.join(icon_path(), 'offline.ico'),
+	    'connecting' : os.path.join(icon_path(), 'connecting.ico'),
+	    'refresh' : os.path.join(icon_path(), 'refresh.ico')
 	}
+
 	print(sys.argv[0])
 	pprint(viper.ICONS)
 	# init logging capabilities

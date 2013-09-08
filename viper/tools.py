@@ -15,8 +15,10 @@ except ImportError:
 PRODUCT_NAME = "Viper"
 PRODUCER_NAME = "Greenhost"
 DEFAULT_OPENVPN_HOME = "./openvpn/"
+DEFAULT_VIPER_HOME = "./"
 
 def is_viper_running():
+    """Make sure that no other instance of Viper is being executed at the moment"""
     lockfile = os.path.join(get_user_cwd(), 'pidlock')
     logging.debug("Check if we are already running...")
     if os.path.isfile( lockfile ):
@@ -38,6 +40,7 @@ def is_viper_running():
         return False
 
 def run_unique(fn):
+    """ Run a python method by making sure it's only run once """
     lockfile = os.path.join(get_user_cwd(), 'pidlock')
     try:
         with file(lockfile, 'w') as flock:
@@ -48,6 +51,7 @@ def run_unique(fn):
         os.unlink(lockfile)
 
 def is_openvpn_running():
+    """Check that the OpenVPN process is only run once"""
     procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
     return procs
 
@@ -59,22 +63,40 @@ def log_init_service(level=logging.DEBUG):
     #fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"
     logging.basicConfig(filename='c:\ovpnmon.log', level=level)
 
+def get_viper_home():
+    """Get location of the Viper install root"""
+    return os.getenv('VIPER_HOME', DEFAULT_VIPER_HOME)
+
 def get_openvpn_home():
-	return os.getenv('OPENVPN_HOME', DEFAULT_OPENVPN_HOME)
+    """ Get location of OpenVPN executable """
+    return os.getenv('OPENVPN_HOME', DEFAULT_OPENVPN_HOME)
 
 def get_my_cwd():
-	return os.path.dirname(sys.executable)
+    """ Get the working directory of the current executable """
+    return os.path.dirname(sys.executable)
 
 def get_user_cwd():
-	d = appdirs.AppDirs(PRODUCT_NAME, PRODUCER_NAME)
-	
-	if not os.path.exists(d.user_data_dir):
-		os.makedirs(d.user_data_dir)
+    """ Get user working directory """
+    d = appdirs.AppDirs(PRODUCT_NAME, PRODUCER_NAME)
 
-	return d.user_data_dir
+    if not os.path.exists(d.user_data_dir):
+        os.makedirs(d.user_data_dir)
+
+    return d.user_data_dir
+
+def get_resource_path(res):
+    """Get path to program resources on disk
+    On windows this is a little tricky because
+    windows processes are executes from 
+    C:\windows\system32 apparently, so we have to get our resources
+    from the install path.
+    """
+    rpath = os.path.join(get_my_cwd(), "resources")
+    return os.path.join(rpath, res)
 
 def log(msg):
-	servicemanager.LogInfoMsg(str(msg))
+    """Send message to the Windows Event Log"""
+    servicemanager.LogInfoMsg(str(msg))
 
 
 def windows_has_tap_device():

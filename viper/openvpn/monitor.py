@@ -23,7 +23,7 @@ from pprint import pprint
 import psutil
 
 from viper import routing
-from viper.windows import service
+from viper.windows import service, firewall
 from viper.tools import *
 from viper.openvpn import management, launcher
 
@@ -44,11 +44,15 @@ class RPCService(rpyc.Service):
         self.connected = False
         self.launcher = launcher.OpenVPNLauncher()
         logging.info("Connection from client opened...")
+        # configure the Windows Firewall to block all IPv6 traffic
+        firewall.block_ipv6()
 
     def on_disconnect(self):
         # code that runs when the connection has already closed
         # (to finalize the service, if needed)
         logging.info("Connection from client closed")
+        # allow IPv6 traffic again
+        firewall.unblock_ipv6()
 
     def exposed_heartbeat(self):
         return str(datetime.now())

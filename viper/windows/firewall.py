@@ -27,8 +27,8 @@ def is_firewall_enabled():
 	return fwprofile.FirewallEnabled
 
 def run_fwipv6(command):
-	path = tools.get_openvpn_home()
-	path = os.path.join(path, "../fwipv6")
+	path = tools.get_viper_home()
+	path = os.path.join(path, "utils/fwipv6")
 
 	logging.debug("Executing fwipv6 at {0}...".format(path) )
 
@@ -55,8 +55,10 @@ def run_fwipv6(command):
 
 def block_ipv6():
 	"""Execute external fwipv6 tool to enable the Windows Firewall filtering of IPv6 traffic"""
+	logging.info("Configuring Windows Firewall to block IPv6 traffic...")
 	run_fwipv6("add")
 
 def unblock_ipv6():
 	"""Execute external fwipv6 tool to disable the Windows Firewall filtering of IPv6 traffic"""
+	logging.info("Windows Firewall allows IPv6 traffic now...")
 	run_fwipv6("remove")
