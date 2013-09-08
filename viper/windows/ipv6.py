@@ -5,6 +5,9 @@
 # Copyright (C) 2013 Greenhost vof
 """
 Routines to enable and disable IPv6 and Windows technologies related to IPv6 stack such as TEREDO
+
+@note these methods are not used. see firewall.py for details on 
+how we block ipv6 traffic now.
 """
 import subprocess, socket
 import os, sys, logging, string, time
