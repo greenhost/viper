@@ -1,47 +1,47 @@
-### DEVELOPERS
+Viper (c) 2013 Greenhost VOF and friends
+https://www.greenhost.io/projects/viper
 
-To build a binary distribution:
+== What is Viper?
+Viper is a easy to use program for windows that helps users in configuring a hardened environment for VPN access. The emphasis is on ease of use and accuracy in reporting the state of the connection.
 
-Execute build.bat, it will perform the following actions:
+Viper works best together with [Uman], a server-side open source VPN web-based management interface also released by Greenhost VOF. See our (https://www.greenhost.io open source projects) for more information on Uman. Although Viper and Uman are designed to work together, Viper is in fact a generic OpenVPN client, so you can use it to connect to any OpenVPN server.
 
-###### Windows Service
-c:\> python setup.py py2exe
+== How does it work?
+Viper wraps around the configuration and command line interface of the open source OpenVPN package and provides a simple GUI in the Windows system tray that allows for easy control and monitoring of the connection status.
 
-Will produce output in dist\service
+Viper uses the OpenVPN management socket to poll connection status.
 
+== Why another VPN client?
+We evaluated the most popular OpenVPN clients and found them lacking in one way or another. But most specially we wanted a client that could guide inexperienced users on best practices to keep safe.
 
-###### Windows Systray program
-c:\> python buildexe.py
+Connection is reported as secure only when the kernel routing tables indicate that packages are correctly routed through the VPN gateway. This is cross-checked with OpenVPN's internal status report to make sure that the lock icons is shown when we really mean to say that the connection is secured.
 
-Will produce output in dist\client
+Since version R7 Viper supports auto-configuration of the Windows Firewall
+to block IPv6 traffic for clients in networks with IPv6 configured. This
+prevents Viper user's from accidentally leaking their IPv6 addresses in the case of a IPv6-based attack.
 
+It is recommended that you run Viper with an active Windows Firewall to take advantage of the afore mentioned feature.
 
-Remember to copy the doc folder to the distribution too.
+== How can I contribute to Viper?
+Viper is a new development and like all new developments it is likely to have some teething problems. I would very much appreciate bug reports from your tests.
 
-###### The OpenVPN configuration file must contain the following directives
+If you wish to join the development of Viper, please continue reading for help on how to set up a development environments.
 
-log filename.log
-management localhost 7505
+== Notes for developers
+Viper is written in Python with some bits and pieces in C#. To build Viper you must have Microsoft's .NET SDK 3.5, used for external utils such as the firewall command line interface and Active State's Python 2.7.5.
 
+There's no need for a Microsoft IDE, I have successfully compiled the C# utils using the open source SharpDevelop IDE.
 
+Due to compatibility issues between Python virtual environments and the Python Windows APIs it is recommended that you do not create a virtualenv
+for Viper, as you would normally do for any new development in Python.
 
+Have a look at the build script build.bat to see how the different elements
+of a release are built together.
 
+All build products are output to the dist directory where the installer script expects them.
 
-OpenVPN Monitor Service 
+NSIS Studio was used to generate the build script and it is recommended that you use this tool to generate the installer from the provided ''.nssp file''.
 
-ovpnmon -install
+You can install the python dependencies using the requirements file provided:
 
-net stop ovpnmon
-net start ovpnmon
-
-sc delete ovpnmon
-
-
-C:\openvpnd>net start ovpnmon
-#check-url <url>
-   URL to open after connection is initialized, so that it is possible to check status from the user's browser
-
-### Starting openvpn manually
-
-c:\openvpnd\openvpn\openvpn C:\Users\Mart\AppData\Local\Greenhost\UmanViper\__config.ovpn
-
+:\> pip install -r third-party\requirements.txt
