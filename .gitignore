@@ -6,6 +6,7 @@ ehthumbs.db
 
 # python bin
 *.pyc
+*.log
 
 # vpn config files
 *.ovpn
