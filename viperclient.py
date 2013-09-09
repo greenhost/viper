@@ -13,6 +13,7 @@ import getopt
 
 import viper
 from viper import routing 
+from viper.openvpn import launcher
 from viper.tools import *
 from viper.windows import systray, balloon, firewall
 
@@ -117,7 +118,14 @@ class ServiceProxy:
         #current = os.getcwd()
         cfg = os.path.join(get_user_cwd(), "__config.ovpn")
         logging.info( "Trying to connect with config %s..." % (cfg,) )
-        r =  self.connection.root.ovpn_start(cfg)
+        r = None
+        try:
+            r =  self.connection.root.ovpn_start(cfg)
+        except Exception, e: # launcher.VPNLauncherException
+            win32api.MessageBox(0, "I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider.", 'Failed to run OpenVPN', 0x10)
+            logging.critical("Failed to run OpenVPN, probably due to a bad configuration file.")
+            return False
+
         return r
 
     def disconnect(self):
@@ -312,9 +320,9 @@ def handle_go_online(sysTrayIcon):
         return False
 
     try:
-        svcproxy.connect()
-        # show immediate feedback to the user
-        monitor.isstarting = True
+        if svcproxy.connect():
+            # show immediate feedback to the user
+            monitor.isstarting = True
     except Exception, e:
         logging.critical("Service seems to be down")
         print e
@@ -322,8 +330,9 @@ def handle_go_online(sysTrayIcon):
     return True
 
 def handle_go_offline(sysTrayIcon):
-    global svcproxy
+    global svcproxy, monitor
 
+    monitor.isstarting = False
     if not svcproxy.is_connected():
         show_message('VPN not online, cannot go offline when offline', 'Already offline')
         return False

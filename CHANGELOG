@@ -1,10 +1,10 @@
 CHANGELOG
 
 == b7 (mamba)
-* Disable IPv6 support upon installation
+* Block all IPv6 upon start-up if Windows Firewall is aenabled
 * Prevent the execution of multiple instances
-* Acknowledge false OpenVPN starts due to bad configuration
-
+* Acknowledge false OpenVPN starts due to bad configuration and report them
+* Cleaned up the code quite substantially
 
 == b6
 * Added auto-connect when client is already configured

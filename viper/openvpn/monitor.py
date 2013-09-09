@@ -90,6 +90,7 @@ class RPCService(rpyc.Service):
         self.launcher.launch(cfgfile)
 
 
+
     def exposed_ovpn_stop(self):
         """Use launcher to stop the OpenVPN process"""
         self.launcher.terminate()
