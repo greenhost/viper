@@ -120,79 +120,53 @@ body{font-size:16px;}
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
 }
-</style></head><body><h1 id="greenhost-openvpn-client-monitor-for-windows">Greenhost OpenVPN client monitor for windows</h1>
-
-<p>This software was designed to be a simple way to control OpenVPN on windows machines
-giving accurate feedback about the connection state. The software is composed of two
-interdependent programs.</p>
-
+</style><title>README</title></head><body><h1 id="viper-beta-8-mamba">Viper beta 8 (mamba)</h1>
+<p>Viper helps with best practices for VPN access.</p>
 <blockquote>
-  <p>WARNING: At the time of this writing this software is still in ALPHA state.
-  There is no installer and some manual work is required to install and start the 
-  windows service. The windows installer to automate all this should be ready soon.</p>
+<p>WARNING: At the time of this writing this software is still in a BETA 
+development state. It is very well possible that bugs might still lurk
+in unknown places. </p>
 </blockquote>
-
-<h2 id="the-windows-service">The windows service</h2>
-
-<p>The windows service is the one in charge of opening the connection to the VPN as well as closing it and monitoring its state.</p>
-
-<h4 id="pre-requisites">Pre-requisites</h4>
-
-<p>Install TAP Windows from the client distribution by double-clicking on the installer.</p>
-
-<p>To let the monitor know where the OpenVPN client is, you must have a system-wide environment variable called <em>OPENVPN_HOME</em> that points to the folder where your OpenVPN installation is. Make sure this variable is available to all users, not only to your current user.</p>
-
-<p><img src="./res/envvar.png" alt="illustration1" title="Set environment variable" /></p>
-
-<h4 id="installation">Installation</h4>
-
-<p>To install the windows service you will need to open a <em>Command Prompt</em> in <em>Administrator mode</em>. For this go to your windows menu, right click on the <em>Command Prompt</em> and select the item labeled as <em>Run as administrator</em>.</p>
-
-<p><img src="./res/run_as_admin.png" alt="illustration1" title="Run as admin" /></p>
-
-<p>Once you are at the command prompt, go to the directory where you unpacked the supplied .ZIP file and go into the <em>service</em> folder and run the following commands:</p>
-
+<h2 id="new-in-this-release">New in this release</h2>
+<ul>
+<li>Block all IPv6 upon start-up if Windows Firewall is enabled</li>
+<li>Prevent the execution of multiple instances</li>
+<li>Acknowledge false OpenVPN starts due to bad configuration and report them</li>
+<li>More robust error checking</li>
+<li>Tested the sleep restart</li>
+<li>Tested time-outs and multiple access with same certificate</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p>The installer will carry out the installation of all the necessary components used by Viper. This includes the TAP/TUN networking driver for Windows, an OpenVPN binary, a service that runs with elevated privileges to start and stop the VPN a small binary utility named <code>fwipv6</code> that helps Viper manage the <em>Windows Firewall</em> and a GUI client that the user interacts with through the systray.</p>
+<h2 id="configuring-viper">Configuring Viper</h2>
+<p>Viper needs a configuration file containing the VPN connection details and all the pertinent certificates. You can request this configuration file from your administrator or fetch it from the Uman VPN web interface.</p>
+<p><img alt="illustration4" src="file://C:\openvpnd\doc/res/configure.png" title="Tell Viper where to find the configuration VPN file." /></p>
+<p>To configure Viper you first have to run the application and right click on the <code>Configure...</code>. A file selection dialog will apear, select the configuration file. Tis file will now be placed in your user directory so that it becomes the default configuration in subsequent runs of Viper.</p>
+<p>At the moment Viper supports one connection profile only, so only one configuration file. Support for multiple connection profiles is planned for future releases.</p>
+<h3 id="recommendations">Recommendations</h3>
+<p>If Viper finds the <em>Windows Firewall</em> active it will automatically configure it to block all IPv6 traffic. The current release of Uman/Viper doesn't support IPv6, so if the network your computer is connected to supports IPv6 it is a good practice to block that traffic during your connection to the VPN.</p>
+<p>If you run Viper with your <em>Windows Firewall</em> disabled it will warn you about it, so that you can manually enable it before you continue.</p>
+<p>Full support for IPv6 is planned for future releases of the server side software.</p>
 <blockquote>
-  <p>c:\unpacked-zip\service> <strong>ovpnmon -install</strong></p>
+<p>If your personal integrity depends on a secured
+internet connection, we remind you that it is not wise to trust your life 
+to any piece of software, so use Viper with utmost care.</p>
 </blockquote>
-
-<p>This will install the service in your windows machine. To start the service type:</p>
-
-<blockquote>
-  <p>c:\unpacked-zip\service> <strong>net start ovpnmon</strong></p>
-</blockquote>
-
-<p><strong>ovpnmon</strong> by the way is the name of the service. If you open your Windows Task Manager and go to the <em>services</em> tab you should see it listed there.</p>
-
-<p>From the previous command you should get the following output:</p>
-
-<p><code>
-    The OVPN monitor service is starting.
-    The OVPN monitor service was started successfully.
-</code></p>
-
-<h2 id="the-systray-gui">The systray gui</h2>
-
-<p>Once you start this application it will sit rather quietly in your system tray until you establish the connection. You do not have to install this one, it is a self-standing executable. You may place it in your <em>Start Up</em> items if you wish to have it available upon startup.</p>
-
-<p><img src="./res/configure.png" alt="illustration2" title="Configure the VPN client" /></p>
-
-<p>Choose <strong>Configure...</strong> to set the configuration file provided by your VPN administrator. This configuration file will be used in every subsequent connection.</p>
-
-<p><img src="./res/validate.png" alt="illustration3" title="Validate your connection against a server within the VPN network" /></p>
-
-<blockquote>
-  <p>The GUI client provides a way to validate the VPN connection against a preconfigured server 
-  inside of the VPN. This is useful as a double check, but please be mindful that this is not 
-  foolproof and if your network has been compromised it would be easy to fool the browser with a 
-  fake page. So trust only what the system tray icon says.</p>
-</blockquote>
-
-<p>When you click on <em>Go online...</em> the client will take a few seconds to initialize the connection. Please wait untill your connection is secured.</p>
-
-<p><img src="./res/connecting.png" alt="illustration4" title="Opening the connection to the VPN takes a few seconds" /></p>
-
-<p>You are now connected to the VPN. Plase validate the IP address of the gateway and the address of your interface, to make absolutely sure that your connection is secured.</p>
-
-<p><img src="./res/connected.png" alt="illustration5" title="You are now connected to the VPN" /></p>
-</body></html>
+<h2 id="using-the-client">Using the client</h2>
+<p>It is important to understand the way Viper reports the connection status. When you click on <code>Go online...</code> Viper will initiate the OpenVPN connection process, it takes a few seconds. When the handshake was successful and the new IP and routing tables are updated Viper will report this by showing a grey icon. Your connection is not yet secure.</p>
+<p><img alt="illustration5" src="file://C:\openvpnd\doc/res/connecting.png" title="Opening the connection to the VPN takes a few seconds" /></p>
+<p>If the connection process was successful a lock icon will appear. Mousing over the icon will show you your new IP and the IP of the gateway that you are connected to. Make sure that those IPs are familiar to you.</p>
+<p><img alt="illustration6" src="file://C:\openvpnd\doc/res/connected.png" title="Only when the icon turns into a lock is the connection secured" /></p>
+<p>If you do not see the lock appear, your connection is not secure.</p>
+<p>From Windows 7 onwards, systray icons are sometimes pushed out of view automatically by Windows. There's nothing Viper can do to always stay in sight, but you can change this yourself by clicking on <code>Customize...</code> on the system tray and selecting the drop down that says <code>Show icon and notifications</code> for Viper. That way the icon will always be present.</p>
+<h3 id="what-happens-if-the-connection-is-lost">What happens if the connection is lost?</h3>
+<p>Sometimes it can happen that connection to the VPN gateway is momentarily lost. Viper will notify you of this change in situation with a ballon, without interrupting your normal activity.</p>
+<p>It is up to you to take measures when the connection to the VPN is lost. But if your computer disconnects from the VPN and you continue using software that has access to the internet your system will default to your standard non-secure connection. So please take approppriate action when Viper notifies you of a dropped connection.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>The Viper beta releases produce two log files that are located in the root directory of your Windows drive. They are named <code>ovpnmon.log</code> which is produced by the Windows service that Viper interacts with for actions that require elevated privileges. The other log file is named <code>openvpn-log.txt</code> and contains the raw log of OpenVPN, here you can find information about connection bootstrapping and possible error messages in the communication with the server.</p>
+<p>When reporting bugs it is generally a good idea to include these two log files.</p>
+<h2 id="help-out">Help out</h2>
+<p>You can help the developers of Viper by testing the software and sending reports of any bugs you might find. If you wish to hack at the code and perhaps even join the development, please refer to the development section at the <code>README</code>.</p>
+<h2 id="future">Future</h2>
+<p>We would like to make Viper a good VPN client for people that work in environments were best practices in security are routine. We would very much appreciate to hear your use cases if they are not contemplated by Viper, to gain more experience from the field.</p>
+<p>In future releases we would like to focus on responsiveness, auto-configuration and self-updating.</p></body></html><script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
