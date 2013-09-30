@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#
+# @license
+#
 import os, sys, re
 
 """This script is meant to be run from the command line on windows, not as an executable"""

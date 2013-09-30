@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2013 Greenhost vof
+# @license
+#
 """
 Service to manage and monitor OpenVPN on windows
 """

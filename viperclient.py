@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 import os, sys, re
 import win32api
 import win32con

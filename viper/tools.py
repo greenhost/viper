@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 import os, sys
 import logging
 import servicemanager

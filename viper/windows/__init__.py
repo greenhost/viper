@@ -1,3 +1,6 @@
+#
+# @license
+#
 # @todo what version of windows are we running?
 # @todo how do we stop Teredo on that version of Windows?
 # @todo how do we check if the network is up?

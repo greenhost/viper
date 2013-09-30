@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # vim: autoindent tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python
 #
-# Copyright (C) 2013 Greenhost vof
+# @license
+#
 """
 Routines to enable and disable IPv6 and Windows technologies related to IPv6 stack such as TEREDO
 

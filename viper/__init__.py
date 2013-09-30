@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 import platform
 
 _system = platform.system()

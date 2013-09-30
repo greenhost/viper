@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 """
 Polls status of OpenVPN using the management socket interface.
 """

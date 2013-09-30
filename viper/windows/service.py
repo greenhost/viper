@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 """
 Install and autostart a ser vice on windows.
 """

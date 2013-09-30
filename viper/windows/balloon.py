@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# @license
+#
 """
 Simple implementation of Balloon tips for windows. Balloon tooltips are used for 
 non-modal feedback to the user.
