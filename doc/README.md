@@ -1,5 +1,5 @@
 # Viper beta 8 (mamba)
-Viper helps with best practices for VPN access.
+Viper is Windows OpenVPN client software designed for Internet access over an VPN connection.
 
 > WARNING: At the time of this writing this software is still in a BETA 
 > development state. It is very well possible that bugs might still lurk
