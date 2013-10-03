@@ -309,7 +309,13 @@ def config_exists():
 
 def handle_go_online(sysTrayIcon):
     global svcproxy, monitor
-    
+
+    # if Windows Firewall is not enabled, refuse to connect
+    if not firewall.is_firewall_enabled():
+        logging.warning("Firewall is not enabled. I will not connect.")
+        win32api.MessageBox(0, "I see that Windows Firewall is not enabled. Viper needs it to safeguard your connection, so I will not connect now. Please enabled Windows Firewall in your machine and try connecting through Viper again.", 'Windows Firewall is disabled', 0x30)
+        return False
+        
     # Check if config file exists
     if not config_exists():
         show_message('No configuration found. Unable to start VPN', 'No configuration found')
@@ -395,10 +401,6 @@ def main():
     log_init_app(debug_level)
 
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
-
-    if not firewall.is_firewall_enabled():
-        logging.warning("Firewall is not enabled.")
-        win32api.MessageBox(0, "I see that your Windows Firewall is not enabled. I recommend that you enable it before running Viper, that way I can configure it to add additional protection while you are connected.", 'Your Windows Firewall is disabled', 0x30)
 
     # make sure that TAP is installed
     if not windows_has_tap_device():
