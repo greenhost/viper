@@ -9,8 +9,8 @@ import fnmatch, glob
 
 LICENSE = """GNU GENERAL PUBLIC LICENSE v3
 
-Viper - Best-practice based VPN management software
-Copyright (C) 2013 Greenhost VOF
+Viper -- Internet-via-OpenVPN software for Windows
+Copyright (C) 2013 Greenhost VOF and contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
