@@ -14,7 +14,7 @@ namespace fwipv6
 {
     /**
      * Very simple command line tool to add/remove and activate/deactivate a Windows Firewall rule
-     * that hardens the operation of Viper in environments where IPv6 is available.
+     * that blocks IPv6.
      *  
      * The following tool produces an exit code, here are the values and their respective meaning:
      * 
