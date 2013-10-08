@@ -70,9 +70,10 @@ echo.
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo Compiling windows installer...
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set FOUND=
 set mk=makensis.exe
-for %%i in ("%PATH%") do if exist %%i\%mk% set found=%%i
-if "%found%"=="" (
+for %%i in (%mk%) do set FOUND="yes"
+IF NOT DEFINED %FOUND%  (
 	echo "!!! NSIS doesn't seem to be installed in your system. I cannot build the Windows installer without it."
 ) else (
 	makensis scripts\viper-installer.nsi
