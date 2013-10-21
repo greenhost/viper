@@ -140,7 +140,7 @@ in unknown places. </p>
 <p>The installer will carry out the installation of all the necessary components used by Viper. This includes the TAP/TUN networking driver for Windows, an OpenVPN binary, a service that runs with elevated privileges to start and stop the VPN a small binary utility named <code>fwipv6</code> that helps Viper manage the <em>Windows Firewall</em> and a GUI client that the user interacts with through the systray.</p>
 <h2 id="configuring-viper">Configuring Viper</h2>
 <p>Viper needs a configuration file containing the VPN connection details and all the pertinent certificates. You can request this configuration file from your administrator or fetch it from the Uman VPN web interface.</p>
-<p><img alt="illustration4" src="file://C:\openvpnd\doc/res/configure.png" title="Tell Viper where to find the configuration VPN file." /></p>
+<p><img alt="illustration4" src="res/configure.png" title="Tell Viper where to find the configuration VPN file." /></p>
 <p>To configure Viper you first have to run the application and right click on the <code>Configure...</code>. A file selection dialog will apear, select the configuration file. Tis file will now be placed in your user directory so that it becomes the default configuration in subsequent runs of Viper.</p>
 <p>At the moment Viper supports one connection profile only, so only one configuration file. Support for multiple connection profiles is planned for future releases.</p>
 <h3 id="recommendations">Recommendations</h3>
@@ -154,9 +154,9 @@ to any piece of software, so use Viper with utmost care.</p>
 </blockquote>
 <h2 id="using-the-client">Using the client</h2>
 <p>It is important to understand the way Viper reports the connection status. When you click on <code>Go online...</code> Viper will initiate the OpenVPN connection process, it takes a few seconds. When the handshake was successful and the new IP and routing tables are updated Viper will report this by showing a grey icon. Your connection is not yet secure.</p>
-<p><img alt="illustration5" src="file://C:\openvpnd\doc/res/connecting.png" title="Opening the connection to the VPN takes a few seconds" /></p>
+<p><img alt="illustration5" src="res/connecting.png" title="Opening the connection to the VPN takes a few seconds" /></p>
 <p>If the connection process was successful a lock icon will appear. Mousing over the icon will show you your new IP and the IP of the gateway that you are connected to. Make sure that those IPs are familiar to you.</p>
-<p><img alt="illustration6" src="file://C:\openvpnd\doc/res/connected.png" title="Only when the icon turns into a lock is the connection secured" /></p>
+<p><img alt="illustration6" src="res/connected.png" title="Only when the icon turns into a lock is the connection secured" /></p>
 <p>If you do not see the lock appear, your connection is not secure.</p>
 <p>From Windows 7 onwards, systray icons are sometimes pushed out of view automatically by Windows. There's nothing Viper can do to always stay in sight, but you can change this yourself by clicking on <code>Customize...</code> on the system tray and selecting the drop down that says <code>Show icon and notifications</code> for Viper. That way the icon will always be present.</p>
 <h3 id="what-happens-if-the-connection-is-lost">What happens if the connection is lost?</h3>
