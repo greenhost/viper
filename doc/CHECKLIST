@@ -1,0 +1,112 @@
+## PRE-RELEASE TESTS
+* start viper, stop windows service
+	- questions: what is reported to the user? 
+
+* kill the openvpn process while Viper is running
+	- questions:
+		does Viper report the connection status correctly?
+
+* shut down computer without exiting Viper
+	- questions:
+		is the lock file still in the user directory?
+
+* put computer to sleep, see what happens when it comes back
+	- what should happen: 
+		openVPN continues to run and the viper client reports the connection as locked.
+
+* while running viper, disconnect computer from network
+	- questions: 
+		1. what is reported to the user?
+		2. what happens when we put the cable back in and how is that reported to the user?
+
+* disconnect computer from network, start viper.
+	- what should happen: 
+		1. user is warned that no network connection is active
+		2. openvpn isn't started (otherwise it will stall)? (unless it kicks right in after a network connection is opened)
+
+## Deleting the routes that the server injects
+
+As admin in windows:
+> route delete 128.0.0.0
+> route delete 0.0.0.0 mask 128.0.0.0
+
+
+## The stand-alone OpenVPN test
+
+1. Start openvpn (stand-alone) from the command line:
+"c:\Program Files (x86)\Viper\client\openvpn\openvpn.exe" --config c:\Users\wintest\AppData\Local\Greenhost\Viper\__config.ovpn
+
+2. Start NetCatGUI and point it to localhost:7505
+3. Type "state" in netcat and when it finally reports the state as "CONNECTED"
+4. Make sure your IP is from the VPS @ wtfismyip.com
+5. Type "route print" in another window, keep good note of the route. 
+6. Put computer to sleep
+7. Wait until OS is clearly sleeping
+8. Come back from sleep
+(let's see if OpenVPN auto-reconnected)
+
+9. Refresh the wtfismyip.com window and make sure that we are no longer connected to the IP
+10. Type "route print" again
+11. Reconnect with netcat and type "state"
+
+(at this point you shouldn't be connected)
+
+**After sending a SIGHUP signal the interface comes back up**
+
+## SEE LOG
+
+#### OpenVPN amd64 3.2.0
+C:\windows\system32>"c:\Program Files (x86)\Viper\client\openvpn\openvpn.exe" --
+config c:\Users\wintest\AppData\Local\Greenhost\Viper\__config.ovpn
+Mon Oct 28 20:06:04 2013 OpenVPN 2.3.0 x86_64-w64-mingw32 [SSL (OpenSSL)] [LZO]
+[PKCS11] [eurephia] [IPv6] built on Feb 14 2013
+Mon Oct 28 20:06:04 2013 WARNING: Make sure you understand the semantics of --tl
+s-remote before using it (see the man page).
+Mon Oct 28 20:06:04 2013 NOTE: OpenVPN 2.1 requires '--script-security 2' or hig
+her to call user-defined scripts or executables
+Mon Oct 28 20:06:04 2013 Control Channel Authentication: tls-auth using INLINE s
+tatic key file
+Mon Oct 28 20:06:04 2013 UDPv4 link local: [undef]
+Mon Oct 28 20:06:04 2013 UDPv4 link remote: [AF_INET]213.108.105.101:51111
+Mon Oct 28 20:06:05 2013 [server] Peer Connection Initiated with [AF_INET]213.10
+8.105.101:51111
+Mon Oct 28 20:06:07 2013 do_ifconfig, tt->ipv6=0, tt->did_ifconfig_ipv6_setup=0
+Mon Oct 28 20:06:07 2013 open_tun, tt->ipv6=0
+Mon Oct 28 20:06:07 2013 TAP-WIN32 device [Local Area Connection] opened: \\.\Gl
+obal\{5B964E86-2123-44A4-AB3C-D92EB1C4BCFD}.tap
+Mon Oct 28 20:06:07 2013 Notified TAP-Windows driver to set a DHCP IP/netmask of
+ 172.26.37.38/255.255.255.252 on interface {5B964E86-2123-44A4-AB3C-D92EB1C4BCFD
+} [DHCP-serv: 172.26.37.37, lease-time: 31536000]
+Mon Oct 28 20:06:07 2013 Successful ARP Flush on interface [19] {5B964E86-2123-4
+4A4-AB3C-D92EB1C4BCFD}
+Mon Oct 28 20:06:25 2013 Initialization Sequence Completed
+
+(sleep, doesn't log anything more)
+
+#### OpenVPN amd64 3.2.2
+C:\windows\system32>"c:\Program Files\OpenVPN\bin\openvpn.exe" --config c:\Users
+\wintest\AppData\Local\Greenhost\Viper\__config.ovpn
+Mon Oct 28 20:41:01 2013 DEPRECATED OPTION: --tls-remote, please update your con
+figuration
+Mon Oct 28 20:41:01 2013 OpenVPN 2.3.2 x86_64-w64-mingw32 [SSL (OpenSSL)] [LZO]
+[PKCS11] [eurephia] [IPv6] built on Aug 22 2013
+Mon Oct 28 20:41:02 2013 Deprecated TLS cipher name 'DHE-RSA-AES256-SHA', please
+ use IANA name 'TLS-DHE-RSA-WITH-AES-256-CBC-SHA'
+Mon Oct 28 20:41:02 2013 Control Channel Authentication: tls-auth using INLINE s
+tatic key file
+Mon Oct 28 20:41:02 2013 UDPv4 link local: [undef]
+Mon Oct 28 20:41:02 2013 UDPv4 link remote: [AF_INET]213.108.105.101:51111
+Mon Oct 28 20:41:02 2013 [server] Peer Connection Initiated with [AF_INET]213.10
+8.105.101:51111
+Mon Oct 28 20:41:05 2013 do_ifconfig, tt->ipv6=0, tt->did_ifconfig_ipv6_setup=0
+Mon Oct 28 20:41:05 2013 open_tun, tt->ipv6=0
+Mon Oct 28 20:41:05 2013 TAP-WIN32 device [Local Area Connection] opened: \\.\Gl
+obal\{5B964E86-2123-44A4-AB3C-D92EB1C4BCFD}.tap
+Mon Oct 28 20:41:05 2013 Notified TAP-Windows driver to set a DHCP IP/netmask of
+ 172.26.37.38/255.255.255.252 on interface {5B964E86-2123-44A4-AB3C-D92EB1C4BCFD
+} [DHCP-serv: 172.26.37.37, lease-time: 31536000]
+Mon Oct 28 20:41:05 2013 Successful ARP Flush on interface [19] {5B964E86-2123-4
+4A4-AB3C-D92EB1C4BCFD}
+Mon Oct 28 20:41:15 2013 Initialization Sequence Completed
+
+(sleep, doesn't log anything more)

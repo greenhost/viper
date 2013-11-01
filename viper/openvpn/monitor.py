@@ -68,6 +68,7 @@ class RPCService(rpyc.Service):
         #self.monitor = None
         self.connected = False
         self.launcher = launcher.OpenVPNLauncher()
+        self.ovpn = management.OVPNInterface()
         logging.info("Connection from client opened...")
         # configure the Windows Firewall to block all IPv6 traffic
         firewall.block_ipv6()
@@ -84,17 +85,17 @@ class RPCService(rpyc.Service):
 
     def exposed_is_connected(self):
         global OVPN_STATUS
-        OVPN_STATUS = management.poll_status()
+        OVPN_STATUS = self.ovpn.poll_status()
         return (OVPN_STATUS['status'] == "CONNECTED")
 
     def exposed_get_vpn_status(self):
         global OVPN_STATUS
-        OVPN_STATUS = management.poll_status()
+        OVPN_STATUS = self.ovpn.poll_status()
         return OVPN_STATUS['status']
 
     def exposed_get_connection_settings(self):
         global OVPN_STATUS
-        OVPN_STATUS = management.poll_status()
+        OVPN_STATUS = self.ovpn.poll_status()
         if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
             return OVPN_STATUS
         else:
