@@ -31,7 +31,7 @@
 Polls status of OpenVPN using the management socket interface.
 """
 import subprocess, logging
-import os, sys
+import os, sys, traceback
 from datetime import datetime
 import win32service
 import win32serviceutil
@@ -48,98 +48,169 @@ from viper import routing
 from viper.tools import *
 import traceback
 
+class OVPNInterface:
+    def __init__(self):
+        self.connected = False
+        self.sock = None
+        self.last_known_gateway = None  # in this session, we don't save to disk between sessions
 
+    def send(self, command, connection_timeout = 1, response_delay = .5):
+        retval = None
+        try:
+            self.sock = socket.socket()
+            logging.debug("Trying to connect to OVPN management socket")
+            self.sock.settimeout( connection_timeout )
+            self.sock.connect(("localhost", 7505))
+            # sock.setblocking(1)
+            self.connected = True
 
-def poll_status(connection_timeout = 2, response_delay = .5):
-    """ 
-    Open connection to management socket and query the current status of OpenVPN 
-    @param connection_timeout seconds that elapse before a socket.timeout exception is raised upon connection
-    @param response_delay seconds to wait to get a response from the 'state' management command
-    """
+            logging.debug("Connected successfully to management socket")
 
-    logging.debug("Polling OpenVPN for vpn status...")
-    retval = None
-    connected = False
-    sock = socket.socket()
+            count = self.sock.send(command)
+            if count == 0:
+                logging.debug("Couldn't send message through socket")
+            time.sleep( response_delay ) # must wait a bit otherwise we will not get a response to our request
 
-    try:
-        logging.debug("Trying to connect to OVPN management socket")
-        sock.settimeout( connection_timeout )
-        sock.connect(("localhost", 7505))
-        # sock.setblocking(1)
-        connected = True
+            retval = self.sock.recv(1024)
+        except socket.timeout, e:
+            logging.debug("OVPN management socket operation timed-out: %s" % e)
+            #retval = {'status': "DISCONNECTED"}
+            return None 
+        except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+            logging.warning("OVPN management socket error: %s" % e)
+            #retval = {'status': "DISCONNECTED"}
+            return None
+        finally:   # always execute
+            try:
+                self.sock.close()
+                connected = False
+                del self.sock
+            except Exception, e:
+                logging.warning("FATAL - closing the socket failed the next open operation would not work")
+                raise
 
-        logging.debug("Connected successfully to management socket")
+        return retval
 
-        sock.send("state\n")
-        time.sleep( response_delay ) # must wait a bit otherwise we will not get a response to our request
+    def hangup(self):
+        """ notify hangup, force OpenVPN to reload its config """
+        self.send("signal SIGHUP\n")
+        self.connected = False
 
-        data = sock.recv(1024)
+    def poll_status(self):
+        """ 
+        Open connection to management socket and query the current status of OpenVPN 
+        @param connection_timeout seconds that elapse before a socket.timeout exception is raised upon connection
+        @param response_delay seconds to wait to get a response from the 'state' management command
+        """
 
-        if not data:
-            retval = {'status': "DISCONNECTED"} 
-            logging.debug("No data received while reading socket")
-        else:
-            logging.debug("RECV raw: %s" % data )
-            resp = parse_status_response(data)
-            #pprint(OVPN_STATUS)
-            # compare status with routing table
-            if resp:
+        logging.debug("Polling OpenVPN for vpn status...")
+        retval = None
+        resp = None
+
+        try:
+            # send state command and parse result back
+            resp = self.parse_state_response( self.send("state\n") )
+
+            if not resp:
+                retval = {'status': "DISCONNECTED"} 
+                logging.debug("No data received while waiting for response from OpenVPN")
+            else:
                 retval = resp
 
-                # verify that the routing table matches status readings
-                if retval['status'] == "CONNECTED":
+                # always cross-check the routing with the last known gateway                    
+                xcheckok = False
+                if self.last_known_gateway:
                     try:
-                        if not routing.verify_vpn_routing_table(retval['gateway']):
+                        if not routing.verify_vpn_routing_table(self.last_known_gateway):
                             retval = {'status' : "DISCONNECTED"}
                             logging.debug("Routing verification didn't pass")
+                        else:
+                            xcheckok = True
                     except routing.InconsistentRoutingTable:
                         # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
                         retval = {'status' : "INCONSISTENT"}
                         logging.debug("Routing verification is not consistent")
 
-            else:
-                retval = {'status' : "DISCONNECTED"}
+                if resp['state'] in ['CONNECTED']:
+                    # OpenVPN says we are connected, don't believe it, verify cross-check
+                    if xcheckok:
+                        self.connected = True
+                        retval = {'status' : "CONNECTED"}
 
-    except socket.timeout, e:
-        logging.debug("OVPN management socket operation timed-out: %s" % e)
-        retval = {'status': "DISCONNECTED"} 
-    except Exception, e:
-        logging.warning("OVPN management socket error: %s" % e)
-        retval = {'status': "DISCONNECTED"} 
-    finally:   # always execute
-        try:
-            sock.close()
-            connected = False
-            del sock
+                    # we only get a new gateway if a CONNECTED, SUCCESS message was read
+                    if 'gateway' in resp:
+                        self.last_known_gateway = resp['gateway']
+
+                elif resp['state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
+                    self.connected = False
+                    retval = {'status': "CONNECTING"}
+                
+                elif (resp['state'] in ['WAIT']) and (self.last_known_gateway):
+                    # restart the connection if we ever knew a gateway
+                    logging.debug("WAIT state detected, notifying SIGHUP")
+                    self.hangup()
+                    self.connected = False
+                    retval = {'status': "CONNECTING"}
+                elif (resp['state'] in ['WAIT']):
+                    retval = {'status' : "DISCONNECTED"}
+                    self.connected = False
+
         except Exception, e:
-            logging.warning("FATAL - closing the socket failed the next open operation would not work")
-            raise
+            traceback.print_exc(file=sys.stdout)
+            logging.warning("Exception while polling for status: %s" % e)
+            pprint(resp)
+            retval = {'status': "DISCONNECTED"} 
 
-    return retval
+        return retval
 
 
-def parse_status_response(msg):
-    """ Parse OpenVPN management interface messages like this: 
-            >INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info
-            1374575393,CONNECTED,SUCCESS,172.26.37.6,213.108.105.101
-            END
-    """
-    try:
-        lines = string.split(msg, os.linesep)
+    def parse_state_response(self, msg):
+        """ Parse OpenVPN management interface messages like this: 
+                >INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info
+                1374575393,CONNECTED,SUCCESS,172.26.37.6,213.108.105.101
+                END
 
-        for l in lines:
-            if ',' in l:
-                parts = string.split(l, ",")
+            These are the OpenVPN states:
+                CONNECTING    -- OpenVPN's initial state.
+                WAIT          -- (Client only) Waiting for initial response
+                                 from server.
+                AUTH          -- (Client only) Authenticating with server.
+                GET_CONFIG    -- (Client only) Downloading configuration options
+                                 from server.
+                ASSIGN_IP     -- Assigning IP address to virtual network
+                                 interface.
+                ADD_ROUTES    -- Adding routes to system.
+                CONNECTED     -- Initialization Sequence Completed.
+                RECONNECTING  -- A restart has occurred.
+                EXITING       -- A graceful exit is in progress.
 
-                # get line containing status
-                if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
-                    return {'status': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
-                elif parts[1] == "ASSIGN_IP":
-                    return {'status': "CONNECTING"}
+            source http://openvpn.net/index.php/open-source/documentation/miscellaneous/79-management-interface.html
+        """
+        if not msg: return None
+
+        try:
+            lines = string.split(msg, os.linesep)
+
+            for l in lines:
+                if '>' in l:
+                    self.parse_realtime_msg(l)
+                elif ',' in l:
+                    parts = string.split(l, ",")
+
+                    # get line containing status
+                    if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
+                        return {'state': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
+                    # sometimes ovpn reports as connected but with errors    
+                    elif parts[1] == "CONNECTED" and parts[2] == "ERROR":
+                        # e.g. Warning: route gateway is not reachable on any active network adapters: <ip address>
+                        return {'state': "DISCONNECTED"}
+                    else:
+                        return {'state': parts[1]}
                 else:
-                    return None
-            else:
-                continue
-    except Exception, e:
-        logging.warning("Failed to parse status response: %s" % e)
+                    continue
+        except Exception, e:
+            logging.warning("Failed to parse status response: %s" % e)
+
+    def parse_realtime_msg(self, line):
+        pass
