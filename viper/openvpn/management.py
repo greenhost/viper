@@ -97,6 +97,11 @@ class OVPNInterface:
         self.send("signal SIGHUP\n")
         self.connected = False
 
+    def terminate(self):
+        """ send termination signal, ask the OpenVPN client to stop """
+        self.send("signal SIGTERM\n")
+        self.connected = False
+
     def poll_status(self):
         """ 
         Open connection to management socket and query the current status of OpenVPN 
@@ -196,21 +201,34 @@ class OVPNInterface:
                 if '>' in l:
                     self.parse_realtime_msg(l)
                 elif ',' in l:
+                    # The output format consists of 5 comma-separated parameters: 
+                    #   (a) the integer unix date/time,
+                    #   (b) the state name,
+                    #   (c) optional descriptive string (used mostly on RECONNECTING
+                    #       and EXITING to show the reason for the disconnect),
+                    #   (d) optional TUN/TAP local IP address (shown for ASSIGN_IP
+                    #       and CONNECTED), and
+                    #   (e) optional address of remote server (OpenVPN 2.1 or higher).                    
                     parts = string.split(l, ",")
+                    if len(parts) < 5:
+                        continue        # not what we are looking for, ignore
+
+                    tstamp, state, desc, tun_ip, remote_ip = parts
 
                     # get line containing status
-                    if parts[1] == "CONNECTED" and parts[2] == "SUCCESS":
-                        return {'state': "CONNECTED", 'interface' : parts[4].split('\r')[0], 'gateway' : parts[3]}
+                    if state == "CONNECTED" and desc == "SUCCESS":
+                        return {'state': "CONNECTED", 'interface' : tun_ip.split('\r')[0], 'gateway' : remote_ip}
                     # sometimes ovpn reports as connected but with errors    
-                    elif parts[1] == "CONNECTED" and parts[2] == "ERROR":
+                    elif state == "CONNECTED" and desc == "ERROR":
                         # e.g. Warning: route gateway is not reachable on any active network adapters: <ip address>
                         return {'state': "DISCONNECTED"}
                     else:
-                        return {'state': parts[1]}
+                        return {'state': state}
                 else:
                     continue
         except Exception, e:
             logging.warning("Failed to parse status response: %s" % e)
 
     def parse_realtime_msg(self, line):
+        """not yet supported"""
         pass
