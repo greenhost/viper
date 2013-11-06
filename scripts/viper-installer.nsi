@@ -95,8 +95,7 @@ Section "UmanViper Install" SEC001
   
   SetOutPath "$INSTDIR"
   SetOutPath "$INSTDIR\client"
-  File "${SRC_ROOT}\dist\client\README"
-  File "${SRC_ROOT}\dist\client\viperclient.exe"
+  File "${SRC_ROOT}\dist\client\*"
   
   SetOutPath "$INSTDIR\client\openvpn"
   File "${SRC_ROOT}\dist\client\openvpn\libeay32.dll"
@@ -249,8 +248,7 @@ FunctionEnd
 
 Section Uninstall
   !insertmacro MUI_STARTMENU_GETFOLDER Application $ICONS_GROUP
-  Delete "$INSTDIR\client\README"
-  Delete "$INSTDIR\client\viperclient.exe"
+  Delete "$INSTDIR\client\*"
   Delete "$INSTDIR\client\openvpn\libeay32.dll"
   Delete "$INSTDIR\client\openvpn\liblzo2-2.dll"
   Delete "$INSTDIR\client\openvpn\libpkcs11-helper-1.dll"
