@@ -58,7 +58,7 @@ class OpenVPNLauncher:
         f = open(os.devnull, 'w')
         try:
             self.proc = subprocess.Popen([path, cfgfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            # @todo check return code (e.g. OpenVPN fails to start is the config file is malformed, Viper doesn't report that condition in any way yet)
+
             time.sleep(0.3)
             self.proc.poll()
             if self.proc.returncode:#   != 0:
