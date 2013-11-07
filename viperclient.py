@@ -167,6 +167,9 @@ class ServiceProxy:
 
     def get_interface_ip(self):
         return self.connection.root.get_interface_ip()
+
+    def hangup(self):
+        return self.connection.root.ovpn_hangup()
     
 
 class ConnectionMonitor(threading.Thread):
@@ -214,7 +217,7 @@ class ConnectionMonitor(threading.Thread):
                     feedback_offline(trayapp)
                     r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNOCANCEL)
                     if r != win32con.IDYES:
-                        return False
+                        return svcproxy.hangup()
                     # # @todo use a blocking dialog a balloon is completely innapropriate
                     # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
 
