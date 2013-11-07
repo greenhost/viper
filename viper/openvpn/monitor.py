@@ -98,16 +98,21 @@ class RPCService(rpyc.Service):
         pass
 
     def exposed_ovpn_start(self, cfgfile):
-        """Use launcher to start the OpenVPN instance
-        an exception of type VPNLauncherException may be raised
-        it's best not to handle it here but in the client so that
-        we can notify the user.
+        """ Use launcher to start the OpenVPN instance """
+        if not tools.is_openvpn_running():
+            self.launcher.launch(cfgfile)
+        else:
+            # if it's already running try to reaload it by sending hangup signal
+            self.ovpn.hangup()
+
+    def exposed_ovpn_hangup(self, cfgfile):
+        """ Send a running instance of openvpn a hangup signal so that it attempts 
+            to reconfigure the connection stack 
         """
-        self.launcher.launch(cfgfile)
-
-
+        if self.ovpn:
+            self.ovpn.hangup()
 
     def exposed_ovpn_stop(self):
-        """Use launcher to stop the OpenVPN process"""
+        """ Use launcher to stop the OpenVPN process """
         self.launcher.terminate()
 
