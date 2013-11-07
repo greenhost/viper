@@ -28,6 +28,10 @@ from pprint import pprint
 import logging
 import getopt
 
+import gettext
+from gettext import gettext as _
+gettext.install('messages', '../i18n', unicode=True)
+
 import viper
 from viper import routing 
 from viper.openvpn import launcher
@@ -51,7 +55,7 @@ monitor = None
 trayapp = None
 svcproxy = None
 config_file = '__config.ovpn'
-hover_text = "Not connected to VPN"
+hover_text = _("Not connected to VPN")
 checkurl = None
 debug_level = logging.DEBUG
 
@@ -60,10 +64,10 @@ def feedback_online(sysTrayIcon):
         sysTrayIcon.icon = viper.ICONS['online']
         sysTrayIcon.refresh_icon()
 
-        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+        menu_options = (( _('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
                         
-                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                         ('Go offline...', None, handle_go_offline, None),
+                         (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
+                         (_('Go offline...'), None, handle_go_offline, None),
                          #('Validate against server...', None, handle_validate_server, None)
                         )
         sysTrayIcon.set_menu(menu_options)
@@ -73,15 +77,15 @@ def feedback_offline(sysTrayIcon):
     if sysTrayIcon:
         sysTrayIcon.icon = viper.ICONS['offline']
         sysTrayIcon.refresh_icon()
-        menu_options = (('Configure...', None, handle_configure, None),
+        menu_options = ((_('Configure...'), None, handle_configure, None),
                         
-                         ('Go online...', None, handle_go_online, None),
-                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Go online...'), None, handle_go_online, None),
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
                         )
         sysTrayIcon.set_menu(menu_options)
 
         if trayapp:
-            trayapp.set_hover_text("Not connected to VPN")
+            trayapp.set_hover_text(_("Not connected to VPN"))
 
 
 def feedback_connecting(sysTrayIcon):
@@ -91,10 +95,10 @@ def feedback_connecting(sysTrayIcon):
         monitor.isstarting = False
         sysTrayIcon.refresh_icon()
 
-        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+        menu_options = ((_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
                         
-                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -104,16 +108,16 @@ def feedback_starting(sysTrayIcon):
         sysTrayIcon.icon = viper.ICONS['refresh']
         sysTrayIcon.refresh_icon()
 
-        menu_options = (('Configure...', None, handle_configure, win32con.MFS_DISABLED),
+        menu_options = ((_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
                         
-                         ('Go online...', None, handle_go_online, win32con.MFS_DISABLED),
-                         ('Go offline...', None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
                         )
         sysTrayIcon.set_menu(menu_options)
 
 def feedback_inconsistent(sysTrayIcon):
     global svcproxy
-    win32api.MessageBox(0, "We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop now. Please try again after rebooting your windows computer.\n", 'Traffic routing inconsistent', 0x10)
+    win32api.MessageBox(0, _("We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop now. Please try again after rebooting your windows computer.\n"), _('Traffic routing inconsistent'), 0x10)
 
     try:
         svcproxy.disconnect()
@@ -139,7 +143,7 @@ class ServiceProxy:
         try:
             r =  self.connection.root.ovpn_start(cfg)
         except Exception, e: # launcher.VPNLauncherException
-            win32api.MessageBox(0, "I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider.", 'Failed to run OpenVPN', 0x10)
+            win32api.MessageBox(0, _("I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider."), _('Failed to run OpenVPN'), 0x10)
             logging.critical("Failed to run OpenVPN, probably due to a bad configuration file.")
             return False
 
@@ -178,8 +182,8 @@ class ConnectionMonitor(threading.Thread):
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
             svcproxy = ServiceProxy(host="localhost", port=18861)
         except:
-            win32api.MessageBox(0, "Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!", 'Service not running', 0x10)
-            print("Please run the OVPN service to continue")
+            win32api.MessageBox(0, _("Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!"), _('Service not running'), 0x10)
+            #print("Please run the OVPN service to continue")
             sys.exit(1)
 
         threading.Thread.__init__(self)
@@ -207,7 +211,12 @@ class ConnectionMonitor(threading.Thread):
 
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
-                    balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
+                    feedback_offline(trayapp)
+                    r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNOCANCEL)
+                    if r != win32con.IDYES:
+                        return False
+                    # # @todo use a blocking dialog a balloon is completely innapropriate
+                    # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
 
                 # report state on the systray
                 if self.state == "CONNECTED":
@@ -216,7 +225,7 @@ class ConnectionMonitor(threading.Thread):
                 elif self.state == "CONNECTING":
                     if trayapp: 
                         #print("connecting.........")
-                        caption = "Connecting, please wait..."
+                        caption = _("Connecting, please wait...")
                         trayapp.set_hover_text(caption)
                         feedback_connecting(trayapp)
                 elif self.state == "INCONSISTENT":
@@ -232,7 +241,7 @@ class ConnectionMonitor(threading.Thread):
 
                 cs = svcproxy.get_connection_settings()
                 if cs and trayapp: 
-                    caption = "Connected to\ngateway: %s\nwith ip: %s\n" % (cs['gateway'], cs['interface'])
+                    caption = _("Connected to the internet with ip: {0}\n").format(cs['interface'])
                     trayapp.set_hover_text(caption)
             except Exception, e:
                 err = "viper main loop: {0}".format(e.message)
@@ -273,14 +282,14 @@ def handle_configure(sysTrayIcon):
 
     r = os.path.exists(cfgdst)
     if r:
-        r = win32api.MessageBox(0, 'VPN already configured. Overwrite config?', 'Overwrite config', win32con.MB_YESNOCANCEL)
+        r = win32api.MessageBox(0, _('VPN already configured. Overwrite config?'), _('Overwrite config'), win32con.MB_YESNOCANCEL)
         if r != win32con.IDYES:
             return False
 
     dlg = win32ui.CreateFileDialog(1, None,None,
                                    (win32con.OFN_FILEMUSTEXIST|win32con.OFN_EXPLORER),
-                                   'VPN configuration (*.ovpn)|*.ovpn||')
-    dlg.SetOFNTitle('Select OpenVPN Files')
+                                   _('VPN configuration (*.ovpn)|*.ovpn||'))
+    dlg.SetOFNTitle(_('Select OpenVPN Files'))
     testvalue = dlg.DoModal()
     if testvalue == win32con.IDOK:
 
@@ -288,7 +297,7 @@ def handle_configure(sysTrayIcon):
             filename = dlg.GetPathNames()[0]
             e = os.path.exists(filename)
             if not e:
-                show_message('Error opening file', 'Error opening file')
+                show_message(_('Error opening file'), _('Error opening file'))
                 return False
 
             # If old file exits, delete it
@@ -297,13 +306,13 @@ def handle_configure(sysTrayIcon):
                 try:
                     os.remove(cfgdst)
                 except OSError:
-                    show_message('Error removing old configuration', 'Error removing old configuration')
+                    show_message(_('Error removing old configuration'), _('Error removing old configuration'))
                     return False
 
             # Be sure old file is gone    
             r = os.path.exists(cfgdst)
             if r:
-                show_message('Error removing old configuration', 'Error removing old configuration')
+                show_message(_('Error removing old configuration'), _('Error removing old configuration'))
                 return False
 
             # Ok, file is not there anymore, copy it        
@@ -311,7 +320,7 @@ def handle_configure(sysTrayIcon):
 
             r = os.path.exists(cfgdst)
             if not r:
-                show_message('Error copying config file', 'Error copying config file')
+                show_message(_('Error copying config file'), _('Error copying config file'))
                 return False
                 
 
@@ -327,19 +336,19 @@ def handle_go_online(sysTrayIcon):
     # if Windows Firewall is not enabled, refuse to connect
     if not firewall.is_firewall_enabled():
         logging.warning("Firewall is not enabled. I will not connect.")
-        win32api.MessageBox(0, "I see that Windows Firewall is not enabled. Viper needs it to safeguard your connection, so I will not connect now. Please enabled Windows Firewall in your machine and try connecting through Viper again.", 'Windows Firewall is disabled', 0x30)
+        win32api.MessageBox(0, _("I see that Windows Firewall is not enabled. Viper needs it to safeguard your connection, so I will not connect now. Please enabled Windows Firewall in your machine and try connecting through Viper again."), _('Windows Firewall is disabled'), 0x30)
         return False
         
     # Check if config file exists
     if not config_exists():
-        show_message('No configuration found. Unable to start VPN', 'No configuration found')
+        show_message(_('No configuration found. Unable to start VPN'), _('No configuration found'))
         return False
 
     if not svcproxy:
         logging.error("SVCProxy is not properly initialized (probably disconnected)")
 
     if svcproxy.is_connected():
-        show_message('VPN already active, cannot go online twice', 'Already online')
+        show_message(_('VPN already active, cannot go online twice'), _('Already online'))
         return False
 
     try:
@@ -357,7 +366,7 @@ def handle_go_offline(sysTrayIcon):
 
     monitor.isstarting = False
     if not svcproxy.is_connected():
-        show_message('VPN not online, cannot go offline when offline', 'Already offline')
+        show_message(_('VPN not online, cannot go offline when offline'), _('Already offline'))
         return False
 
     try:
@@ -419,7 +428,7 @@ def main():
     # make sure that TAP is installed
     if not windows_has_tap_device():
         logging.critical("TAP driver is not installed, please install.")
-        win32api.MessageBox(0, "I couldn't find the TAP/TUN driver for Windows.\n\nPlease install TAP for windows and try running this program again.\n\nhttp://openvpn.net/index.php/open-source/downloads.html", 'TAP/TUN driver missing', 0x10)
+        win32api.MessageBox(0, _("I couldn't find the TAP/TUN driver for Windows.\n\nPlease install TAP for windows and try running this program again.\n\nhttp://openvpn.net/index.php/open-source/downloads.html"), _('TAP/TUN driver missing'), 0x10)
         sys.exit(1)
 
     start_monitor()
@@ -427,10 +436,10 @@ def main():
     #checkurl = config_check_url(config_file)
     #print("URL to check VPN connection %s ..." % (checkurl,))
 
-    menu_options = (('Configure ...', None, handle_configure, None),
+    menu_options = ((_('Configure ...'), None, handle_configure, None),
                     
-                    ('Go online ...', None, handle_go_online, None),
-                    ('Go offline ...', None, handle_go_offline, win32con.MFS_DISABLED)
+                    (_('Go online ...'), None, handle_go_online, None),
+                    (_('Go offline ...'), None, handle_go_offline, win32con.MFS_DISABLED)
                    )
     
     trayapp = systray.SysTrayIcon(viper.ICONS['offline'], hover_text, menu_options, on_quit=handle_quit, default_menu_index=1)
@@ -454,7 +463,7 @@ if __name__ == '__main__':
 
     # run the main loop if it's not already running otherwise tell the user
     if is_viper_running():
-        win32api.MessageBox(0, "Viper can only run once. I found another instance running, so I will stop now.", 'Viper can only run once', 0x10)
+        win32api.MessageBox(0, _("Viper can only run once. I found another instance running, so I will stop now."), _('Viper can only run once'), 0x10)
         logging.warning("Another instance was running, will exit now.")
         sys.exit(3) # already running
     else:
