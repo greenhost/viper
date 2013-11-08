@@ -45,14 +45,14 @@ class OpenVPNLauncher:
     def __init__(self):
         self.proc = None
 
-    def launch(self, cfgfile):
+    def launch(self, cfgfile, logdir):
         """Start the OpenVPN process """
         path = get_openvpn_home()
         path = os.path.join(path, "openvpn")
         # logfile goes to user's AppData dir
-        logfile = os.path.join(get_user_cwd(), "openvpn.log")
+        logfile = os.path.join(logdir, "openvpn.log")
 
-        cmd = "%s %s --log %s" % (path, cfgfile, logfile)
+        cmd = "{0} --config {1} --log {2}".format(path, cfgfile, logfile)
         logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
         # @todo redirect stdout and stderr to /dev/null, perhaps we want to send this output somewhere else?
         f = open(os.devnull, 'w')
