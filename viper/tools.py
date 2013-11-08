@@ -76,9 +76,9 @@ def log_init_app(level=logging.DEBUG):
     fn = os.path.join(get_user_cwd(), 'umanviper.log')
     logging.basicConfig(filename=fn, level=level)
 
-def log_init_service(level=logging.DEBUG):
+def log_init_service(level=logging.DEBUG, logfile="c:\ovpnmon.log"):
     #fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"
-    logging.basicConfig(filename='c:\ovpnmon.log', level=level)
+    logging.basicConfig(filename=logfile, level=level, filemode="w+")
 
 def get_viper_home():
     """Get location of the Viper install root"""
