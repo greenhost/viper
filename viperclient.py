@@ -23,7 +23,7 @@ import win32con
 import win32ui
 import win32gui_struct
 import win32file
-import threading, time
+import threading, time, traceback
 from pprint import pprint
 import logging
 import getopt
@@ -34,7 +34,7 @@ gettext.install('messages', '../i18n', unicode=True)
 
 import viper
 from viper import routing 
-from viper.openvpn import launcher
+from viper.openvpn import launcher, management
 from viper.tools import *
 from viper.windows import systray, balloon, firewall
 
@@ -58,9 +58,10 @@ config_file = '__config.ovpn'
 hover_text = _("Not connected to VPN")
 checkurl = None
 debug_level = logging.DEBUG
+quitting = False
 
 def feedback_online(sysTrayIcon):
-    if sysTrayIcon:
+    if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['online']
         sysTrayIcon.refresh_icon()
 
@@ -74,7 +75,7 @@ def feedback_online(sysTrayIcon):
 
 def feedback_offline(sysTrayIcon):
     global trayapp
-    if sysTrayIcon:
+    if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['offline']
         sysTrayIcon.refresh_icon()
         menu_options = ((_('Configure...'), None, handle_configure, None),
@@ -90,7 +91,7 @@ def feedback_offline(sysTrayIcon):
 
 def feedback_connecting(sysTrayIcon):
     global monitor
-    if sysTrayIcon:
+    if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['connecting']
         monitor.isstarting = False
         sysTrayIcon.refresh_icon()
@@ -104,7 +105,7 @@ def feedback_connecting(sysTrayIcon):
 
 
 def feedback_starting(sysTrayIcon):
-    if sysTrayIcon:
+    if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['refresh']
         sysTrayIcon.refresh_icon()
 
@@ -130,21 +131,27 @@ def feedback_inconsistent(sysTrayIcon):
 ## rpyc client to connect to windows service
 ##
 class ServiceProxy:
-    '''This service manager is meant to run on the same machine as the service itself, the localhost connection is hardcoded.
+    '''Proxy the start/stop procedures for the connection stack through a Windows service and monitor
+    the status of the conneciton subsequently. To run the stack with elevated privileges the windows service is
+    required. Checking for status however can be done without elevated privileges.
+
+    This service manager is meant to run on the same machine as the service itself, the localhost connection is hardcoded.
     '''
     def __init__(self, host="localhost", port=18861):
+        """Initialize the local-link connection to the Widows service"""
         self.connection = rpyc.connect(host, port)
+        self.ovpn = management.OVPNInterface()
 
     def connect(self):
-        #current = os.getcwd()
+        # start monitoring the management interface
         cfg = os.path.join(get_user_cwd(), "__config.ovpn")
-        logging.info( "Trying to connect with config %s..." % (cfg,) )
+        logging.info( "Trying to connect with config {0}...".format(cfg) )
         r = None
         try:
-            r =  self.connection.root.ovpn_start(cfg)
+            r =  self.connection.root.ovpn_start(cfg, get_user_cwd())
         except Exception, e: # launcher.VPNLauncherException
             win32api.MessageBox(0, _("I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider."), _('Failed to run OpenVPN'), 0x10)
-            logging.critical("Failed to run OpenVPN, probably due to a bad configuration file.")
+            logging.critical("Failed to run OpenVPN, reason: {0}".format(e.message))
             return False
 
         return r
@@ -154,22 +161,33 @@ class ServiceProxy:
         return self.connection.root.ovpn_stop()
 
     def is_connected(self):
-        return self.connection.root.is_connected()
+        return (self.get_vpn_status() == "CONNECTED")
 
     def get_vpn_status(self):
-        return self.connection.root.get_vpn_status()
+        status = self.ovpn.poll_status()
+        return status['viper_status']
 
     def get_connection_settings(self):
-        return self.connection.root.get_connection_settings()
+        status = self.ovpn.poll_status()
+        pprint(status)
+        if status and status['viper_status'] == "CONNECTED":
+            return status
+        else:
+            return None
 
     def get_gateway_ip(self):
-        return self.connection.root.get_gateway_ip()
+        settings = self.get_connection_settings()
+        return settings['gateway'] if 'gateway' in settings else None
 
     def get_interface_ip(self):
-        return self.connection.root.get_interface_ip()
+        settings = self.get_connection_settings()
+        return settings['interface'] if 'interface' in settings else None
 
     def hangup(self):
-        return self.connection.root.ovpn_hangup()
+        """ Send a running instance of openvpn a hangup signal so that it attempts 
+            to reconfigure the connection stack 
+        """
+        self.ovpn.hangup()
     
 
 class ConnectionMonitor(threading.Thread):
@@ -184,7 +202,8 @@ class ConnectionMonitor(threading.Thread):
         try:
             #win32api.MessageBox(0, "BOLLOCKS!", 'Service not running', 0x10)
             svcproxy = ServiceProxy(host="localhost", port=18861)
-        except:
+        except Exception, e:
+            logging.warning("Failed to start the proxy to talk to the service: {0}".format(e.message))
             win32api.MessageBox(0, _("Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!"), _('Service not running'), 0x10)
             #print("Please run the OVPN service to continue")
             sys.exit(1)
@@ -215,8 +234,9 @@ class ConnectionMonitor(threading.Thread):
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
                     feedback_offline(trayapp)
-                    r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNOCANCEL)
-                    if r != win32con.IDYES:
+                    r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO)
+                    if r == win32con.IDYES:
+                        logging.debug("User requested a reconnect, trying to send hangup signal to stack")
                         return svcproxy.hangup()
                     # # @todo use a blocking dialog a balloon is completely innapropriate
                     # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
@@ -246,8 +266,9 @@ class ConnectionMonitor(threading.Thread):
                 if cs and trayapp: 
                     caption = _("Connected to the internet with ip: {0}\n").format(cs['interface'])
                     trayapp.set_hover_text(caption)
-            except Exception, e:
+            except Exception as e:
                 err = "viper main loop: {0}".format(e.message)
+                traceback.print_exc()
                 logging.critical(err)
                 self.terminate()
                 print e
@@ -368,8 +389,9 @@ def handle_go_offline(sysTrayIcon):
     global svcproxy, monitor
 
     monitor.isstarting = False
-    if not svcproxy.is_connected():
-        show_message(_('VPN not online, cannot go offline when offline'), _('Already offline'))
+    connected = svcproxy.is_connected()
+    if not connected:
+        show_message(_("VPN not online, cannot go offline when offline, is connected: {0}".format(connected) ), _('Already offline'))
         return False
 
     try:
@@ -381,6 +403,7 @@ def handle_go_offline(sysTrayIcon):
     return True
 
 def handle_quit(sysTrayIcon):
+    quitting = True
     # stop monitoring
     stop_monitor()
     logging.info('Bye, then.')
