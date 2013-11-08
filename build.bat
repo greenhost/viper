@@ -14,6 +14,7 @@
 @rem You should have received a copy of the GNU Affero General Public License
 @rem along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+@echo off
 set msBuildDir=%WINDIR%\Microsoft.NET\Framework\v3.5
 
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
