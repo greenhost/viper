@@ -1,3 +1,4 @@
+@echo off
 @rem Copyright (c) 2013 Greenhost VOF
 @rem https://greenhost.nl -\- https://greenhost.io
 @rem 
