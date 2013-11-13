@@ -56,7 +56,8 @@ class OVPNInterface:
 
             logging.debug("Connected successfully to management socket")
 
-            count = self.sock.send(command)
+            count = 0
+            if self.sock: count = self.sock.send(command)
             if count == 0:
                 logging.debug("Couldn't send message through socket")
             time.sleep( response_delay ) # must wait a bit otherwise we will not get a response to our request
@@ -83,11 +84,13 @@ class OVPNInterface:
 
     def hangup(self):
         """ notify hangup, force OpenVPN to reload its config """
+        logging.debug("sending hangup signal")
         self.send("signal SIGHUP\n")
         self.connected = False
 
     def terminate(self):
         """ send termination signal, ask the OpenVPN client to stop """
+        logging.debug("sending terminate signal")
         self.send("signal SIGTERM\n")
         self.connected = False
 
