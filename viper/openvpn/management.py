@@ -49,33 +49,33 @@ class OVPNInterface:
         try:
             self.sock = socket.socket()
             logging.debug("Trying to connect to OVPN management socket")
-            self.sock.settimeout( connection_timeout )
-            self.sock.connect(("localhost", 7505))
+            if self.sock: self.sock.settimeout( connection_timeout )
+            if self.sock: self.sock.connect(("localhost", 7505))
             # sock.setblocking(1)
             self.connected = True
 
             logging.debug("Connected successfully to management socket")
 
-            count = self.sock.send(command)
+            count = 0
+            if self.sock: count = self.sock.send(command)
             if count == 0:
                 logging.debug("Couldn't send message through socket")
             time.sleep( response_delay ) # must wait a bit otherwise we will not get a response to our request
 
-            retval = self.sock.recv(1024)
+            if self.sock: retval = self.sock.recv(1024)
         except socket.timeout, e:
-            logging.debug("OVPN management socket operation timed-out: %s" % e)
-            #retval = {'status': "DISCONNECTED"}
+            logging.debug("OVPN management socket operation timed-out: {0}".format(e.message))
             return None 
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
-            logging.warning("OVPN management socket error: %s" % e)
-            #retval = {'status': "DISCONNECTED"}
+            logging.warning("OVPN management socket error: {0}".format(e.message))
             return None
         finally:   # always execute
             try:
-                self.sock.close()
+                if self.sock: self.sock.close()
                 connected = False
                 del self.sock
+                self.sock = None # avoid exception of missing attribute in class
             except Exception, e:
                 logging.warning("FATAL - closing the socket failed the next open operation would not work")
                 raise
@@ -84,23 +84,31 @@ class OVPNInterface:
 
     def hangup(self):
         """ notify hangup, force OpenVPN to reload its config """
+        logging.debug("sending hangup signal")
         self.send("signal SIGHUP\n")
         self.connected = False
 
     def terminate(self):
         """ send termination signal, ask the OpenVPN client to stop """
+        logging.debug("sending terminate signal")
         self.send("signal SIGTERM\n")
         self.connected = False
 
     def poll_status(self):
         """ 
-        Open connection to management socket and query the current status of OpenVPN 
+        Open connection to management socket and query the current status of OpenVPN. There's an important
+        step implemented in this method, which is the translation of what OpenVPN reports as it's current
+        status and the actual status that viper reports as current. Sometimes OpenVPN can report a connected 
+        state but further inspection of the routing table shows that it is not the case. The OpenVPN state
+        is sotred in the dictionary as 'ovpn_state' and the status the viper reports is stored 'viper_status'.
+
         @param connection_timeout seconds that elapse before a socket.timeout exception is raised upon connection
         @param response_delay seconds to wait to get a response from the 'state' management command
+        @return a dictionary with the current state of the connection stack, the one the client reports is identified by the key 'viper_status'
         """
 
         logging.debug("Polling OpenVPN for vpn status...")
-        retval = None
+        retval = {}
         resp = None
 
         try:
@@ -108,7 +116,7 @@ class OVPNInterface:
             resp = self.parse_state_response( self.send("state\n") )
 
             if not resp:
-                retval = {'status': "DISCONNECTED"} 
+                retval['viper_status'] = "DISCONNECTED" 
                 logging.debug("No data received while waiting for response from OpenVPN")
             else:
                 retval = resp
@@ -118,44 +126,51 @@ class OVPNInterface:
                 if self.last_known_gateway:
                     try:
                         if not routing.verify_vpn_routing_table(self.last_known_gateway):
-                            retval = {'status' : "DISCONNECTED"}
+                            retval['viper_status'] = "DISCONNECTED"
                             logging.debug("Routing verification didn't pass")
                         else:
                             xcheckok = True
                     except routing.InconsistentRoutingTable:
                         # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
-                        retval = {'status' : "INCONSISTENT"}
+                        retval['viper_status'] =  "INCONSISTENT"
                         logging.debug("Routing verification is not consistent")
 
-                if resp['state'] in ['CONNECTED']:
+                if resp['ovpn_state'] in ['CONNECTED']:
                     # OpenVPN says we are connected, don't believe it, verify cross-check
                     if xcheckok:
+                        logging.debug("Connected and cross-check ok")
                         self.connected = True
-                        retval = {'status' : "CONNECTED"}
+                        retval['viper_status'] =  "CONNECTED"
+                    else:
+                        retval['viper_status'] =  "DISCONNECTED"
 
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
                     if 'gateway' in resp:
-                        self.last_known_gateway = resp['gateway']
+                        self.last_known_gateway = resp['interface'] #resp['gateway']
 
-                elif resp['state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
+                elif resp['ovpn_state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
                     self.connected = False
-                    retval = {'status': "CONNECTING"}
+                    retval['viper_status'] =  "CONNECTING"
                 
-                elif (resp['state'] in ['WAIT']) and (self.last_known_gateway):
+                elif (resp['ovpn_state'] in ['WAIT']) and (self.last_known_gateway):
                     # restart the connection if we ever knew a gateway
                     logging.debug("WAIT state detected, notifying SIGHUP")
                     self.hangup()
                     self.connected = False
-                    retval = {'status': "CONNECTING"}
-                elif (resp['state'] in ['WAIT']):
-                    retval = {'status' : "DISCONNECTED"}
+                    retval['viper_status'] =  "CONNECTING"
+                elif (resp['ovpn_state'] in ['WAIT']):
+                    retval['viper_status'] =  "DISCONNECTED"
+                    self.connected = False
+                # in any other case
+                else:
+                    retval['viper_status'] = "DISCONNECTED"
                     self.connected = False
 
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             logging.warning("Exception while polling for status: %s" % e)
             pprint(resp)
-            retval = {'status': "DISCONNECTED"} 
+            retval['viper_status'] = "DISCONNECTED" 
 
         return retval
 
@@ -207,13 +222,13 @@ class OVPNInterface:
 
                     # get line containing status
                     if state == "CONNECTED" and desc == "SUCCESS":
-                        return {'state': "CONNECTED", 'interface' : tun_ip.split('\r')[0], 'gateway' : remote_ip}
+                        return {'ovpn_state': "CONNECTED", 'interface' : tun_ip.split('\r')[0], 'gateway' : remote_ip}
                     # sometimes ovpn reports as connected but with errors    
                     elif state == "CONNECTED" and desc == "ERROR":
                         # e.g. Warning: route gateway is not reachable on any active network adapters: <ip address>
-                        return {'state': "DISCONNECTED"}
+                        return {'ovpn_state': "DISCONNECTED"}
                     else:
-                        return {'state': state}
+                        return {'ovpn_state': state}
                 else:
                     continue
         except Exception, e:

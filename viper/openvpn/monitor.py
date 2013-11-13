@@ -58,7 +58,7 @@ class RPCService(rpyc.Service):
         #self.monitor = None
         self.connected = False
         self.launcher = launcher.OpenVPNLauncher()
-        self.ovpn = management.OVPNInterface()
+
         logging.info("Connection from client opened...")
         # configure the Windows Firewall to block all IPv6 traffic
         firewall.block_ipv6()
@@ -70,47 +70,20 @@ class RPCService(rpyc.Service):
         # allow IPv6 traffic again
         firewall.unblock_ipv6()
 
-    def exposed_heartbeat(self):
-        return str(datetime.now())
-
-    def exposed_is_connected(self):
-        global OVPN_STATUS
-        OVPN_STATUS = self.ovpn.poll_status()
-        return (OVPN_STATUS['status'] == "CONNECTED")
-
-    def exposed_get_vpn_status(self):
-        global OVPN_STATUS
-        OVPN_STATUS = self.ovpn.poll_status()
-        return OVPN_STATUS['status']
-
-    def exposed_get_connection_settings(self):
-        global OVPN_STATUS
-        OVPN_STATUS = self.ovpn.poll_status()
-        if OVPN_STATUS and OVPN_STATUS['status'] == "CONNECTED":
-            return OVPN_STATUS
-        else:
-            return None
-
-    def exposed_get_gateway_ip(self):
-        pass
-
-    def exposed_get_interface_ip(self):
-        pass
-
-    def exposed_ovpn_start(self, cfgfile):
-        """ Use launcher to start the OpenVPN instance """
-        if not tools.is_openvpn_running():
-            self.launcher.launch(cfgfile)
-        else:
-            # if it's already running try to reaload it by sending hangup signal
-            self.ovpn.hangup()
-
-    def exposed_ovpn_hangup(self, cfgfile):
-        """ Send a running instance of openvpn a hangup signal so that it attempts 
-            to reconfigure the connection stack 
+    def exposed_ovpn_start(self, cfgfile, logdir):
+        """ Use launcher to start the OpenVPN instance 
+        @param cfgfile location of OpenVPN configuration file in the file system
+        @param logdir directory for log output
         """
-        if self.ovpn:
-            self.ovpn.hangup()
+        if not is_openvpn_running():
+            logging.debug("OpenVPN isn't running, trying to start process")
+            self.launcher.launch(cfgfile, logdir)
+        else:
+            logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
+            management = management.OVPNInterface()
+            management.hangup()
+            del management
+            # if it's already running try to reaload it by sending hangup signal
 
     def exposed_ovpn_stop(self):
         """ Use launcher to stop the OpenVPN process """
