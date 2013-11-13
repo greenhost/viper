@@ -237,7 +237,7 @@ class ConnectionMonitor(threading.Thread):
                     r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO)
                     if r == win32con.IDYES:
                         logging.debug("User requested a reconnect, trying to send hangup signal to stack")
-                        return svcproxy.hangup()
+                        svcproxy.hangup()
                     # # @todo use a blocking dialog a balloon is completely innapropriate
                     # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
 
@@ -389,10 +389,10 @@ def handle_go_offline(sysTrayIcon):
     global svcproxy, monitor
 
     monitor.isstarting = False
-    connected = svcproxy.is_connected()
-    if not connected:
-        show_message(_("VPN not online, cannot go offline when offline, is connected: {0}".format(connected) ), _('Already offline'))
-        return False
+    # connected = svcproxy.is_connected()
+    # if not connected:
+    #     show_message(_("VPN not online, cannot go offline when offline, is connected: {0}".format(connected) ), _('Already offline'))
+    #     return False
 
     try:
         svcproxy.disconnect()
