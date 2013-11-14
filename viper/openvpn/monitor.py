@@ -82,7 +82,7 @@ class RPCService(rpyc.Service):
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
             handle = management.OVPNInterface()
             handle.hangup()
-            del management
+            del handle
             # if it's already running try to reaload it by sending hangup signal
 
     def exposed_ovpn_stop(self):
