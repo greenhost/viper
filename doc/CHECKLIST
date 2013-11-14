@@ -34,7 +34,7 @@ As admin in windows:
 ## The stand-alone OpenVPN test
 
 1. Start openvpn (stand-alone) from the command line:
-"c:\Program Files (x86)\Viper\client\openvpn\openvpn.exe" --config c:\Users\wintest\AppData\Local\Greenhost\Viper\__config.ovpn
+"C:\Program Files (x86)\viper\client\openvpn\openvpn" --config C:\Users\wintest\AppData\Local\Greenhost\Viper\__config.ovpn --log C:\Users\wintest\AppData\Local\Greenhost\Viper\openvpn.log
 
 2. Start NetCatGUI and point it to localhost:7505
 3. Type "state" in netcat and when it finally reports the state as "CONNECTED"
