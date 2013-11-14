@@ -69,8 +69,11 @@ def run_unique(fn):
 
 def is_openvpn_running():
     """Check that the OpenVPN process is only run once"""
-    procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
-    return procs
+    try:
+        procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name]
+        return procs
+    except NoSuchProcess as e:
+        return False
 
 def log_init_app(level=logging.DEBUG):
     fn = os.path.join(get_user_cwd(), 'umanviper.log')
