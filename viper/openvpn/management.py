@@ -169,7 +169,7 @@ class OVPNInterface:
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             logging.warning("Exception while polling for status: %s" % e)
-            pprint(resp)
+            logging.warning(resp)
             retval['viper_status'] = "DISCONNECTED" 
 
         return retval
