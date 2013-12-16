@@ -47,7 +47,7 @@ def is_viper_running():
                 # if process is found with the PID, there's another instance running
                 proc = psutil.Process(pid)
                 return True
-            except psutil.NoSuchProcess, e:
+            except psutil.NoSuchProcess as e:
                 # pidfile is tale, delete it
                 # we can now assume there's not another version of viper running
                 f.close()
