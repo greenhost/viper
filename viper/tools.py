@@ -97,7 +97,7 @@ def get_my_cwd():
 
 def get_user_cwd():
     """ Get user working directory """
-    d = appdirs.AppDirs(PRODUCT_NAME, ".") #, PRODUCER_NAME)
+    d = appdirs.AppDirs(PRODUCT_NAME, "") #, PRODUCER_NAME)
 
     if not os.path.exists(d.user_data_dir):
         os.makedirs(d.user_data_dir)

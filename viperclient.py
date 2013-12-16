@@ -60,6 +60,13 @@ checkurl = None
 debug_level = logging.DEBUG
 quitting = False
 
+def window_handle():
+    """ get the window handle for the systray appplication if one exists """
+    if trayapp and trayapp.hwnd:
+        return trayapp.hwnd
+    else:
+        return 0
+
 def feedback_online(sysTrayIcon):
     if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['online']
@@ -118,7 +125,7 @@ def feedback_starting(sysTrayIcon):
 
 def feedback_inconsistent(sysTrayIcon):
     global svcproxy
-    win32api.MessageBox(trayapp.hwnd, _("We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop now. Please try again after rebooting your windows computer.\n"), _('Traffic routing inconsistent'), 0x10)
+    win32api.MessageBox(window_handle(), _("We have detected an inconsistency in routing of the traffic\nit is therefore not secure to continue like this.\nThis can happen because sometimes windows becomes confused about the number of encrypted connections open.\n\nFor your security, I will stop now. Please try again after rebooting your windows computer.\n"), _('Traffic routing inconsistent'), 0x10)
 
     try:
         svcproxy.disconnect()
@@ -150,7 +157,7 @@ class ServiceProxy:
         try:
             r =  self.connection.root.ovpn_start(cfg, get_user_cwd())
         except Exception, e: # launcher.VPNLauncherException
-            win32api.MessageBox(trayapp.hwnd, _("I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider."), _('Failed to run OpenVPN'), 0x10)
+            win32api.MessageBox(window_handle(), _("I failed to connect to the VPN, this might be due to a bad configuration file. Please get a fresh configuration file and try again or consult with your service provider."), _('Failed to run OpenVPN'), 0x10)
             logging.critical("Failed to run OpenVPN, reason: {0}".format(e.message))
             return False
 
@@ -204,7 +211,7 @@ class ConnectionMonitor(threading.Thread):
             svcproxy = ServiceProxy(host="localhost", port=18861)
         except Exception, e:
             logging.warning("Failed to start the proxy to talk to the service: {0}".format(e.message))
-            win32api.MessageBox(trayapp.hwnd, _("Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!"), _('Service not running'), 0x10)
+            win32api.MessageBox(window_handle(), _("Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!"), _('Service not running'), 0x10)
             #print("Please run the OVPN service to continue")
             sys.exit(1)
 
@@ -234,7 +241,7 @@ class ConnectionMonitor(threading.Thread):
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
                     feedback_offline(trayapp)
-                    r = win32api.MessageBox(trayapp.hwnd, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
+                    r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
                     if r == win32con.IDYES:
                         logging.debug("User requested a reconnect, trying to send hangup signal to stack")
                         svcproxy.hangup()
@@ -308,7 +315,7 @@ def handle_configure(sysTrayIcon):
 
     r = os.path.exists(cfgdst)
     if r:
-        r = win32api.MessageBox(trayapp.hwnd, _('VPN already configured. Overwrite config?'), _('Overwrite config'), win32con.MB_YESNOCANCEL | win32con.MB_SYSTEMMODAL)
+        r = win32api.MessageBox(window_handle(), _('VPN already configured. Overwrite config?'), _('Overwrite config'), win32con.MB_YESNOCANCEL | win32con.MB_SYSTEMMODAL)
         if r != win32con.IDYES:
             return False
 
@@ -351,7 +358,7 @@ def handle_configure(sysTrayIcon):
                 
 
 def show_message(message, title):
-    win32api.MessageBox(trayapp.hwnd, message, title)
+    win32api.MessageBox(window_handle(), message, title)
 
 def config_exists():
     return os.path.exists(os.path.join(get_user_cwd(), config_file))
@@ -362,7 +369,7 @@ def handle_go_online(sysTrayIcon):
     # if Windows Firewall is not enabled, refuse to connect
     if not firewall.is_firewall_enabled():
         logging.warning("Firewall is not enabled. I will not connect.")
-        win32api.MessageBox(trayapp.hwnd, _("I see that Windows Firewall is not enabled. Viper needs it to safeguard your connection, so I will not connect now. Please enabled Windows Firewall in your machine and try connecting through Viper again."), _('Windows Firewall is disabled'), 0x30)
+        win32api.MessageBox(window_handle(), _("I see that Windows Firewall is not enabled. Viper needs it to safeguard your connection, so I will not connect now. Please enabled Windows Firewall in your machine and try connecting through Viper again."), _('Windows Firewall is disabled'), 0x30)
         return False
         
     # Check if config file exists
@@ -456,7 +463,7 @@ def main():
     # make sure that TAP is installed
     if not windows_has_tap_device():
         logging.critical("TAP driver is not installed, please install.")
-        win32api.MessageBox(trayapp.hwnd, _("I couldn't find the TAP/TUN driver for Windows.\n\nPlease install TAP for windows and try running this program again.\n\nhttp://openvpn.net/index.php/open-source/downloads.html"), _('TAP/TUN driver missing'), 0x10)
+        win32api.MessageBox(window_handle(), _("I couldn't find the TAP/TUN driver for Windows.\n\nPlease install TAP for windows and try running this program again.\n\nhttp://openvpn.net/index.php/open-source/downloads.html"), _('TAP/TUN driver missing'), 0x10)
         sys.exit(1)
 
     start_monitor()
@@ -491,7 +498,7 @@ if __name__ == '__main__':
 
     # run the main loop if it's not already running otherwise tell the user
     if is_viper_running():
-        win32api.MessageBox(trayapp.hwnd, _("Viper can only run once. I found another instance running, so I will stop now."), _('Viper can only run once'), 0x10)
+        win32api.MessageBox(window_handle(), _("Viper can only run once. I found another instance running, so I will stop now."), _('Viper can only run once'), 0x10)
         logging.warning("Another instance was running, will exit now.")
         sys.exit(3) # already running
     else:
