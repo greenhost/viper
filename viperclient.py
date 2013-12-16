@@ -264,7 +264,7 @@ class ConnectionMonitor(threading.Thread):
 
                 cs = svcproxy.get_connection_settings()
                 if cs and trayapp: 
-                    caption = _("Connected to the internet with ip: {0}\n").format(cs['interface'])
+                    caption = _("Connected to the internet with ip: {0}\n").format(cs['gateway'])
                     trayapp.set_hover_text(caption)
             except Exception as e:
                 err = "viper main loop: {0}".format(e.message)
