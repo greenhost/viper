@@ -4,6 +4,10 @@
 Thums.db
 ehthumbs.db
 
+*.userprefs
+.project
+.pydevproject
+
 # python bin
 *.pyc
 *.log
