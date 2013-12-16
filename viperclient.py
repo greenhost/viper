@@ -59,6 +59,7 @@ hover_text = _("Not connected to VPN")
 checkurl = None
 debug_level = logging.DEBUG
 quitting = False
+user_wants_online = False  # keep this status to represent the intention of the user irrespective of what OpenVPN
 
 def window_handle():
     """ get the window handle for the systray appplication if one exists """
@@ -228,7 +229,7 @@ class ConnectionMonitor(threading.Thread):
         svcproxy.disconnect()
 
     def run(self):
-        global svcproxy, trayapp
+        global svcproxy, trayapp, user_wants_online
 
         while self.running:
             try:
@@ -241,10 +242,11 @@ class ConnectionMonitor(threading.Thread):
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
                     feedback_offline(trayapp)
-                    r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
-                    if r == win32con.IDYES:
-                        logging.debug("User requested a reconnect, trying to send hangup signal to stack")
-                        svcproxy.hangup()
+                    if user_wants_online:
+                        r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
+                        if r == win32con.IDYES:
+                            logging.debug("User requested a reconnect, trying to send hangup signal to stack")
+                            svcproxy.hangup()
                     # # @todo use a blocking dialog a balloon is completely innapropriate
                     # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
 
@@ -364,7 +366,10 @@ def config_exists():
     return os.path.exists(os.path.join(get_user_cwd(), config_file))
 
 def handle_go_online(sysTrayIcon):
-    global svcproxy, monitor
+    global svcproxy, monitor, user_wants_online
+
+    # user has explicitly indicate that she wants to go online
+    user_wants_online = True
 
     # if Windows Firewall is not enabled, refuse to connect
     if not firewall.is_firewall_enabled():
@@ -395,7 +400,10 @@ def handle_go_online(sysTrayIcon):
     return True
 
 def handle_go_offline(sysTrayIcon):
-    global svcproxy, monitor
+    global svcproxy, monitor, user_wants_online
+
+    # user has explicitly indicate that she wants to be offline
+    user_wants_online = False
 
     monitor.isstarting = False
     # connected = svcproxy.is_connected()
