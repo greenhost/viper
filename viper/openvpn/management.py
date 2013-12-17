@@ -43,8 +43,9 @@ class OVPNInterface:
         self.connected = False
         self.sock = None
         self.last_known_gateway = None  # in this session, we don't save to disk between sessions
+        self.retries = 0
 
-    def send(self, command, connection_timeout = 1, response_delay = .5):
+    def send(self, command, connection_timeout = .5, response_delay = .5):
         retval = None
         try:
             self.sock = socket.socket()
@@ -116,9 +117,17 @@ class OVPNInterface:
             resp = self.parse_state_response( self.send("state\n") )
 
             if not resp:
-                retval['viper_status'] = "DISCONNECTED" 
-                logging.debug("No data received while waiting for response from OpenVPN")
+                # if we didn't hear anything back from OpenVPN we keep trying for a few more loops
+                if self.retries > 3:
+                    retval['viper_status'] = "DISCONNECTED"
+                    self.retries = 0
+                else:
+                    self.retries += 1
+                    retval['viper_status'] = "TIMED-OUT"
+                    logging.debug("No data received while waiting for response from OpenVPN")
             else:
+                self.retries = 0 # reset retry counter
+
                 retval = resp
 
                 # always cross-check the routing with the last known gateway                    

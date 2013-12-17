@@ -173,7 +173,7 @@ class ServiceProxy:
 
     def get_vpn_status(self):
         status = self.ovpn.poll_status()
-        return status['viper_status']
+        return status['viper_status'] # if 'viper_status' in status else None
 
     def get_connection_settings(self):
         status = self.ovpn.poll_status()
@@ -249,6 +249,10 @@ class ConnectionMonitor(threading.Thread):
                             svcproxy.hangup()
                     # # @todo use a blocking dialog a balloon is completely innapropriate
                     # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
+
+                # allow the client to time out for a few retries, keep reporting previous state
+                if self.state == "TIMED-OUT":
+                    self.state = self.last_state
 
                 # report state on the systray
                 if self.state == "CONNECTED":
