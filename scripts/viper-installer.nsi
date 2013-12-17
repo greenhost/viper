@@ -5,7 +5,7 @@
 
 ; Define helper variables
 !define PRODUCT_NAME "viper"
-!define PRODUCT_VERSION "0.9.1.3"
+!define PRODUCT_VERSION "0.9.1.6"
 !define PRODUCT_DISPLAY_NAME "${PRODUCT_NAME} v${PRODUCT_VERSION}"
 !define PRODUCT_PUBLISHER "Greenhost"
 !define PRODUCT_WEB_SITE "www.greenhost.nl"
@@ -29,11 +29,11 @@ SetCompressor /SOLID lzma
 !include "MUI.nsh"
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\floppy_installer_green.ico"
-!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\floppy_installer_green.bmp"
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\box-install.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\arrow.bmp"
 !define MUI_COMPONENTSPAGE_CHECKBITMAP "${NSISDIR}\Contrib\Graphics\Checks\modern.bmp"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\floppy_uninstaller_red.ico"
-!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\floppy_installer_green.bmp"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\box-uninstall.ico"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\arrow.bmp"
 
 ; Language Selection Dialog Settings
 !define MUI_LANGDLL_REGISTRY_ROOT "${PRODUCT_UNINST_ROOT_KEY}"
@@ -81,9 +81,9 @@ Caption "${PRODUCT_DISPLAY_NAME} Setup"
 UninstallCaption "${PRODUCT_DISPLAY_NAME} Uninstall"
 
 ; Installer file metadata
-VIProductVersion "0.9.1.1"
+VIProductVersion ${PRODUCT_VERSION}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" "Viper"
-VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductVersion" "0.9.1.1"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductVersion" ${PRODUCT_VERSION}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "CompanyName" "Greenhost"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "? ${PRODUCT_PUBLISHER}"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalTrademarks" ""
@@ -168,6 +168,9 @@ Section "Startup" SEC005
   ExecWait '"net" start ovpnmon'
 SectionEnd
 
+
+
+
 Function .onInit
   !insertmacro MULTIUSER_INIT
   !define MUI_LANGDLL_ALWAYSSHOW
@@ -199,6 +202,26 @@ Function .onInit
   StrCpy $0 0
   IntOp $0 $0 | ${SF_SELECTED}
   SectionSetFlags ${SEC005} $0
+
+  ; Find out if there's a previous version installed
+  ReadRegStr $R0 HKLM \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+    "UninstallString"
+    StrCmp $R0 "" done
+   
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+    "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
+    previous version or `Cancel` to cancel this upgrade." \
+    IDOK uninst
+    Abort
+   
+  ;Run the uninstaller
+  uninst:
+    ClearErrors
+    ;ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+    Exec $INSTDIR\uninst.exe
+    
+  done:
 
 FunctionEnd
 
