@@ -280,12 +280,12 @@ class ConnectionMonitor(threading.Thread):
                     caption = _("Connected to the internet with ip: {0}\n").format(cs['gateway'])
                     trayapp.set_hover_text(caption)
             except Exception as e:
-                err = "viper main loop: {0}".format(e.message)
-                traceback.print_exc()
+                feedback_offline(trayapp)
+                err = "viper main loop: {0}".format( traceback.format_exc() )
                 logging.critical(err)
-                caption = _("Not connected to the VPN")
-                trayapp.set_hover_text(caption)
-                self.terminate()
+                #caption = _("Not connected to the VPN")
+                #trayapp.set_hover_text(caption)
+                #self.terminate()
                 print e
 
             time.sleep(0.5)
