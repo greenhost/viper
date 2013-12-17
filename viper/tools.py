@@ -75,9 +75,10 @@ def is_openvpn_running():
     except psutil.NoSuchProcess as e:
         return False
 
-def log_init_app(level=logging.DEBUG):
+def log_init_app(lvl=logging.DEBUG):
     fn = os.path.join(get_user_cwd(), 'viperclient.log')
-    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=level)
+    print("Trying to log to file %s, with level %s" % (fn, lvl))
+    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=lvl, filemode="w+")
 
 def log_init_service(level=logging.DEBUG, logfile="c:\ovpnmon.log"):
     #fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"

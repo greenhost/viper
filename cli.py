@@ -42,7 +42,7 @@ if __name__ == '__main__':
 	print(sys.argv[0])
 	pprint(viper.ICONS)
 	# init logging capabilities
-	logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG)
+	logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=logging.DEBUG)
 
 	if tools.is_viper_running():
 		sys.exit(3) # already running

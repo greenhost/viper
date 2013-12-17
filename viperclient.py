@@ -464,7 +464,7 @@ def main():
             debug_level = logging.DEBUG
 
     # init logging capabilities
-    log_init_app(debug_level)
+    #log_init_app(logging.DEBUG)
 
     #win32api.MessageBox(0, "CWD: %s\nOPENVPN_HOME: %s\sys.executable: %s" % (os.getcwd(),get_openvpn_home(), ) , 'Debug', 0x10)
 
@@ -503,6 +503,9 @@ if __name__ == '__main__':
         'connecting' : get_resource_path('icons/connecting.ico'),
         'refresh' : get_resource_path('icons/refresh.ico')
     }
+
+    fn = os.path.join(get_user_cwd(), 'viperclient.log')
+    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
 
     # run the main loop if it's not already running otherwise tell the user
     if is_viper_running():

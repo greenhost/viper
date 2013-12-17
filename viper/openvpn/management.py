@@ -219,7 +219,8 @@ class OVPNInterface:
                         continue        # not what we are looking for, ignore
 
                     tstamp, state, desc, tun_ip, remote_ip = parts
-
+                    logging.debug(parts)
+                    
                     # get line containing status
                     if state == "CONNECTED" and desc == "SUCCESS":
                         return {'ovpn_state': "CONNECTED", 'interface' : tun_ip.split('\r')[0], 'gateway' : remote_ip}
