@@ -172,6 +172,19 @@ SectionEnd
 
 
 Function .onInit
+  ; Find out if there's a previous version installed
+  ReadRegStr $R0 HKLM \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+    "UninstallString"
+    StrCmp $R0 "" done
+   
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+    "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
+    previous version or `Cancel` to cancel this upgrade." \
+    IDOK uninst
+    Abort
+
+  ; Go on with initialization routine
   !insertmacro MULTIUSER_INIT
   !define MUI_LANGDLL_ALWAYSSHOW
   !insertmacro MUI_LANGDLL_DISPLAY
@@ -202,18 +215,6 @@ Function .onInit
   StrCpy $0 0
   IntOp $0 $0 | ${SF_SELECTED}
   SectionSetFlags ${SEC005} $0
-
-  ; Find out if there's a previous version installed
-  ReadRegStr $R0 HKLM \
-    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
-    "UninstallString"
-    StrCmp $R0 "" done
-   
-    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-    "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
-    previous version or `Cancel` to cancel this upgrade." \
-    IDOK uninst
-    Abort
    
   ;Run the uninstaller
   uninst:
