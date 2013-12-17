@@ -505,7 +505,7 @@ if __name__ == '__main__':
     }
 
     fn = os.path.join(get_user_cwd(), 'viperclient.log')
-    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
+    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
 
     # run the main loop if it's not already running otherwise tell the user
     if is_viper_running():
