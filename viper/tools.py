@@ -18,6 +18,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import os, sys
+from os import popen
 import logging
 import servicemanager
 import appdirs
@@ -114,6 +115,14 @@ def get_resource_path(res):
     """
     rpath = os.path.join(get_my_cwd(), "resources")
     return os.path.join(rpath, res)
+
+def flush_dns():
+    """ Instruct Windows to flush the DNS cache
+    :return True: is flushing is Successfully
+    :return False: otherwise 
+    """
+    res = popen("ipconfig /flushdns").read().split()
+    return True if 'Successfully' in res else False  # tested on windows 8 and windows 7
 
 def log(msg):
     """Send message to the Windows Event Log"""
