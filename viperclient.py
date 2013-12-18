@@ -375,6 +375,11 @@ def handle_go_online(sysTrayIcon):
     # user has explicitly indicate that she wants to go online
     user_wants_online = True
 
+    # flushing the dns cache doesn't harm and it can prevent dns leaks
+    # @NOTE should we flush before connection is completed or should be flush only after new DNS
+    # entries are injected by OpenVPN?
+    flush_dns()
+
     # if Windows Firewall is not enabled, refuse to connect
     if not firewall.is_firewall_enabled():
         logging.warning("Firewall is not enabled. I will not connect.")
