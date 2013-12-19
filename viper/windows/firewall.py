@@ -49,7 +49,11 @@ def run_fwipv6(command):
 
 	void = open(os.devnull, 'w')
 	try:
-		proc = subprocess.Popen([path, command], stdout=void, stderr=void)
+		# build command array as expected by subprocess.Popen
+		cmd = [path]
+		cmd.extend(command.split())
+		# execute command
+		proc = subprocess.Popen(cmd, stdout=void, stderr=void)
 
 		proc.wait()
 		if (proc.returncode == 1) or (proc.returncode == 3):
