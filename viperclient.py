@@ -175,6 +175,12 @@ class ServiceProxy:
         status = self.ovpn.poll_status()
         return status['viper_status'] # if 'viper_status' in status else None
 
+    def firewall_up(self):
+        self.connection.root.firewall_up()
+
+    def firewall_down(self):
+        self.connection.root.firewall_down()
+
     def get_connection_settings(self):
         status = self.ovpn.poll_status()
         logging.debug(status)
@@ -211,7 +217,7 @@ class ConnectionMonitor(threading.Thread):
             #win32api.MessageBox(0, "LOOKATME!", 'Service not running', 0x10)
             svcproxy = ServiceProxy(host="localhost", port=18861)
         except Exception, e:
-            logging.warning("Failed to start the proxy to talk to the service: {0}".format(e.message))
+            logging.warning("Failed to start the proxy to talk to the service: {0}".format( traceback.format_exc() ))
             win32api.MessageBox(window_handle(), _("Seems like the OVPN service isn't running. Please run the OVPN service and then try running the viper client again. \n\nI will close when you press OK. Goodbye!"), _('Service not running'), 0x10)
             #print("Please run the OVPN service to continue")
             sys.exit(1)
@@ -406,6 +412,12 @@ def handle_go_online(sysTrayIcon):
         logging.critical("Service seems to be down")
         print e
 
+    try:
+        svcproxy.firewall_up()
+    except Exception as e:
+        err = "error setting up the firewall: {0}".format( traceback.format_exc() )
+        logging.error(err)
+
     return True
 
 def handle_go_offline(sysTrayIcon):
@@ -426,6 +438,12 @@ def handle_go_offline(sysTrayIcon):
         logging.critical("Service seems to be down")
         print e
         
+    try:
+        svcproxy.firewall_down()
+    except Exception as e:
+        err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
+        logging.error(err)
+
     return True
 
 def handle_quit(sysTrayIcon):

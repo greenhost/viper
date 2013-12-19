@@ -78,10 +78,10 @@ class RPCService(rpyc.Service):
             logging.debug("OpenVPN isn't running, trying to start process")
 
             # configure the Windows Firewall to block all IPv6 traffic
-            firewall.block_ipv6()
+            #firewall.block_ipv6()
             self.launcher.launch(cfgfile, logdir)
             # @TODOlaunch is async, perhaps this should be a callback
-            firewall.block_default_gateway()
+            #firewall.block_default_gateway()
         else:
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
             handle = management.OVPNInterface()
@@ -94,13 +94,13 @@ class RPCService(rpyc.Service):
         # configure the Windows Firewall to block all IPv6 traffic
         firewall.block_ipv6()
         # @TODO launch is async, perhaps this should be a callback
-        firewall.block_default_gateway()
+        firewall.block_default_gateway("none-specified")
 
     def exposed_firewall_down(self):
         """ Deactivate the firewall rules """
         # allow IPv6 traffic again
         firewall.unblock_ipv6()
-        firewall.unblock_default_gateway()
+        firewall.unblock_default_gateway("none-specified")
 
     def exposed_ovpn_stop(self):
         """ Use launcher to stop the OpenVPN process """

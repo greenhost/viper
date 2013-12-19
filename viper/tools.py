@@ -121,6 +121,7 @@ def flush_dns():
     :return True: is flushing is Successfully
     :return False: otherwise 
     """
+    logging.debug("Flushing DNS cache...")
     res = popen("ipconfig /flushdns").read().split()
     return True if 'Successfully' in res else False  # tested on windows 8 and windows 7
 

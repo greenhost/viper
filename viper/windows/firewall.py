@@ -71,9 +71,25 @@ def run_fwipv6(command):
 def block_ipv6():
 	"""Execute external fwipv6 tool to enable the Windows Firewall filtering of IPv6 traffic"""
 	logging.info("Configuring Windows Firewall to block IPv6 traffic...")
-	run_fwipv6("add")
+	run_fwipv6("add ipv6")
 
 def unblock_ipv6():
 	"""Execute external fwipv6 tool to disable the Windows Firewall filtering of IPv6 traffic"""
 	logging.info("Windows Firewall allows IPv6 traffic now...")
-	run_fwipv6("remove")
+	run_fwipv6("remove ipv6")
+
+def block_default_gateway(interface_ip):
+	logging.info("Blocking all traffic on the local subnet (gateway ip: {0})".format(interface_ip))
+	run_fwipv6("add defgateway")
+
+def unblock_default_gateway(interface_ip):
+	logging.info("Unblocking local subnet (gateway ip: {0})".format(interface_ip))
+	run_fwipv6("remove defgateway")
+
+def block_all_ports_except_vpn(vpn_port):
+	logging.info("Blocking all ports except the VPN's (vpn port: {0})".format(vpn_port))
+	pass
+
+def unblock_all_ports():
+	logging.info("Unblocking all ports")
+	pass
