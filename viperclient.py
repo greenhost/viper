@@ -27,6 +27,7 @@ import threading, time, traceback
 from pprint import pprint
 import logging
 import getopt
+import atexit
 
 import gettext
 from gettext import gettext as _
@@ -523,6 +524,13 @@ def main():
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()
 
+def on_exit():
+    """ exit handler takes care of restoring firewall state """
+    logging.info("Restoring firewall state to permit traffic outside of the tunnel")
+    if svcproxy:
+        svcproxy.firewall_down()
+
+
 if __name__ == '__main__':
     viper.ICONS = {
         'online' : get_resource_path('icons/online.ico'),
@@ -530,6 +538,8 @@ if __name__ == '__main__':
         'connecting' : get_resource_path('icons/connecting.ico'),
         'refresh' : get_resource_path('icons/refresh.ico')
     }
+
+    atexit.register( on_exit )
 
     fn = os.path.join(get_user_cwd(), 'viperclient.log')
     logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
