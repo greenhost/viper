@@ -46,10 +46,18 @@ namespace fwipv6
             get { return fwmngr.LocalPolicy.CurrentProfile.FirewallEnabled; }
         }
 
-        static string GLOBAL_UNICAST_ADDRESS = "2033::/3";  // IPv6 Global Unicast
-        static string VIPER_RULE_NAME = "Viper - Block IPv6";
+        public const string VIPER_RULE_IPv6 = "Viper - Block IPv6";
+		public const string VIPER_RULE_DEFGATEWAY = "Viper - Block default gateway subnet";
+		public const string VIPER_RULE_ALLPORTS = "Viper - Block all ports but VPN";
 
-        /*
+		/// <summary>
+		/// Known IP addresses, ranges and ip wildcards used in the firewall rules.
+		/// </summary>
+		const  string GLOBAL_UNICAST_ADDRESS = "2033::/3";  // IPv6 Global Unicast
+		const  string ANY_IP_ADDRESS = "*";
+		const  string LOCAL_SUBNET = "LocalSubnet";
+
+		/*
         static Firewall()
         {
             INetFwMgr fwmngr = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwMgr")) as INetFwMgr;
@@ -81,10 +89,44 @@ namespace fwipv6
             return null;
         }
 
-        public bool AddRule()
+		public bool AddRule_DefGateway(string gatewayIp)
+		{
+			// try to find the rule first, if found return successfully
+			INetFwRule2 rule = FindRule(VIPER_RULE_DEFGATEWAY);
+			if(null != rule) {
+				Console.WriteLine("Not adding rule because iit already exists...");
+				return true;
+			}
+
+			// if it's not found, add it
+			try
+			{
+				INetFwRule2 firewallRule = (INetFwRule2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
+
+				firewallRule.Name = VIPER_RULE_DEFGATEWAY;
+				firewallRule.Description = "Block all traffic through the default gateway";
+				firewallRule.Action = NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
+				firewallRule.Direction = NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
+				firewallRule.Enabled = true;
+				firewallRule.Protocol = (int)NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_ANY;
+				firewallRule.RemoteAddresses = Firewall.LOCAL_SUBNET;
+				firewallRule.LocalAddresses = Firewall.ANY_IP_ADDRESS;
+
+				this.fwpolicy.Rules.Add(firewallRule);
+
+				Console.WriteLine("Adding firewall rule '{0}'...", VIPER_RULE_DEFGATEWAY);
+			} catch (UnauthorizedAccessException uae) {
+				Console.WriteLine("I'm sorry Dave, I'm afraid I can't do that. You do not have sufficient privileges. Run again as admin.");
+			} catch (Exception e) {
+				return false;
+			}
+			return true;
+		}
+
+		public bool AddRule_ipv6()
         {
             // try to find the rule first, if found return successfully
-            INetFwRule2 rule = FindRule(VIPER_RULE_NAME);
+			INetFwRule2 rule = FindRule(VIPER_RULE_IPv6);
             if(null != rule) {
                 return true;
             }
@@ -94,7 +136,7 @@ namespace fwipv6
             {
                 INetFwRule2 firewallRule = (INetFwRule2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
 
-                firewallRule.Name = VIPER_RULE_NAME;
+				firewallRule.Name = VIPER_RULE_IPv6;
                 firewallRule.Description = "Block unwated IPv6 traffic while Viper OpenVPN client is running";
                 firewallRule.Action = NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
                 firewallRule.Direction = NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
@@ -103,41 +145,60 @@ namespace fwipv6
                 firewallRule.RemoteAddresses = GLOBAL_UNICAST_ADDRESS;
                 firewallRule.LocalAddresses = GLOBAL_UNICAST_ADDRESS;
 
-                fwpolicy.Rules.Add(firewallRule);
+                this.fwpolicy.Rules.Add(firewallRule);
 
-                Console.WriteLine("Adding firewall rule...");
+				Console.WriteLine("Adding firewall rule '{0}'...", VIPER_RULE_IPv6);
+			} catch (UnauthorizedAccessException uae) {
+				Console.WriteLine("I'm sorry Dave, I'm afraid I can't do that. You do not have sufficient privileges. Run again as admin.");
             } catch (Exception e) {
                 return false;
             }
             return true;
         }
 
-        public bool RemoveRule()
+		public bool AddRule(string name, string[] parameters) 
+		{
+			bool retval = false;
+
+			switch(name) {
+				case Firewall.VIPER_RULE_ALLPORTS:
+					break;
+			case Firewall.VIPER_RULE_DEFGATEWAY:
+					retval = this.AddRule_DefGateway(null);
+					break;
+			case Firewall.VIPER_RULE_IPv6:
+				retval = this.AddRule_ipv6 ();
+					break;
+			}
+			return retval;
+		}
+
+        public bool RemoveRule(string name)
         {
             try
             {
-                Console.WriteLine("Removing firewall rule...");
-                fwpolicy.Rules.Remove(VIPER_RULE_NAME);
+				Console.WriteLine("Removing firewall rule '{0}'", name);
+				this.fwpolicy.Rules.Remove(name);
             } catch (Exception e) {
                 return false;
             }
             return true;
         }
 
-        public bool EnableRule()
+        public bool EnableRule(string name)
         {
             bool retval = true;
 
-            INetFwRule2 rule = FindRule(VIPER_RULE_NAME);
+            INetFwRule2 rule = FindRule(name);
             if (null != rule)
             {
-                Console.WriteLine("Enabling firewall rule...");
+				Console.WriteLine("Enabling firewall rule '{0}'", name);
                 rule.Enabled = true;
                 Marshal.ReleaseComObject(rule);
             }
             else
             {
-                Console.WriteLine("Couldn't enable firewall rule " + VIPER_RULE_NAME + " because I coudn't find it.");
+                Console.WriteLine("Couldn't enable firewall rule '{0}' because I coudn't find it.", name);
                 retval = false;
             }
 
@@ -150,19 +211,24 @@ namespace fwipv6
             Console.WriteLine(@"fwipv6 manages the Windows Firewall to block all IPv6 traffic. For it to work it must be executed with elevated privileges.\n
 
 Usage:
-    fwipv6 add       -   adds rule
-    fwipv6 remove    -   removes rule
-    fwipv6 enable    -   enables the rule (rule must exist in current profile)
-    fwipv6 disable   -   disables the rule (rule must exist in current profile)
-    fwipv6 usage     -   prints this text
+    fwi add <rule>       -   adds rule
+    fwi remove <rule>    -   removes rule
+    fwi enable <rule>    -   enables the rule (rule must exist in current profile)
+    fwi disable <rule>   -   disables the rule (rule must exist in current profile)
+    fwi usage <rule>     -   prints this text
+
+Available rules:
+	ipv6				 - rule that denies/allows IPv6 traffic
+	defgateway			 - rule that blocks/unblocks all traffic on the default gateway (blocks local subnet)
+	allports			 - rule that blocks/unblocks all ports except those used by the VPN
 ");
         }
 
-        public bool DisableRule()
+        public bool DisableRule(string name)
         {
             bool retval = true;
 
-            INetFwRule2 rule = FindRule(VIPER_RULE_NAME);
+            INetFwRule2 rule = FindRule(name);
             if (null != rule)
             {
                 Console.WriteLine("Disabling firewall rule...");
@@ -171,7 +237,7 @@ Usage:
             }
             else
             {
-                Console.WriteLine("Couldn't disable firewall rule " + VIPER_RULE_NAME + " because I coudn't find it.");
+                Console.WriteLine("Couldn't disable firewall rule '{0}' because I coudn't find it.", name);
                 retval = false;
             }
 
@@ -182,49 +248,84 @@ Usage:
 
     class Program
     {
+		Firewall fwall;
+
+		private string ParseRuleFromCli(string []args)
+		{
+			string retval = null;
+
+			if(args.Length >= 2) {
+				switch (args[1].ToLower())
+				{
+					case "ipv6":
+					retval = Firewall.VIPER_RULE_IPv6;
+					break;
+					case "defgateway":
+					retval = Firewall.VIPER_RULE_DEFGATEWAY;
+					break;
+					case "allports":
+					retval = Firewall.VIPER_RULE_ALLPORTS;
+					break;
+				}
+			}
+
+			return retval;
+		}
+
+//		private string[] ParseRuleParameters(string[] args) 
+//		{
+//		}
+
+		public void go(string []args) {
+			this.fwall = new Firewall();
+			bool retval = true;
+
+			if (!this.fwall.FirewallEnabled) System.Environment.Exit(2);
+
+			string rule = ParseRuleFromCli(args);
+			//string[] parameters = ParseRuleParameters(rule, args);
+
+			if (args.Length > 0)
+			{
+				switch (args[0].ToLower())
+				{
+					case "add":
+						retval = this.fwall.AddRule(rule, null);
+						break;
+					case "remove":
+						retval = this.fwall.RemoveRule(rule);
+						break;
+					case "enable":
+						retval = this.fwall.EnableRule(rule);
+						break;
+					case "disable":
+						retval = this.fwall.DisableRule(rule);
+						break;
+					case "usage":
+						this.fwall.Usage();
+						retval = true;
+					break;
+				}
+			}
+			else
+			{
+				this.fwall.Usage();
+			}
+
+			// set system return code to be read from calling script
+			if (false == retval)
+			{
+				System.Environment.Exit(1);
+			}
+			else
+			{
+				System.Environment.Exit(0);
+			}
+		} // go(string [])
+
         static void Main(string[] args)
         {
-            Firewall fw = new Firewall();
-            bool retval = true;
-
-            if (!fw.FirewallEnabled) System.Environment.Exit(2);
-
-            if (args.Length > 0)
-            {
-                switch (args[0].ToLower())
-                {
-                    case "add":
-                        retval = fw.AddRule();
-                        break;
-                    case "remove":
-                        retval = fw.RemoveRule();
-                        break;
-                    case "enable":
-                        retval = fw.EnableRule();
-                        break;
-                    case "disable":
-                        retval = fw.DisableRule();
-                        break;
-                    case "usage":
-                        fw.Usage();
-                        retval = true;
-                        break;
-                }
-            }
-            else
-            {
-                fw.Usage();
-            }
-
-            // set system return code to be read from calling script
-            if (false == retval)
-            {
-                System.Environment.Exit(1);
-            }
-            else
-            {
-                System.Environment.Exit(0);
-            }
+        	new Program().go(args);
         } // Main
 
     } // class
