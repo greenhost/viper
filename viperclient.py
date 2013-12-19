@@ -527,27 +527,35 @@ def main():
 def on_exit():
     """ exit handler takes care of restoring firewall state """
     logging.info("Restoring firewall state to permit traffic outside of the tunnel")
-    if svcproxy:
+    try:
         svcproxy.firewall_down()
+    except Exception as e:
+        logging.error("Failed to restore firewall, we probably left the user out of internet: {0}".format(traceback.format_exc()))
 
 
 if __name__ == '__main__':
-    viper.ICONS = {
-        'online' : get_resource_path('icons/online.ico'),
-        'offline' : get_resource_path('icons/offline.ico'),
-        'connecting' : get_resource_path('icons/connecting.ico'),
-        'refresh' : get_resource_path('icons/refresh.ico')
-    }
+    try:
+        viper.ICONS = {
+            'online' : get_resource_path('icons/online.ico'),
+            'offline' : get_resource_path('icons/offline.ico'),
+            'connecting' : get_resource_path('icons/connecting.ico'),
+            'refresh' : get_resource_path('icons/refresh.ico')
+        }
 
-    atexit.register( on_exit )
+        atexit.register( on_exit )
 
-    fn = os.path.join(get_user_cwd(), 'viperclient.log')
-    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
+        fn = os.path.join(get_user_cwd(), 'viperclient.log')
+        logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
 
-    # run the main loop if it's not already running otherwise tell the user
-    if is_viper_running():
-        win32api.MessageBox(window_handle(), _("Viper can only run once. I found another instance running, so I will stop now."), _('Viper can only run once'), 0x10)
-        logging.warning("Another instance was running, will exit now.")
-        sys.exit(3) # already running
-    else:
-        run_unique( main )
+        # run the main loop if it's not already running otherwise tell the user
+        if is_viper_running():
+            win32api.MessageBox(window_handle(), _("Viper can only run once. I found another instance running, so I will stop now."), _('Viper can only run once'), 0x10)
+            logging.warning("Another instance was running, will exit now.")
+            sys.exit(3) # already running
+        else:
+            run_unique( main )
+    except Exception as e:
+        logging.critical( "Abnormal termination: {0}".format(traceback.format_exc()) )
+    finally:
+        # try to recover from bad crash and restore firewall if possible
+        on_exit()
