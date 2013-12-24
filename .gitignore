@@ -16,6 +16,12 @@ ehthumbs.db
 *.ovpn
 *.spec
 
+# binaries
+utils/*.exe
+
+# sensitive files
+resources/provider.json
+
 # build byproducts
 build
 dist

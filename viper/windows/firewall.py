@@ -67,7 +67,7 @@ def run_fwipv6(command):
 			raise FirewallException(msg)
 	except OSError, e:
 		# @todo check if the exception above is actually raised by subprocess.Popen
-		msg = "Couldn't execute subprocess '{}'".format(path)
+		msg = "Couldn't execute subprocess '{0}'".format(path)
 		# log and propagate
 		logging.critical(msg)
 		raise FirewallException(msg)

@@ -36,6 +36,7 @@ from pprint import pprint
 
 from viper import routing 
 from viper.tools import *
+from viper import provider
 import traceback
 
 class OVPNInterface:
@@ -130,19 +131,20 @@ class OVPNInterface:
 
                 retval = resp
 
-                # always cross-check the routing with the last known gateway                    
-                xcheckok = False
-                if self.last_known_gateway:
-                    try:
-                        if not routing.verify_vpn_routing_table(self.last_known_gateway):
-                            retval['viper_status'] = "DISCONNECTED"
-                            logging.debug("Routing verification didn't pass")
-                        else:
-                            xcheckok = True
-                    except routing.InconsistentRoutingTable:
-                        # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
-                        retval['viper_status'] =  "INCONSISTENT"
-                        logging.debug("Routing verification is not consistent")
+                if provider.get_provider_setting('route_cross_check'):
+                    # cross-check the routing with the last known gateway                    
+                    xcheckok = False
+                    if self.last_known_gateway:
+                        try:
+                            if not routing.verify_vpn_routing_table(self.last_known_gateway):
+                                retval['viper_status'] = "DISCONNECTED"
+                                logging.debug("Routing verification didn't pass")
+                            else:
+                                xcheckok = True
+                        except routing.InconsistentRoutingTable:
+                            # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
+                            retval['viper_status'] =  "INCONSISTENT"
+                            logging.debug("Routing verification is not consistent")
 
                 if resp['ovpn_state'] in ['CONNECTED']:
                     # OpenVPN says we are connected, don't believe it, verify cross-check
