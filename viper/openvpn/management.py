@@ -36,7 +36,6 @@ from pprint import pprint
 
 from viper import routing 
 from viper.tools import *
-from viper import provider
 import traceback
 
 class OVPNInterface:
@@ -130,6 +129,9 @@ class OVPNInterface:
                 self.retries = 0 # reset retry counter
 
                 retval = resp
+
+                # load provider config
+                from viper import provider
 
                 # cross-check the routing with the last known gateway                    
                 xcheckok = False
