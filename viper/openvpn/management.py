@@ -131,9 +131,9 @@ class OVPNInterface:
 
                 retval = resp
 
+                # cross-check the routing with the last known gateway                    
+                xcheckok = False
                 if provider.get_provider_setting('route_cross_check'):
-                    # cross-check the routing with the last known gateway                    
-                    xcheckok = False
                     if self.last_known_gateway:
                         try:
                             if not routing.verify_vpn_routing_table(self.last_known_gateway):
@@ -153,7 +153,11 @@ class OVPNInterface:
                         self.connected = True
                         retval['viper_status'] =  "CONNECTED"
                     else:
-                        retval['viper_status'] =  "DISCONNECTED"
+                        # if cross check didn't pass check if it was required
+                        if provider.get_provider_setting('route_cross_check'):
+                            retval['viper_status'] =  "DISCONNECTED"
+                        else:
+                            retval['viper_status'] =  "CONNECTED"
 
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
                     if 'gateway' in resp:
