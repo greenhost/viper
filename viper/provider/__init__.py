@@ -20,6 +20,7 @@
 import os, sys, re
 import json
 import logging
+from viper import tools
 
 provider = None
 
@@ -43,4 +44,6 @@ def get_provider_setting(name):
 	return provider.get(name)
 
 provider = ProviderSettings()
-provider.load('resources/provider.json')
+path = tools.get_viper_home()
+path = os.path.join(path, 'resources/provider.json')
+provider.load(path)
