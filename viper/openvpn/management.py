@@ -131,7 +131,10 @@ class OVPNInterface:
                 retval = resp
 
                 # load provider config
-                from viper import provider
+                try:
+                    from viper import provider
+                except Exception:
+                    logging.error("Failed to load provider information: {0}".format(traceback.format_exc()))
 
                 # cross-check the routing with the last known gateway                    
                 xcheckok = False
@@ -159,6 +162,7 @@ class OVPNInterface:
                         if provider.get_provider_setting('route_cross_check'):
                             retval['viper_status'] =  "DISCONNECTED"
                         else:
+                            logging.debug("Connected but skipping routing cross-check")
                             retval['viper_status'] =  "CONNECTED"
 
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
