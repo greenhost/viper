@@ -17,7 +17,7 @@ ehthumbs.db
 *.spec
 
 # binaries
-utils/
+/utils/*.exe
 
 # sensitive files
 resources/provider.json
