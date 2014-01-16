@@ -155,3 +155,9 @@ def windows_has_tap_device():
             pass
     return False
 
+def sanitize_ip(ipaddr):
+    """
+    Make sure the IP address is a dot-separated numeric quad
+    """
+    quad = [int(byte) for byte in ipaddr.split(".")]
+    return "%d.%d.%d.%d" % tuple(quad)

@@ -20,50 +20,20 @@
 """
 Routing Table Tools for Windows. These are used to cross-check that
 Internet traffic is correctly routed.
-
-This is how a normal IPv4 routing table looks like
-
-Network Destination        Netmask          Gateway       Interface  Metric
-          0.0.0.0          0.0.0.0    192.168.2.254      192.168.2.1     25
-        127.0.0.0        255.0.0.0         On-link         127.0.0.1    306
-        127.0.0.1  255.255.255.255         On-link         127.0.0.1    306
-        [...]		[...]					[...]			[...]		[...]
-  255.255.255.255  255.255.255.255         On-link       192.168.2.1    281
-
-The routes marked as 'On-link' do not need a gateway because they are local. Windows
-lists the routes in an inverse order to Linux based systems. Linux links the 
-default route last and lists them in the order of prevalence, on Windows they are 
-listed in reverse to their order of prevalence.
-
-When OpenVPN is running in EIP mode and all internet traffic is channeled through it
-a routing trick is added to the table. In addition to your default route:
-
-          0.0.0.0          0.0.0.0    192.168.2.254      192.168.2.1     25
-
-You will see at least two new ones with the same gateway and the same interface:
-
-          0.0.0.0        128.0.0.0     172.xx.xx.xx     172.yy.yy.yy     30
-        128.0.0.0        128.0.0.0     172.xx.xx.xx     172.yy.yy.yy     30
-
-These routes are pushed by the OpenVPN server and basically override your
-default route forcing all Internet traffic to go from your 
-interface (172.yy.yy.yy) through the VPN gateway (172.xx.xx.xx).
-
-If these routes do not exist in your routing table while you are connected to 
-the VPN, you might be leaking traffic through your default route unknowingly.
 """
 import logging
 from os import popen
 from re import match
 from pprint import pprint
+import subprocess
 
 class InconsistentRoutingTable(Exception):
 	pass
 
-def get_default_route():
-	rtr_table = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]
-	# on windows the default route is always listed first
-	return rtr_table[0]
+# def get_default_route():
+# 	rtr_table = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]
+# 	# on windows the default route is always listed first
+# 	return rtr_table[0]
 
 def get_all_routes():
 	retval = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]
@@ -81,14 +51,43 @@ def get_default_route():
 
 	return None
 
+def get_default_gateway():
+	"""
+	Obtain the ip address of the current default gateway
+	"""
+	rt = get_default_route()
+	return rt[2] if len(rt) > 2 else None
+
 def filter_route(destination, netmask, iface):
 	tab = get_iface_route(iface)
 	retval = [row for row in tab if ( (row[0] == destination) and (row[1] == netmask))]
 	return retval
 
-def verify_vpn_routing_table(ifaceip):
+
+def delete_default_gateway(self):
+    save_default_gateway()
+    route_del("0.0.0.0", "0.0.0.0")
+
+def restore_default_gateway(self):
+    route_add("0.0.0.0", "0.0.0.0")
+
+
+def route_add(self, net, mask="255.255.255.255", dest):
+    dst = sanitise_addr(dest)
+    cmd = "route add %s mask %s %s" % (net, mask, dst)
+    subprocess.call(cmd, shell=True)
+
+def route_del(self, net, mask="255.255.255.255", dest):
+    dst = sanitise_addr(dest)
+    cmd = "route delete %s mask %s %s" % (net, mask, dst)
+    subprocess.call(cmd.split(), shell=True)
+
+## ######################################################################################
+## Filter implementations
+## ######################################################################################
+class VerifyTwoRoutes:
 	""" 
-	Given an interface address that we obtain from querying OpenVPN, we should check for the existence of
+	This is a pass filter. Given an interface address that we obtain from querying OpenVPN, we should check for the existence of
 	two (and only two) entries in the routing table.
 	destination			netmask			iface
 	0.0.0.0             128.0.0.0       <given>
@@ -97,18 +96,38 @@ def verify_vpn_routing_table(ifaceip):
 	If we find more than one of these then our routing table is corrupted, this might be from a OpenVPN 
 	run that didn't close properly.
 	"""
-	route1 = filter_route("0.0.0.0", "128.0.0.0", ifaceip)
-	route2 = filter_route("128.0.0.0", "128.0.0.0", ifaceip)
+	def __init__(self, ifaceip):
+		self.interface = ifaceip
 
-	if( (len(route1) == 1) and (len(route2) == 1) ):  # if one and only one route was found
-		logging.debug("Verifying routing table for interface '%s': PASSED" % ifaceip)
-		return True
-	# the following condition might not be true, some providers might provide
-	# several of these routes for redundancy's sake. Viper wants to be
-	# conservative about this and wants to make sure that only one EIP gateway exists.
-	elif ( (len(route1) > 1) or (len(route2) > 1) ):
-		raise InconsistentRoutingTable("A routing table with multiple entries for interface %s was found" % ifaceip)
-	else:
-		logging.debug("Verifying routing table for interface '%s': FAILED" % ifaceip)
-		return False
+	def pass(self):
+		route1 = filter_route("0.0.0.0", "128.0.0.0", self.interface)
+		route2 = filter_route("128.0.0.0", "128.0.0.0", self.interface)
+
+		if( (len(route1) == 1) and (len(route2) == 1) ):  # if one and only one route was found
+			logging.debug("Verifying routing table for interface '%s': PASSED" % self.interface)
+			return True
+		# the following condition might not be true, some providers might provide
+		# several of these routes for redundancy's sake. Viper wants to be
+		# conservative about this and wants to make sure that only one EIP gateway exists.
+		elif ( (len(route1) > 1) or (len(route2) > 1) ):
+			raise InconsistentRoutingTable("A routing table with multiple entries for interface %s was found" % self.interface)
+		else:
+			logging.debug("Verifying routing table for interface '%s': FAILED" % self.interface)
+			return False
+
+class VerifyDefaultGateway:
+	"""
+	Makes sure there is a single default gateway entry in the routing table
+	"""
+	def __init__(gwip):
+		self.gateway_ip = gwip
+
+	def pass(self):
+		defroute = filter_route("0.0.0.0", "0.0.0.0", self.gateway_ip)
+		if( len(defroute) == 1 ):
+			logging.debug("Verifying default gateway '%s': PASSED" % self.gateway_ip)
+			return True
+		else:
+			logging.debug("Verifying default gateway '%s': FAILED" % self.gateway_ip)
+			return False
 
