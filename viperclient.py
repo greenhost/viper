@@ -182,6 +182,9 @@ class ServiceProxy:
     def firewall_down(self):
         self.connection.root.firewall_down()
 
+    def set_default_gateway(self, gwip):
+        self.connection.root.set_default_gateway(gwip)
+
     def get_connection_settings(self):
         status = self.ovpn.poll_status()
         logging.debug(status)
@@ -387,6 +390,9 @@ def handle_go_online(sysTrayIcon):
     # entries are injected by OpenVPN?
     flush_dns()
 
+    # @todo save default gateway onto user dir
+    tools.save_default_gateway()
+
     # if Windows Firewall is not enabled, refuse to connect
     if not firewall.is_firewall_enabled():
         logging.warning("Firewall is not enabled. I will not connect.")
@@ -444,6 +450,16 @@ def handle_go_offline(sysTrayIcon):
     except Exception as e:
         err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
         logging.error(err)
+
+    # @todo restore default gateway
+    try:
+        gwip = tools.recover_default_gateway()
+        # only the service running with elevated privileges can insert the default route
+        svcproxy.set_default_gateway(gwip)
+    except Exception as e:
+        err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
+        logging.error(err)
+
 
     return True
 

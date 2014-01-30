@@ -25,6 +25,7 @@ import logging
 from os import popen
 from re import match
 from pprint import pprint
+from viper import tools
 import subprocess
 
 class InconsistentRoutingTable(Exception):
@@ -63,29 +64,22 @@ def filter_route(destination, netmask, iface):
 	retval = [row for row in tab if ( (row[0] == destination) and (row[1] == netmask))]
 	return retval
 
-
-def delete_default_gateway(self):
-    save_default_gateway()
-    route_del("0.0.0.0", "0.0.0.0")
-
-def restore_default_gateway(self):
-    route_add("0.0.0.0", "0.0.0.0")
-
-
-def route_add(self, net, mask="255.255.255.255", dest):
-    dst = sanitise_addr(dest)
+def route_add(net, mask, dest):
+    dst = tools.sanitize_ip(dest)
     cmd = "route add %s mask %s %s" % (net, mask, dst)
+    logging.debug("Adding route (net {0}, mask {1}, dst {2})".format(net, mask, dst))
     subprocess.call(cmd, shell=True)
 
-def route_del(self, net, mask="255.255.255.255", dest):
-    dst = sanitise_addr(dest)
+def route_del(net, mask, dest):
+    dst = tools.sanitize_ip(dest)
     cmd = "route delete %s mask %s %s" % (net, mask, dst)
+    logging.debug("Removing route (net {0}, mask {1}, dst {2})".format(net, mask, dst))
     subprocess.call(cmd.split(), shell=True)
 
 ## ######################################################################################
 ## Filter implementations
 ## ######################################################################################
-class VerifyTwoRoutes:
+class MonitorSplitRoutes:
 	""" 
 	This is a pass filter. Given an interface address that we obtain from querying OpenVPN, we should check for the existence of
 	two (and only two) entries in the routing table.
@@ -99,7 +93,7 @@ class VerifyTwoRoutes:
 	def __init__(self, ifaceip):
 		self.interface = ifaceip
 
-	def pass(self):
+	def verify(self):
 		route1 = filter_route("0.0.0.0", "128.0.0.0", self.interface)
 		route2 = filter_route("128.0.0.0", "128.0.0.0", self.interface)
 
@@ -115,14 +109,14 @@ class VerifyTwoRoutes:
 			logging.debug("Verifying routing table for interface '%s': FAILED" % self.interface)
 			return False
 
-class VerifyDefaultGateway:
+class MonitorDefaultGateway:
 	"""
 	Makes sure there is a single default gateway entry in the routing table
 	"""
-	def __init__(gwip):
+	def __init__(self, gwip):
 		self.gateway_ip = gwip
 
-	def pass(self):
+	def verify(self):
 		defroute = filter_route("0.0.0.0", "0.0.0.0", self.gateway_ip)
 		if( len(defroute) == 1 ):
 			logging.debug("Verifying default gateway '%s': PASSED" % self.gateway_ip)

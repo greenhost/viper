@@ -22,6 +22,7 @@ from os import popen
 import logging
 import servicemanager
 import appdirs
+from viper import routing
 
 try:
     import psutil
@@ -161,3 +162,44 @@ def sanitize_ip(ipaddr):
     """
     quad = [int(byte) for byte in ipaddr.split(".")]
     return "%d.%d.%d.%d" % tuple(quad)
+
+
+## ##########################################################################
+## Routing stack helpers
+## ##########################################################################
+def save_default_gateway():
+    defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
+    gwip = routing.get_default_gateway()
+    try:
+        with file(defaultgw, 'w+') as f:
+            f.write( str(gwip) )
+    except Exception as e:
+        logging.info("Failed to save default gateway to file {0}".format(defaultgw))
+
+def recover_default_gateway():
+    """ 
+    Get the last known default gateway configuration from a file on disk
+
+    :returns: IP address of the default gateway if found, None if nothing is found
+    """
+    defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
+    try:
+        if os.path.isfile( defaultgw ):
+            with open(defaultgw, 'r') as f:
+                content = f.read()
+                return sanitize_ip( str(content) )
+        else:
+            return None
+    except Exception as e:
+        logging.info("Failed to load default gateway from file {0}".format(defaultgw))
+        return None
+
+def delete_default_gateway():
+    save_default_gateway()
+    gwip = routing.get_default_gateway()
+    routing.route_del("0.0.0.0", "0.0.0.0", gwip)
+
+def restore_default_gateway():
+    gwip = recover_default_gateway()
+    routing.route_add("0.0.0.0", "0.0.0.0", gwip)
+
