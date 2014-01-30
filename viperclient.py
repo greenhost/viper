@@ -78,7 +78,7 @@ def feedback_online(sysTrayIcon):
                         
                          (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
                          (_('Go offline...'), None, handle_go_offline, None),
-                         #('Validate against server...', None, handle_validate_server, None)
+                         (_('Validate against server...'), None, handle_validate_server, None)
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -91,6 +91,7 @@ def feedback_offline(sysTrayIcon):
                         
                          (_('Go online...'), None, handle_go_online, None),
                          (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Validate against server...'), None, handle_validate_server, None)
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -109,6 +110,7 @@ def feedback_connecting(sysTrayIcon):
                         
                          (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
                          (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Validate against server...'), None, handle_validate_server, None)
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -321,7 +323,10 @@ def vpn_browser_check(url):
     webbrowser.open(url)
 
 def handle_validate_server(sysTrayIcon):
-    vpn_browser_check(checkurl)
+    from viper.provider import *
+    url = provider.get('landing-page')
+    logging.debug("Validating connection against landing page {0}".format(url))
+    vpn_browser_check( url )
     return True
 
 def handle_configure(sysTrayIcon):
