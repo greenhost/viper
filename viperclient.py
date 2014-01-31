@@ -324,7 +324,7 @@ def vpn_browser_check(url):
 
 def handle_validate_server(sysTrayIcon):
     from viper.provider import *
-    url = provider.get('landing-page')
+    url = provider.get('landing_page')
     logging.debug("Validating connection against landing page {0}".format(url))
     vpn_browser_check( url )
     return True
