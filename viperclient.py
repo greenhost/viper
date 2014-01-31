@@ -37,7 +37,6 @@ import viper
 from viper import routing 
 from viper.openvpn import launcher, management
 from viper.tools import *
-from viper.provider import *
 from viper.windows import systray, balloon, firewall
 
 # dependencies
@@ -320,7 +319,7 @@ def vpn_browser_check(url):
     webbrowser.open(url)
 
 def handle_validate_server(sysTrayIcon):
-    url = provider.get('landing_page')
+    url = get_provider_setting('landing_page')
     logging.debug("Validating connection against landing page {0}".format(url))
     vpn_browser_check( url )
     return True
@@ -564,6 +563,9 @@ if __name__ == '__main__':
 
         fn = os.path.join(get_user_cwd(), 'viperclient.log')
         logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
+
+        # load provider config
+        from viper.provider import *
 
         # run the main loop if it's not already running otherwise tell the user
         if is_viper_running():
