@@ -456,13 +456,13 @@ def handle_go_offline(sysTrayIcon):
         err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
         logging.error(err)
 
-    # @todo restore default gateway
+    # restore default gateway
     try:
         gwip = tools.recover_default_gateway()
         # only the service running with elevated privileges can insert the default route
         svcproxy.set_default_gateway(gwip)
     except Exception as e:
-        err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
+        err = "error restoring the default gateway: {0}".format( traceback.format_exc() )
         logging.error(err)
 
 
