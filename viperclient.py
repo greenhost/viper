@@ -37,6 +37,7 @@ import viper
 from viper import routing 
 from viper.openvpn import launcher, management
 from viper.tools import *
+from viper.provider import *
 from viper.windows import systray, balloon, firewall
 
 # dependencies
@@ -74,11 +75,10 @@ def feedback_online(sysTrayIcon):
         sysTrayIcon.icon = viper.ICONS['online']
         sysTrayIcon.refresh_icon()
 
-        menu_options = (( _('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
-                        
+        menu_options = ( (_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
                          (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
                          (_('Go offline...'), None, handle_go_offline, None),
-                         (_('Validate against server...'), None, handle_validate_server, None)
+                         (_('Validate against server...'), None, handle_validate_server, None),
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -87,11 +87,10 @@ def feedback_offline(sysTrayIcon):
     if sysTrayIcon and not quitting:
         sysTrayIcon.icon = viper.ICONS['offline']
         sysTrayIcon.refresh_icon()
-        menu_options = ((_('Configure...'), None, handle_configure, None),
-                        
+        menu_options = ( (_('Configure...'), None, handle_configure, None),
                          (_('Go online...'), None, handle_go_online, None),
-                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
-                         (_('Validate against server...'), None, handle_validate_server, None)
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED),
+                         (_('Validate against server...'), None, handle_validate_server, None),
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -106,11 +105,10 @@ def feedback_connecting(sysTrayIcon):
         monitor.isstarting = False
         sysTrayIcon.refresh_icon()
 
-        menu_options = ((_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
-                        
+        menu_options = ( (_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
                          (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
-                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
-                         (_('Validate against server...'), None, handle_validate_server, None)
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED),
+                         (_('Validate against server...'), None, handle_validate_server, None),
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -121,9 +119,8 @@ def feedback_starting(sysTrayIcon):
         sysTrayIcon.refresh_icon()
 
         menu_options = ((_('Configure...'), None, handle_configure, win32con.MFS_DISABLED),
-                        
                          (_('Go online...'), None, handle_go_online, win32con.MFS_DISABLED),
-                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED)
+                         (_('Go offline...'), None, handle_go_offline, win32con.MFS_DISABLED),
                         )
         sysTrayIcon.set_menu(menu_options)
 
@@ -323,8 +320,7 @@ def vpn_browser_check(url):
     webbrowser.open(url)
 
 def handle_validate_server(sysTrayIcon):
-    from viper.provider import *
-    url = provider.get('landing-page')
+    url = provider.get('landing_page')
     logging.debug("Validating connection against landing page {0}".format(url))
     vpn_browser_check( url )
     return True
@@ -470,6 +466,7 @@ def handle_go_offline(sysTrayIcon):
 
 def handle_quit(sysTrayIcon):
     quitting = True
+    handle_go_offline(None)
     # stop monitoring
     stop_monitor()
     logging.info('Bye, then.')
