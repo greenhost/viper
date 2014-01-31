@@ -22,7 +22,7 @@ from os import popen
 import logging
 import servicemanager
 import appdirs
-from viper import routing
+from viper.routing import *
 
 try:
     import psutil
@@ -169,7 +169,7 @@ def sanitize_ip(ipaddr):
 ## ##########################################################################
 def save_default_gateway():
     defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
-    gwip = routing.get_default_gateway()
+    gwip = get_default_gateway()
     try:
         with file(defaultgw, 'w+') as f:
             f.write( str(gwip) )
@@ -196,10 +196,10 @@ def recover_default_gateway():
 
 def delete_default_gateway():
     save_default_gateway()
-    gwip = routing.get_default_gateway()
-    routing.route_del("0.0.0.0", "0.0.0.0", gwip)
+    gwip = get_default_gateway()
+    route_del("0.0.0.0", "0.0.0.0", gwip)
 
 def restore_default_gateway():
     gwip = recover_default_gateway()
-    routing.route_add("0.0.0.0", "0.0.0.0", gwip)
+    route_add("0.0.0.0", "0.0.0.0", gwip)
 

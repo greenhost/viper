@@ -25,7 +25,7 @@ import logging
 from os import popen
 from re import match
 from pprint import pprint
-from viper import tools
+from viper.tools import *
 import subprocess
 
 class InconsistentRoutingTable(Exception):
@@ -65,13 +65,13 @@ def filter_route(destination, netmask, iface):
 	return retval
 
 def route_add(net, mask, dest):
-    dst = tools.sanitize_ip(dest)
+    dst = sanitize_ip(dest)
     cmd = "route add %s mask %s %s" % (net, mask, dst)
     logging.debug("Adding route (net {0}, mask {1}, dst {2})".format(net, mask, dst))
     subprocess.call(cmd, shell=True)
 
 def route_del(net, mask, dest):
-    dst = tools.sanitize_ip(dest)
+    dst = sanitize_ip(dest)
     cmd = "route delete %s mask %s %s" % (net, mask, dst)
     logging.debug("Removing route (net {0}, mask {1}, dst {2})".format(net, mask, dst))
     subprocess.call(cmd.split(), shell=True)
