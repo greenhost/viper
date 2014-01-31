@@ -17,6 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import platform
+import sys
 
 _system = platform.system()
 
@@ -24,3 +25,5 @@ IS_WIN = True if _system == "Windows" else False
 IS_MAC = True if _system == "Darwin" else False
 IS_LINUX = True if _system == "Linux" else False
 IS_UNIX = IS_MAC or IS_LINUX
+
+IS_64BIT = sys.maxsize > 2**32 

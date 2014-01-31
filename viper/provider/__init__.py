@@ -22,8 +22,6 @@ import json
 import logging
 from viper import tools
 
-provider = None
-
 class ProviderSettings:
 	def __init__(self):
 		self.settings = {}
@@ -40,10 +38,9 @@ class ProviderSettings:
 
 def get_provider_setting(name):
 	""" Get a configuration value from the provider file for the given key """
-	global provider
+	provider = ProviderSettings()
+	path = tools.get_viper_home()
+	path = os.path.join(path, 'resources/provider.json')
+	provider.load(path)
 	return provider.get(name)
 
-provider = ProviderSettings()
-path = tools.get_viper_home()
-path = os.path.join(path, 'resources/provider.json')
-provider.load(path)
