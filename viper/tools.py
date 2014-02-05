@@ -22,7 +22,6 @@ from os import popen
 import logging
 import servicemanager
 import appdirs
-from viper import routing
 
 try:
     import psutil
@@ -168,6 +167,7 @@ def sanitize_ip(ipaddr):
 ## Routing stack helpers
 ## ##########################################################################
 def save_default_gateway():
+    from viper import routing
     defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
     gwip = routing.get_default_gateway()
     try:
@@ -193,13 +193,16 @@ def recover_default_gateway():
     except Exception as e:
         logging.info("Failed to load default gateway from file {0}".format(defaultgw))
         return None
+    finally:
+        os.unlink(defaultgw)
 
 def delete_default_gateway():
+    from viper import routing
     save_default_gateway()
     gwip = routing.get_default_gateway()
-    routing.route_del("0.0.0.0", "0.0.0.0", gwip)
+    route_del("0.0.0.0", "0.0.0.0", gwip)
 
 def restore_default_gateway():
     gwip = recover_default_gateway()
-    routing.route_add("0.0.0.0", "0.0.0.0", gwip)
+    route_add("0.0.0.0", "0.0.0.0", gwip)
 
