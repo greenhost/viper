@@ -250,13 +250,13 @@ class ConnectionMonitor(threading.Thread):
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
                     feedback_offline(trayapp)
-                    if user_wants_online:
-                        r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
-                        if r == win32con.IDYES:
-                            logging.debug("User requested a reconnect, trying to send hangup signal to stack")
-                            svcproxy.hangup()
-                    # # @todo use a blocking dialog a balloon is completely innapropriate
-                    # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
+                    # @note this was annoying and is no longer required as the connection is firewalled
+                    # user will eventually notice that there's no internet connection.
+                    # if user_wants_online:
+                    #     r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
+                    #     if r == win32con.IDYES:
+                    #         logging.debug("User requested a reconnect, trying to send hangup signal to stack")
+                    #         svcproxy.hangup()
 
                 # allow the client to time out for a few retries, keep reporting previous state
                 if self.state == "TIMED-OUT":
@@ -427,24 +427,9 @@ def handle_go_online(sysTrayIcon):
 
     return True
 
-def handle_go_offline(sysTrayIcon):
-    global svcproxy, monitor, user_wants_online
 
-    # user has explicitly indicate that she wants to be offline
-    user_wants_online = False
-
-    monitor.isstarting = False
-    # connected = svcproxy.is_connected()
-    # if not connected:
-    #     show_message(_("VPN not online, cannot go offline when offline, is connected: {0}".format(connected) ), _('Already offline'))
-    #     return False
-
-    try:
-        svcproxy.disconnect()
-    except Exception, e:
-        logging.critical("Service seems to be down")
-        print e
-        
+def restore_network_stack():
+    logging.info("Restoring firewall state to permit traffic outside of the tunnel")
     try:
         svcproxy.firewall_down()
     except Exception as e:
@@ -452,6 +437,7 @@ def handle_go_offline(sysTrayIcon):
         logging.error(err)
 
     # restore default gateway
+    logging.info("Restoring default gateway")
     try:
         gwip = tools.recover_default_gateway()
         # only the service running with elevated privileges can insert the default route
@@ -461,6 +447,21 @@ def handle_go_offline(sysTrayIcon):
         logging.error(err)
 
 
+def handle_go_offline(sysTrayIcon):
+    global svcproxy, monitor, user_wants_online
+
+    # user has explicitly indicated that she wants to be offline
+    user_wants_online = False
+
+    monitor.isstarting = False
+
+    try:
+        svcproxy.disconnect()
+    except Exception, e:
+        logging.critical("Service seems to be down")
+        print e
+        
+    restore_network_stack()
     return True
 
 def handle_quit(sysTrayIcon):
