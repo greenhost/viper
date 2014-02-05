@@ -12,6 +12,10 @@ ehthumbs.db
 *.pyc
 *.log
 
+# sensitive files
+resources/provider.json
+untracked/*
+
 # vpn config files
 *.ovpn
 *.spec

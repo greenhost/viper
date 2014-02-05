@@ -234,12 +234,13 @@ class ConnectionMonitor(threading.Thread):
                 # immediately report it with a popup when the connection is lost
                 if ( (self.last_state == "CONNECTED") and (self.state == "DISCONNECTED") ):
                     feedback_offline(trayapp)
-                    r = win32api.MessageBox(0, _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO)
-                    if r == win32con.IDYES:
-                        logging.debug("User requested a reconnect, trying to send hangup signal to stack")
-                        svcproxy.hangup()
-                    # # @todo use a blocking dialog a balloon is completely innapropriate
-                    # balloon.balloon_tip("Secure connection lost!", "The connection to the VPN has dropped, your communications are no longer protected. \n\nRestart Viper to secure your connection again.")
+                    # @note this was annoying and is no longer required as the connection is firewalled
+                    # user will eventually notice that there's no internet connection.
+                    # if user_wants_online:
+                    #     r = win32api.MessageBox(window_handle(), _('Your connection has dropped. You are now offline. Would you like to try reconnecting?'), _('Connection dropped'), win32con.MB_YESNO | win32con.MB_SYSTEMMODAL)
+                    #     if r == win32con.IDYES:
+                    #         logging.debug("User requested a reconnect, trying to send hangup signal to stack")
+                    #         svcproxy.hangup()
 
                 # report state on the systray
                 if self.state == "CONNECTED":
@@ -296,7 +297,9 @@ def vpn_browser_check(url):
     webbrowser.open(url)
 
 def handle_validate_server(sysTrayIcon):
-    vpn_browser_check(checkurl)
+    url = get_provider_setting('landing_page')
+    logging.debug("Validating connection against landing page {0}".format(url))
+    vpn_browser_check( url )
     return True
 
 def handle_configure(sysTrayIcon):
@@ -385,6 +388,24 @@ def handle_go_online(sysTrayIcon):
 
     return True
 
+def restore_network_stack():
+    logging.info("Restoring firewall state to permit traffic outside of the tunnel")
+    try:
+        svcproxy.firewall_down()
+    except Exception as e:
+        err = "error tearing down the firewall: {0}".format( traceback.format_exc() )
+        logging.error(err)
+
+    # restore default gateway
+    logging.info("Restoring default gateway")
+    try:
+        gwip = tools.recover_default_gateway()
+        # only the service running with elevated privileges can insert the default route
+        svcproxy.set_default_gateway(gwip)
+    except Exception as e:
+        err = "error restoring the default gateway: {0}".format( traceback.format_exc() )
+        logging.error(err)
+
 def handle_go_offline(sysTrayIcon):
     global svcproxy, monitor
 
@@ -400,12 +421,14 @@ def handle_go_offline(sysTrayIcon):
         logging.critical("Service seems to be down")
         print e
         
+    restore_network_stack()
     return True
 
 def handle_quit(sysTrayIcon):
     quitting = True
     # stop monitoring
     stop_monitor()
+    restore_network_stack()
     logging.info('Bye, then.')
     #os._exit(os.EX_OK)
 
@@ -478,6 +501,11 @@ def main():
 
     # !!! must call the loop function to enter the win32 message pump
     trayapp.loop()
+
+def on_exit():
+    """ exit handler takes care of restoring firewall state """
+    restore_network_stack()
+
 
 if __name__ == '__main__':
     viper.ICONS = {
