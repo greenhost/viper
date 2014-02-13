@@ -4,6 +4,8 @@
 Thums.db
 ehthumbs.db
 
+*.pem
+
 *.userprefs
 .project
 .pydevproject
