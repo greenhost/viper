@@ -153,8 +153,8 @@ class OVPNInterface:
                             logging.debug("Routing verification is not consistent")
 
                 # verify that the default gateway hasn't changed under our feet
-                if provider.get_provider_setting('monitor_default_gateway') and self.monitor_default_gateway:
-                    if self.monitor_default_gateway.verify():
+                if provider.get_provider_setting('monitor_default_gateway') and self.gateway_monitor:
+                    if self.gateway_monitor.verify():
                         xcheckok = True
 
                 if resp['ovpn_state'] in ['CONNECTED']:
@@ -176,8 +176,8 @@ class OVPNInterface:
                         self.last_known_gateway = resp['interface'] #resp['gateway']
 
                     # if we are not monitoring the default gateway yet, create a monitor for it
-                    if not self.monitor_default_gateway:
-                        self.monitor_default_gateway = routing.MonitorDefaultGateway(self.last_known_gateway)
+                    if not self.gateway_monitor:
+                        self.gateway_monitor = routing.MonitorDefaultGateway(self.last_known_gateway)
 
                 elif resp['ovpn_state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
                     self.connected = False
