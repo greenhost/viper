@@ -44,6 +44,7 @@ class OVPNInterface:
         self.sock = None
         self.last_known_gateway = None  # in this session, we don't save to disk between sessions
         self.retries = 0
+        self.gateway_monitor = None
 
     def send(self, command, connection_timeout = .5, response_delay = .5):
         retval = None
@@ -151,6 +152,11 @@ class OVPNInterface:
                             retval['viper_status'] =  "INCONSISTENT"
                             logging.debug("Routing verification is not consistent")
 
+                # verify that the default gateway hasn't changed under our feet
+                if provider.get_provider_setting('monitor_default_gateway') and self.monitor_default_gateway:
+                    if self.monitor_default_gateway.verify():
+                        xcheckok = True
+
                 if resp['ovpn_state'] in ['CONNECTED']:
                     # OpenVPN says we are connected, don't believe it, verify cross-check
                     if xcheckok:
@@ -168,6 +174,10 @@ class OVPNInterface:
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
                     if 'gateway' in resp:
                         self.last_known_gateway = resp['interface'] #resp['gateway']
+
+                    # if we are not monitoring the default gateway yet, create a monitor for it
+                    if not self.monitor_default_gateway:
+                        self.monitor_default_gateway = routing.MonitorDefaultGateway(self.last_known_gateway)
 
                 elif resp['ovpn_state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
                     self.connected = False
