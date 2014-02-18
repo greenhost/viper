@@ -18,6 +18,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 __version__ = ""
- __author__ = ""
- __email__ = ""
- __date__ = ""
+__commit__ = ""
+__author__ = ""
+__email__ = ""
+__date__ = ""
