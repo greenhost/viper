@@ -37,10 +37,11 @@ Setup:
 
 3. add a version.py file with this contents:
 
- __version__ = ""
- __author__ = ""
- __email__ = ""
- __date__ = ""
+__version__ = ""
+__commit__ = ""
+__author__ = ""
+__email__ = ""
+__date__ = ""
 
 """
 
@@ -58,6 +59,7 @@ def main():
     # initialise empty here. Otherwise: forkbomb through the git calls.
     subst_list = {
         "version": "",
+        "commit": "",
         "date": "",
         "author": "",
         "email": ""
@@ -67,7 +69,8 @@ def main():
         if not clean:
             subst_list = {
                 # '--dirty' could be added to the following, too, but is not supported everywhere
-                "version": subprocess.check_output(['git', 'describe', '--always']),  
+                "version": "0.9.4",  
+                "commit": subprocess.check_output(['git', 'describe', '--always']),  
                 "date": subprocess.check_output(['git', 'log', '--pretty=format:"%ad"', '-1']),
                 "author": subprocess.check_output(['git', 'log', '--pretty=format:"%an"', '-1']),
                 "email": subprocess.check_output(['git', 'log', '--pretty=format:"%ae"', '-1'])
