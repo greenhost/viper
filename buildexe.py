@@ -6,17 +6,17 @@
 ## executables can now be build in a single call:
 ##
 ## $ python pyinstaller.py [opts] yourprogram.py
-## 
-## see documentation for further details: 
+##
+## see documentation for further details:
 ## http://www.pyinstaller.org/export/v2.0/project/doc/Manual.html?format=raw
 import os, sys
 import time, string
 import subprocess
 import shutil
 
-PYINST_DEFAULT_PATH = 'C:\pyinstaller-2.0'
+PYINST_DEFAULT_PATH = 'C:\Python27\Lib\site-packages\PyInstaller'
 
-# Apps to build, specifying the entry point script and the icon to 
+# Apps to build, specifying the entry point script and the icon to
 # embed in the executable file as a resource
 APPS = [
 		{'script': 'viperclient.py', 'icon': 'resources/icons/online.ico'}
