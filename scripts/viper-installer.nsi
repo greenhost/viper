@@ -29,11 +29,11 @@ SetCompressor /SOLID lzma
 !include "MUI.nsh"
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\floppy_installer_green.ico"
-!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\floppy_installer_green.bmp"
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange.bmp"
 !define MUI_COMPONENTSPAGE_CHECKBITMAP "${NSISDIR}\Contrib\Graphics\Checks\modern.bmp"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\floppy_uninstaller_red.ico"
-!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\floppy_installer_green.bmp"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange-uninstall.bmp"
 
 ; Language Selection Dialog Settings
 !define MUI_LANGDLL_REGISTRY_ROOT "${PRODUCT_UNINST_ROOT_KEY}"
@@ -92,11 +92,11 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "1.0.0.0"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "Comments" ""
 
 Section "UmanViper Install" SEC001
-  
+
   SetOutPath "$INSTDIR"
   SetOutPath "$INSTDIR\client"
   File "${SRC_ROOT}\dist\client\*"
-  
+
   SetOutPath "$INSTDIR\client\openvpn"
   File "${SRC_ROOT}\dist\client\openvpn\libeay32.dll"
   File "${SRC_ROOT}\dist\client\openvpn\liblzo2-2.dll"
@@ -136,10 +136,10 @@ Section "UmanViper Install" SEC001
   File "${SRC_ROOT}\dist\doc\*"
   SetOutPath "$INSTDIR\doc\res"
   File "${SRC_ROOT}\dist\doc\res\*"
-  
+
   SetOutPath "$INSTDIR\service"
   File "${SRC_ROOT}\dist\service\*"
-  
+
   SetOutPath "$INSTDIR\utils"
   File "${SRC_ROOT}\dist\utils\*.exe"
   File "${SRC_ROOT}\dist\utils\*.dll"
