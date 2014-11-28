@@ -1,0 +1,204 @@
+# This file was made with the swagger API editor
+# load it in the editor that you can find here http://editor.swagger.io
+# to visualize it in all its pretty colors
+swagger: '2.0'
+
+info:
+  version: "0.9.0"
+  title: Viper Secure Tunnel API
+host: viperinternal.local
+basePath: /api
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+  - text/html
+
+paths:
+  /tunnel/open:
+    post:
+      description: |
+        Open tunnel connection with given configuration.
+      parameters:
+        - name: provider
+          description: Provider configuration.
+          required: true
+          in: body
+          schema:
+            $ref: '#/definitions/ProviderConfig'
+      responses:
+        200:
+          description: Tunnel initialized successfully
+        503:
+          description: Failed to initialize tunnel
+        511:
+          description: Failed to authenticate
+        522:
+          description: Connection timed out
+
+  /tunnel/close:
+    post:
+      description: |
+        Close the current active tunnel.
+      responses:
+        200:
+          description: Tunnel closed successfully
+        503:
+          description: Failed to terminate tunnel, connection might be in an inconsistent state (query state to learn more)
+
+  /tunnel/status:
+    get:
+      description: |
+        Gets the current status of tunnel connection.
+      responses:
+        200:
+          description: Successful response
+          schema:
+            title: Status
+            $ref: '#/definitions/Tunnel'
+        444:
+          description: No response
+
+  /policy:
+    get:
+      description: List all implemented connection policies.
+      responses:
+        200: 
+          description: Success
+          schema:
+            title: Policies
+            type: array
+            items:
+              $ref: '#/definitions/Policy'
+
+    options:
+      description: Fetch connection policies that are currently active.
+      responses:
+        200: 
+          description: Success
+          schema:
+            title: ActivePolicies
+            type: array
+            items:
+              $ref: '#/definitions/Policy'
+      
+  /policy/enable:
+    post:
+      description: |
+        Enable a connection policy.
+      parameters:
+        - name: policy
+          description: Name of policy to enforce.
+          required: true
+          in: body
+          schema:
+            type: string
+            format: string
+      responses:
+        200:
+          description: Policy enabled successfully
+        400:
+          description: Policy isn't implemented
+        503:
+          description: Failed to enable policy
+
+  /policy/setting:
+    post:
+      description: |
+        Commit setting to the given policy. The setting is a key value pair.
+      parameters:
+        - name: policy
+          description: Name of policy to configure.
+          required: true
+          in: body
+          schema:
+            type: string
+            format: string
+        - name: key
+          description: Name of configuration key.
+          required: true
+          in: body
+          schema:
+            type: string
+            format: string
+        - name: value
+          description: Value for given setting.
+          required: true
+          in: body
+          schema:
+            type: string
+            format: string
+      responses:
+        200:
+          description: Setting added succesfully to policy
+        503:
+          description: Failed to add setting
+
+  /policy/disable:
+    post:
+      description: |
+        Disable a connection policy.
+      parameters:
+        - name: policy
+          description: Name of policy to disable.
+          required: true
+          in: body
+          schema:
+            type: string
+            format: string
+      responses:
+        200:
+          description: Policy disabled successfully
+        503:
+          description: Failed to disable policy
+
+definitions:
+  Policy:
+    description: |
+      Name of security policy.
+    properties:
+      name:
+        description: Name of connection policy.
+        type: string
+        format: string
+
+
+  ProviderConfig:
+    description: |
+      Determines OpenVPN config as well as location of log file.
+    properties:
+      ovpn:
+        type: string
+        format: string
+        description: Path to OpenVPN config.
+      log:
+        type: string
+        format: string
+        description: Path to output log file.
+      url:
+        type: string
+        format: string
+        description: Provider landing page after connection.
+        
+  Tunnel:
+    description: |
+      Describe staus of the tunnel.
+    properties:
+      state:
+        type: string
+        format: string
+        description: Status of tunnel, can be "CONNECTED", "DISCONNECTED" or "UNKNOWN".
+      uptime:
+        type: integer
+        format: int64
+        description: Seconds since connection was stablished.
+      uplink:
+        type: integer
+        format: int64
+        description: Bytes uploaded.
+      downlink:
+        type: integer
+        format: int64
+        description: Bytes downloaded.
