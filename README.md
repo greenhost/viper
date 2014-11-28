@@ -4,9 +4,9 @@ https://www.greenhost.io/projects/viper
 ### What is Viper?
 Viper is a client for a type of proxy that we like to call Encrypted Internet Proxy (EIP). An EIP is a set of technologies that work together to enable encrypted Internet access and enhanced anonymity.
 
-As an EIP client Viper implements a set of policies that are aimed at keeping you anonymous online and encrypt all your interactions with the Internet.
+As an EIP client Viper implements a set of policies that are aimed at keeping you anonymous online and encrypt all your interactions through the Internet.
 
-Viper uses VPN technology, with a carefully crafted OpenVPN configuration, in combination wwith other techniques to achieve these goals.
+Viper uses VPN technology, with a carefully crafted OpenVPN configuration, in combination with other techniques to achieve these goals.
 
 ### Anti-censorship
 Viper uses OpenVPN, this provides first-hop encryption in all your connections to the Internet.
