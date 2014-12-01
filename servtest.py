@@ -16,5 +16,6 @@ def stop():
     self.svc.close()
 
 if __name__ == '__main__':
+	#log_init_service()
 	logging.basicConfig(level=logging.DEBUG)
 	start()
