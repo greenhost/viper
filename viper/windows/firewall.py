@@ -41,6 +41,19 @@ def is_firewall_enabled():
 	fwprofile = fw.LocalPolicy.CurrentProfile
 	return fwprofile.FirewallEnabled
 
+def set_firewall_state(state = "on"):
+	""" Elevated privileges needed to run this 
+	@note uses the netsh command to interact with the firewall which is notorious for changing acrsso versions of windows
+	"""
+	cmd = "netsh advfirewall set allprofiles state {0}".format(state)
+	subprocess.call( cmd.split() )
+
+def firewall_enable():
+	set_firewall_state("on")
+
+def firewall_disable():
+	set_firewall_state("off")
+
 def run_fwipv6(command):
 	path = tools.get_viper_home()
 	path = os.path.join(path, "utils/fwipv6")
