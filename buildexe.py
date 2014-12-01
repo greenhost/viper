@@ -51,7 +51,7 @@ def get_pyinstaller_path():
 def create_executables():
 	print("Creating executables...")
 	path = get_pyinstaller_path()
-	cmd = os.path.join(path, "pyinstaller.py")
+	cmd = os.path.join(path, "main.py")
 	opt = string.join(OPTS)
 	for app in APPS:
 		# build actual command to execute for this application
