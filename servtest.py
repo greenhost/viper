@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import time
 from viper import routing
-from viper.windows import service
 from viper.openvpn import monitor
 from viper.tools import *
 import traceback
@@ -16,6 +16,7 @@ def start():
 	SERVICE = ThreadedServer(monitor.RPCService, hostname = 'localhost', port = 18861)
 
 def stop():
+	global SERVICE
 	logging.info("OVPN STOP...")
 	SERVICE.close()
 
@@ -23,3 +24,5 @@ if __name__ == '__main__':
 	#log_init_service()
 	logging.basicConfig(level=logging.DEBUG)
 	start()
+	while 1:
+		time.sleep(200)
