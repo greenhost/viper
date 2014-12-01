@@ -72,9 +72,10 @@ def is_openvpn_running():
     try:
         procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name()]
         return procs
-    except AccessDenied as e:
+    except psutil.AccessDenied as e:
         logging.debug("Access denied on process list while checking if openvpn is running")
-    except NoSuchProcess as e:
+        pass
+    except psutil.NoSuchProcess as e:
         return False
 
 def log_init_app(level=logging.DEBUG):
