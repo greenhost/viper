@@ -70,11 +70,14 @@ def run_unique(fn):
 def is_openvpn_running():
     """Check that the OpenVPN process is only run once"""
     try:
-        procs = [p for p in psutil.get_process_list() if 'openvpn' in p.name()]
-        return procs
-    except psutil.AccessDenied as e:
-        logging.debug("Access denied on process list while checking if openvpn is running")
-        pass
+        procs = []
+        for p in psutil.get_process_list():
+            try:
+                if p.name() and ('openvpn' in p.name().lower()):
+                    procs.append(p)
+            except psutil.AccessDenied as e:
+                # we have no rights to peer into this process, skip to next
+                continue
     except psutil.NoSuchProcess as e:
         return False
 
