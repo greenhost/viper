@@ -78,6 +78,8 @@ def is_openvpn_running():
             except psutil.AccessDenied as e:
                 # we have no rights to peer into this process, skip to next
                 continue
+
+        return procs
     except psutil.NoSuchProcess as e:
         return False
 
