@@ -66,6 +66,8 @@ class OpenVPNLauncher:
                 # log error and propagate condition
                 logging.error(msg)
                 raise VPNLauncherException(msg)
+            # return pid on successful run
+            return self.proc.pid
         except OSError, e:
             # @todo check if the exception above is actually raised by subprocess.Popen
             msg = "Couldn't execute subprocess '%s'" % (path,)
