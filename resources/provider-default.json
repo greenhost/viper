@@ -1,0 +1,6 @@
+{
+	"landing" : "http://www.provider.tld/some_landing_page",
+	"provider" : "www.provider.tld",
+	"route_cross_check" : true,
+	"force_default_gateway" : true
+}

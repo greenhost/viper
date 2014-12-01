@@ -5,7 +5,7 @@
 
 ; Define helper variables
 !define PRODUCT_NAME "viper"
-!define PRODUCT_VERSION "0.9.1.3"
+!define PRODUCT_VERSION "0.9.4.0"
 !define PRODUCT_DISPLAY_NAME "${PRODUCT_NAME} v${PRODUCT_VERSION}"
 !define PRODUCT_PUBLISHER "Greenhost"
 !define PRODUCT_WEB_SITE "www.greenhost.nl"
@@ -29,11 +29,19 @@ SetCompressor /SOLID lzma
 !include "MUI.nsh"
 
 !define MUI_ABORTWARNING
+<<<<<<< HEAD
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange.bmp"
 !define MUI_COMPONENTSPAGE_CHECKBITMAP "${NSISDIR}\Contrib\Graphics\Checks\modern.bmp"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange-uninstall.bmp"
+=======
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\box-install.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\arrow.bmp"
+!define MUI_COMPONENTSPAGE_CHECKBITMAP "${NSISDIR}\Contrib\Graphics\Checks\modern.bmp"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\box-uninstall.ico"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\arrow.bmp"
+>>>>>>> json-provider
 
 ; Language Selection Dialog Settings
 !define MUI_LANGDLL_REGISTRY_ROOT "${PRODUCT_UNINST_ROOT_KEY}"
@@ -81,9 +89,9 @@ Caption "${PRODUCT_DISPLAY_NAME} Setup"
 UninstallCaption "${PRODUCT_DISPLAY_NAME} Uninstall"
 
 ; Installer file metadata
-VIProductVersion "0.9.1.1"
+VIProductVersion ${PRODUCT_VERSION}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" "Viper"
-VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductVersion" "0.9.1.1"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductVersion" ${PRODUCT_VERSION}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "CompanyName" "Greenhost"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "? ${PRODUCT_PUBLISHER}"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalTrademarks" ""
@@ -105,7 +113,10 @@ Section "UmanViper Install" SEC001
   File "${SRC_ROOT}\dist\client\openvpn\openvpn.exe"
   File "${SRC_ROOT}\dist\client\openvpn\openvpnserv.exe"
   File "${SRC_ROOT}\dist\client\openvpn\ssleay32.dll"
+  SetOutPath "$INSTDIR\resources"
+  File "${SRC_ROOT}\dist\client\resources\provider.json"
   SetOutPath "$INSTDIR\client\resources"
+  File "${SRC_ROOT}\dist\client\resources\*"
   SetOutPath "$INSTDIR\client\resources\icons"
   File "${SRC_ROOT}\dist\client\resources\icons\*.ico"
 
@@ -168,7 +179,11 @@ Section "Startup" SEC005
   ExecWait '"net" start ovpnmon'
 SectionEnd
 
+
+
+
 Function .onInit
+  ; Go on with initialization routine
   !insertmacro MULTIUSER_INIT
   !define MUI_LANGDLL_ALWAYSSHOW
   !insertmacro MUI_LANGDLL_DISPLAY
@@ -199,6 +214,26 @@ Function .onInit
   StrCpy $0 0
   IntOp $0 $0 | ${SF_SELECTED}
   SectionSetFlags ${SEC005} $0
+
+  ; Find out if there's a previous version installed
+  ReadRegStr $R0 HKLM \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+    "UninstallString"
+    StrCmp $R0 "" done
+   
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+    "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
+    previous version or `Cancel` to cancel this upgrade." \
+    IDOK uninst
+    Abort
+   
+  ;Run the uninstaller
+  uninst:
+    ClearErrors
+    ;ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+    Exec $INSTDIR\uninst.exe
+    
+  done:
 
 FunctionEnd
 
@@ -249,18 +284,9 @@ FunctionEnd
 Section Uninstall
   !insertmacro MUI_STARTMENU_GETFOLDER Application $ICONS_GROUP
   Delete "$INSTDIR\client\*"
-  Delete "$INSTDIR\client\openvpn\libeay32.dll"
-  Delete "$INSTDIR\client\openvpn\liblzo2-2.dll"
-  Delete "$INSTDIR\client\openvpn\libpkcs11-helper-1.dll"
-  Delete "$INSTDIR\client\openvpn\openvpn-gui.exe"
-  Delete "$INSTDIR\client\openvpn\openvpn.exe"
-  Delete "$INSTDIR\client\openvpn\openvpnserv.exe"
-  Delete "$INSTDIR\client\openvpn\ssleay32.dll"
-  Delete "$INSTDIR\client\resources\icons\connecting.ico"
-  Delete "$INSTDIR\client\resources\icons\monitor.ico"
-  Delete "$INSTDIR\client\resources\icons\offline.ico"
-  Delete "$INSTDIR\client\resources\icons\online.ico"
-  Delete "$INSTDIR\client\resources\icons\refresh.ico"
+  Delete "$INSTDIR\client\openvpn\*"
+  Delete "$INSTDIR\client\resources\icons\*"
+  Delete "$INSTDIR\client\resources\*"
   Delete "$INSTDIR\client\tap-windows\tap-windows.exe"
   Delete "$INSTDIR\client\tap-windows\tapdrivers\icon.ico"
   Delete "$INSTDIR\client\tap-windows\tapdrivers\license.txt"
@@ -285,58 +311,8 @@ Section Uninstall
   Delete "$INSTDIR\doc\res\not_connected.png"
   Delete "$INSTDIR\doc\res\run_as_admin.png"
   Delete "$INSTDIR\doc\res\validate.png"
-  Delete "$INSTDIR\service\API-MS-Win-Core-DelayLoad-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-ErrorHandling-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-File-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-Handle-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-Heap-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-IO-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-LibraryLoader-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-LocalRegistry-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-Misc-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-ProcessThreads-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-Profile-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-String-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-Synch-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-SysInfo-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Core-ThreadPool-L1-1-0.dll"
-  Delete "$INSTDIR\service\API-MS-Win-Security-Base-L1-1-0.dll"
-  Delete "$INSTDIR\service\bz2.pyd"
-  Delete "$INSTDIR\service\IPHLPAPI.DLL"
-  Delete "$INSTDIR\service\library.zip"
-  Delete "$INSTDIR\service\mfc90.dll"
-  Delete "$INSTDIR\service\NSI.dll"
-  Delete "$INSTDIR\service\ovpnmon.exe"
-  Delete "$INSTDIR\service\perfmon.pyd"
-  Delete "$INSTDIR\service\PSAPI.DLL"
-  Delete "$INSTDIR\service\pyexpat.pyd"
-  Delete "$INSTDIR\service\python27.dll"
-  Delete "$INSTDIR\service\pythoncom27.dll"
-  Delete "$INSTDIR\service\pywintypes27.dll"
-  Delete "$INSTDIR\service\select.pyd"
-  Delete "$INSTDIR\service\servicemanager.pyd"
-  Delete "$INSTDIR\service\unicodedata.pyd"
-  Delete "$INSTDIR\service\win32api.pyd"
-  Delete "$INSTDIR\service\win32event.pyd"
-  Delete "$INSTDIR\service\win32evtlog.pyd"
-  Delete "$INSTDIR\service\win32pipe.pyd"
-  Delete "$INSTDIR\service\win32service.pyd"
-  Delete "$INSTDIR\service\win32ui.pyd"
-  Delete "$INSTDIR\service\WINNSI.DLL"
-  Delete "$INSTDIR\service\WTSAPI32.dll"
-  Delete "$INSTDIR\service\_ctypes.pyd"
-  Delete "$INSTDIR\service\_hashlib.pyd"
-  Delete "$INSTDIR\service\_multiprocessing.pyd"
-  Delete "$INSTDIR\service\_psutil_mswindows.pyd"
-  Delete "$INSTDIR\service\_socket.pyd"
-  Delete "$INSTDIR\service\_ssl.pyd"
-  Delete "$INSTDIR\service\_win32sysloader.pyd"
-  Delete "$INSTDIR\utils\fwipv6.exe"
-  Delete "$INSTDIR\utils\fwipv6.pdb"
-  Delete "$INSTDIR\utils\Interop.NATUPNPLib.dll"
-  Delete "$INSTDIR\utils\Interop.NetCenterLUALib.dll"
-  Delete "$INSTDIR\utils\Interop.NETCONLib.dll"
-  Delete "$INSTDIR\utils\Interop.NetFwTypeLib.dll"
+  Delete "$INSTDIR\service\*"
+  Delete "$INSTDIR\utils\*"
   RMDir "$INSTDIR\client\openvpn"
   RMDir "$INSTDIR\client\resources\icons"
   RMDir "$INSTDIR\client\resources"

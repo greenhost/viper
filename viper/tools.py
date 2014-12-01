@@ -18,9 +18,17 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import os, sys
+from os import popen
 import logging
-import servicemanager
-import appdirs
+try:
+    import appdirs
+except ImportError:
+    print("appdirs module is required. Please see: https://pypi.python.org/pypi/appdirs/")
+
+try:
+    import servicemanager
+except ImportError:
+    print("Couldn't import servicemanager, you are probably not on windows")
 
 try:
     import psutil
@@ -47,7 +55,7 @@ def is_viper_running():
                 # if process is found with the PID, there's another instance running
                 proc = psutil.Process(pid)
                 return True
-            except psutil.NoSuchProcess, e:
+            except psutil.NoSuchProcess as e:
                 # pidfile is tale, delete it
                 # we can now assume there's not another version of viper running
                 f.close()
@@ -83,9 +91,10 @@ def is_openvpn_running():
     except psutil.NoSuchProcess as e:
         return False
 
-def log_init_app(level=logging.DEBUG):
-    fn = os.path.join(get_user_cwd(), 'umanviper.log')
-    logging.basicConfig(filename=fn, level=level)
+def log_init_app(lvl=logging.DEBUG):
+    fn = os.path.join(get_user_cwd(), 'viperclient.log')
+    print("Trying to log to file %s, with level %s" % (fn, lvl))
+    logging.basicConfig(filename=fn, format='%(asctime)s %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S', level=lvl, filemode="w+")
 
 def log_init_service(level=logging.DEBUG, logfile="c:\ovpnmon.log"):
     #fmt = "%(asctime)-15s - %(levelname)s - %(user)-8s - %(message)s"
@@ -105,7 +114,7 @@ def get_my_cwd():
 
 def get_user_cwd():
     """ Get user working directory """
-    d = appdirs.AppDirs(PRODUCT_NAME, PRODUCER_NAME)
+    d = appdirs.AppDirs(PRODUCT_NAME, "") #, PRODUCER_NAME)
 
     if not os.path.exists(d.user_data_dir):
         os.makedirs(d.user_data_dir)
@@ -121,6 +130,15 @@ def get_resource_path(res):
     """
     rpath = os.path.join(get_my_cwd(), "resources")
     return os.path.join(rpath, res)
+
+def flush_dns():
+    """ Instruct Windows to flush the DNS cache
+    :return True: is flushing is Successfully
+    :return False: otherwise 
+    """
+    logging.debug("Flushing DNS cache...")
+    res = popen("ipconfig /flushdns").read().split()
+    return True if 'Successfully' in res else False  # tested on windows 8 and windows 7
 
 def log(msg):
     """Send message to the Windows Event Log"""
@@ -151,4 +169,55 @@ def windows_has_tap_device():
         except WindowsError:
             pass
     return False
+
+def sanitize_ip(ipaddr):
+    """
+    Make sure the IP address is a dot-separated numeric quad
+    """
+    quad = [int(byte) for byte in ipaddr.split(".")]
+    return "%d.%d.%d.%d" % tuple(quad)
+
+
+## ##########################################################################
+## Routing stack helpers
+## ##########################################################################
+def save_default_gateway():
+    from viper import routing
+    defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
+    gwip = routing.get_default_gateway()
+    try:
+        with file(defaultgw, 'w+') as f:
+            f.write( str(gwip) )
+    except Exception as e:
+        logging.info("Failed to save default gateway to file {0}".format(defaultgw))
+
+def recover_default_gateway():
+    """ 
+    Get the last known default gateway configuration from a file on disk
+
+    :returns: IP address of the default gateway if found, None if nothing is found
+    """
+    defaultgw = os.path.join(get_user_cwd(), 'defaultgw')
+    try:
+        if os.path.isfile( defaultgw ):
+            with open(defaultgw, 'r') as f:
+                content = f.read()
+                return sanitize_ip( str(content) )
+        else:
+            return None
+    except Exception as e:
+        logging.info("Failed to load default gateway from file {0}".format(defaultgw))
+        return None
+    finally:
+        os.unlink(defaultgw)
+
+def delete_default_gateway():
+    from viper import routing
+    save_default_gateway()
+    gwip = routing.get_default_gateway()
+    route_del("0.0.0.0", "0.0.0.0", gwip)
+
+def restore_default_gateway():
+    gwip = recover_default_gateway()
+    route_add("0.0.0.0", "0.0.0.0", gwip)
 
