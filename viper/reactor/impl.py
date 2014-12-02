@@ -17,33 +17,27 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import subprocess
 import os, sys, logging
 from datetime import datetime
 import os, sys, string, time
-import socket
-import threading, time
 from pprint import pprint
-import psutil
 
 from viper import routing
-from viper.windows import service, firewall
+#from viper.windows import service, firewall
 from viper.tools import *
 from viper.openvpn import management, launcher
 
 import traceback
 
 
-# global that keeps track of the current status
-OVPN_STATUS = None
-isstarting = False
-
 class Reactor:
     """ This service performs all the operations that have to run with elevated privileges, such as
     starting and stopping OpenVPN, interacting with firewall rules and routing tables, etc.
     """
     def __init__(self):
+        logging.info("Initializing reactor...")
         self.launcher = launcher.OpenVPNLauncher()
+        self.settings = {}
 
     def tunnel_open(self, cfgfile, logdir):
         """ Use launcher to start the OpenVPN instance 

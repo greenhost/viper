@@ -29,7 +29,6 @@ from pprint import pprint
 import psutil
 
 from viper import routing
-from viper.windows import service
 from viper.tools import *
 from viper.openvpn import management
 import traceback

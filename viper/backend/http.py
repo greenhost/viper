@@ -11,12 +11,9 @@ import atexit
 import json
 from viper.backend.http import *
 from viper.policies import *
-from viper.reactor import Reactor
+from viper import reactor
 
 vstate = "DISCONNECTED"
-
-# wrapper for actions that require elevated privileges
-react = Reactor()
 
 ## ##########################################################################
 ## monitoring loop
@@ -57,23 +54,23 @@ def tunnel_open():
     #pprint(request.body)
     if jreq and ( ('config' in jreq) and ('log' in jreq) ):
         logging.info( "Open tunnel wih params [config = {0}] [log = {1}]".format(jreq['config'], jreq['log']) )
-        react.tunnel_open()
+        reactor.core.tunnel_open()
     else:
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 
 @route('/tunnel/close', method='POST')
 def tunnel_close():
     logging.info("Closing tunnel")
-    react.tunnel_close()
+    reactor.core.tunnel_close()
 
 @route('/tunnel/status', method='GET')
-def tunnel_close():
+def tunnel_status():
     global vstate
     state = {"state" : vstate, "policies" : ["ipv6", "xcheck", "gatewaymon"]}
     return json.dumps( state )
 
 @route('/policy', method=['GET','OPTIONS'])
-def tunnel_close():
+def policy():
     logging.info( "Request to policy, method = {0}".format(request.method) )
     if request.method == "GET":
         logging.info( "Getting list of policies that this daemon implements" )
@@ -83,7 +80,7 @@ def tunnel_close():
         return json.dumps( get_active_policies() )
 
 @route('/policy/enable', method='POST')
-def tunnel_close():
+def policy_enable():
     jreq = request.json
     pprint(request.body)
     if jreq and ('name' in jreq):
@@ -93,11 +90,11 @@ def tunnel_close():
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 
 @route('/policy/setting', method=['GET', 'POST'])
-def tunnel_close():
+def policy_setting():
     pass
 
 @route('/policy/disable', method='POST')
-def tunnel_close():
+def policy_disable():
     jreq = request.json
     if jreq and ('name' in jreq):
         logging.info( "Request to enable policy with name [{0}]".format(jreq['name']) )
