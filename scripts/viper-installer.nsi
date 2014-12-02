@@ -106,7 +106,7 @@ Section "UmanViper Install" SEC001
   File "${SRC_ROOT}\dist\client\openvpn\openvpnserv.exe"
   File "${SRC_ROOT}\dist\client\openvpn\ssleay32.dll"
   SetOutPath "$INSTDIR\resources"
-  File "${SRC_ROOT}\dist\client\resources\provider.json"
+  File "${SRC_ROOT}\dist\client\resources\provider-default.json"
   SetOutPath "$INSTDIR\client\resources"
   File "${SRC_ROOT}\dist\client\resources\*"
   SetOutPath "$INSTDIR\client\resources\icons"
@@ -212,19 +212,19 @@ Function .onInit
     "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
     "UninstallString"
     StrCmp $R0 "" done
-   
+
     MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
     "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
     previous version or `Cancel` to cancel this upgrade." \
     IDOK uninst
     Abort
-   
+
   ;Run the uninstaller
   uninst:
     ClearErrors
     ;ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
     Exec $INSTDIR\uninst.exe
-    
+
   done:
 
 FunctionEnd
