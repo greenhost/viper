@@ -26,7 +26,7 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['__config.ovpn', 'README', 'resources', 'third-party/tap-windows', 'third-party/openvpn', 'dist/viperclient.exe']
+RES  = ['README.md', 'resources', 'third-party/tap-windows', 'third-party/openvpn', 'dist/viperclient.exe']
 
 # Build byproducts to delete after build
 CLEAN = ['dist/viperclient.exe']

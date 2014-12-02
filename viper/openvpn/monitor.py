@@ -51,6 +51,9 @@ isstarting = False
 
 
 class RPCService(rpyc.Service):
+    """ This service performs all the operations that have to run with elevated privileges, such as
+    starting and stopping OpenVPN and interacting with firewall rules.
+    """
     def on_connect(self):
         # code that runs when a connection is created
         # (to init the service, if needed)
@@ -60,15 +63,11 @@ class RPCService(rpyc.Service):
         self.launcher = launcher.OpenVPNLauncher()
 
         logging.info("Connection from client opened...")
-        # configure the Windows Firewall to block all IPv6 traffic
-        firewall.block_ipv6()
 
     def on_disconnect(self):
         # code that runs when the connection has already closed
         # (to finalize the service, if needed)
         logging.info("Connection from client closed")
-        # allow IPv6 traffic again
-        firewall.unblock_ipv6()
 
     def exposed_ovpn_start(self, cfgfile, logdir):
         """ Use launcher to start the OpenVPN instance 
@@ -77,13 +76,37 @@ class RPCService(rpyc.Service):
         """
         if not is_openvpn_running():
             logging.debug("OpenVPN isn't running, trying to start process")
+
+            # configure the Windows Firewall to block all IPv6 traffic
+            #firewall.block_ipv6()
             self.launcher.launch(cfgfile, logdir)
+            # @TODOlaunch is async, perhaps this should be a callback
+            #firewall.block_default_gateway()
         else:
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
             handle = management.OVPNInterface()
             handle.hangup()
             del handle
             # if it's already running try to reaload it by sending hangup signal
+
+    def exposed_firewall_up(self):
+        """ Activate the firewall rules that will enhance the user's protection through the duration of the VPN run """
+        logging.debug("Putting up firewall")
+        # configure the Windows Firewall to block all IPv6 traffic
+        firewall.block_ipv6()
+        # @TODO launch is async, perhaps this should be a callback
+        firewall.block_default_gateway("none-specified")
+
+    def exposed_firewall_down(self):
+        """ Deactivate the firewall rules """
+        logging.debug("Taking down firewall")
+        # allow IPv6 traffic again
+        firewall.unblock_ipv6()
+        firewall.unblock_default_gateway("none-specified")
+
+    def exposed_set_default_gateway(self, gwip):
+        logging.debug("Setting default gateway to '{0}'".format(gwip))
+        routing.route_add("0.0.0.0", "0.0.0.0", gwip)
 
     def exposed_ovpn_stop(self):
         """ Use launcher to stop the OpenVPN process """

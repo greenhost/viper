@@ -4,6 +4,8 @@
 Thums.db
 ehthumbs.db
 
+*.pem
+
 *.userprefs
 .project
 .pydevproject
@@ -17,6 +19,13 @@ ehthumbs.db
 # vpn config files
 *.ovpn
 *.spec
+
+# binaries
+/utils/*.exe
+
+# sensitive files
+resources/provider.json
+untracked/*
 
 # build byproducts
 build

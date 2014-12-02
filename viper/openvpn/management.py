@@ -43,8 +43,10 @@ class OVPNInterface:
         self.connected = False
         self.sock = None
         self.last_known_gateway = None  # in this session, we don't save to disk between sessions
+        self.retries = 0
+        self.gateway_monitor = None
 
-    def send(self, command, connection_timeout = 1, response_delay = .5):
+    def send(self, command, connection_timeout = .5, response_delay = .5):
         retval = None
         try:
             self.sock = socket.socket()
@@ -116,24 +118,44 @@ class OVPNInterface:
             resp = self.parse_state_response( self.send("state\n") )
 
             if not resp:
-                retval['viper_status'] = "DISCONNECTED" 
-                logging.debug("No data received while waiting for response from OpenVPN")
+                # if we didn't hear anything back from OpenVPN we keep trying for a few more loops
+                if self.retries > 3:
+                    retval['viper_status'] = "DISCONNECTED"
+                    self.retries = 0
+                else:
+                    self.retries += 1
+                    retval['viper_status'] = "TIMED-OUT"
+                    logging.debug("No data received while waiting for response from OpenVPN")
             else:
+                self.retries = 0 # reset retry counter
+
                 retval = resp
 
-                # always cross-check the routing with the last known gateway                    
+                # load provider config
+                try:
+                    from viper import provider
+                except Exception:
+                    logging.error("Failed to load provider information: {0}".format(traceback.format_exc()))
+
+                # cross-check the routing with the last known gateway                    
                 xcheckok = False
-                if self.last_known_gateway:
-                    try:
-                        if not routing.verify_vpn_routing_table(self.last_known_gateway):
-                            retval['viper_status'] = "DISCONNECTED"
-                            logging.debug("Routing verification didn't pass")
-                        else:
-                            xcheckok = True
-                    except routing.InconsistentRoutingTable:
-                        # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
-                        retval['viper_status'] =  "INCONSISTENT"
-                        logging.debug("Routing verification is not consistent")
+                if provider.get_provider_setting('route_cross_check'):
+                    if self.last_known_gateway:
+                        try:
+                            if not routing.verify_vpn_routing_table(self.last_known_gateway):
+                                retval['viper_status'] = "DISCONNECTED"
+                                logging.debug("Routing verification didn't pass")
+                            else:
+                                xcheckok = True
+                        except routing.InconsistentRoutingTable:
+                            # @todo this error also comes up when we try to run OpenVON for a second time and we see that the routing tables are already set 
+                            retval['viper_status'] =  "INCONSISTENT"
+                            logging.debug("Routing verification is not consistent")
+
+                # verify that the default gateway hasn't changed under our feet
+                if provider.get_provider_setting('monitor_default_gateway') and self.gateway_monitor:
+                    if self.gateway_monitor.verify():
+                        xcheckok = True
 
                 if resp['ovpn_state'] in ['CONNECTED']:
                     # OpenVPN says we are connected, don't believe it, verify cross-check
@@ -142,11 +164,20 @@ class OVPNInterface:
                         self.connected = True
                         retval['viper_status'] =  "CONNECTED"
                     else:
-                        retval['viper_status'] =  "DISCONNECTED"
+                        # if cross check didn't pass check if it was required
+                        if provider.get_provider_setting('route_cross_check'):
+                            retval['viper_status'] =  "DISCONNECTED"
+                        else:
+                            logging.debug("Connected but skipping routing cross-check")
+                            retval['viper_status'] =  "CONNECTED"
 
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
                     if 'gateway' in resp:
                         self.last_known_gateway = resp['interface'] #resp['gateway']
+
+                    # if we are not monitoring the default gateway yet, create a monitor for it
+                    if not self.gateway_monitor:
+                        self.gateway_monitor = routing.MonitorDefaultGateway(self.last_known_gateway)
 
                 elif resp['ovpn_state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
                     self.connected = False
@@ -169,7 +200,7 @@ class OVPNInterface:
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             logging.warning("Exception while polling for status: %s" % e)
-            pprint(resp)
+            logging.warning(resp)
             retval['viper_status'] = "DISCONNECTED" 
 
         return retval
@@ -219,7 +250,8 @@ class OVPNInterface:
                         continue        # not what we are looking for, ignore
 
                     tstamp, state, desc, tun_ip, remote_ip = parts
-
+                    logging.debug(parts)
+                    
                     # get line containing status
                     if state == "CONNECTED" and desc == "SUCCESS":
                         return {'ovpn_state': "CONNECTED", 'interface' : tun_ip.split('\r')[0], 'gateway' : remote_ip}

@@ -23,6 +23,7 @@ Launch & terminate the OpenVPN subprocess
 """
 import subprocess
 import os, sys, logging, string, time
+import shlex
 from datetime import datetime
 from pprint import pprint
 import psutil
@@ -57,7 +58,9 @@ class OpenVPNLauncher:
         # @todo redirect stdout and stderr to /dev/null, perhaps we want to send this output somewhere else?
         f = open(os.devnull, 'w')
         try:
-            self.proc = subprocess.Popen([path, cfgfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # prepare argument list for Popen
+            args = [path, "--config", cfgfile, "--log", logfile]
+            self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             time.sleep(0.3)
             self.proc.poll()
@@ -66,6 +69,8 @@ class OpenVPNLauncher:
                 # log error and propagate condition
                 logging.error(msg)
                 raise VPNLauncherException(msg)
+            # return pid on successful run
+            return self.proc.pid
         except OSError, e:
             # @todo check if the exception above is actually raised by subprocess.Popen
             msg = "Couldn't execute subprocess '%s'" % (path,)

@@ -152,13 +152,14 @@ class SysTrayIcon(object):
         if self.notify_id: message = win32gui.NIM_MODIFY
         else: message = win32gui.NIM_ADD
 
-        self.notify_id = (self.hwnd,
-                          0,
-                          win32gui.NIF_ICON | win32gui.NIF_MESSAGE | win32gui.NIF_TIP,
-                          win32con.WM_USER+20,
-                          self.hicon,
-                          self.hover_text)
-        win32gui.Shell_NotifyIcon(message, self.notify_id)
+        if self.hwnd:
+            self.notify_id = (self.hwnd,
+                              0,
+                              win32gui.NIF_ICON | win32gui.NIF_MESSAGE | win32gui.NIF_TIP,
+                              win32con.WM_USER+20,
+                              self.hicon,
+                              self.hover_text)
+            win32gui.Shell_NotifyIcon(message, self.notify_id)
 
     def restart(self, hwnd, msg, wparam, lparam):
         self.refresh_icon()
