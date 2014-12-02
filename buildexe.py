@@ -13,6 +13,7 @@ import os, sys
 import time, string
 import subprocess
 import shutil
+import urlparse
 
 PYINST_DEFAULT_PATH = 'C:\Python27\Lib\site-packages\PyInstaller'
 
@@ -31,6 +32,13 @@ RES  = ['README.md', 'resources', 'third-party/tap-windows', 'third-party/openvp
 # Build byproducts to delete after build
 CLEAN = ['dist/viperclient.exe']
 
+# third-party binaries
+OVPN_DOWNLOAD_URL = "http://swupdate.openvpn.org/community/releases/"
+OVPN_DOWNLOAD = "openvpn-install-{0}-{1}.exe"
+OVPN_VERSION = "2.3.6-I601"
+TUNTAP_DOWNLOAD = "tap-windows-{0}.exe"
+TUNTAP_VERSION = "9.21.1"
+
 # relative to the CWD
 def get_build_path():
 	p = os.path.join(os.getcwd(), "dist\client")
@@ -39,12 +47,34 @@ def get_build_path():
 
 	return p
 
+def get_ovpn_platform_suffix():
+	""" get the platform from the python API and translate it to the suffix used in OpenVPN releases """
+	PLATFORM = {'32bit' : "i686", '64bit' : "x86_64"}
+	import platform
+	b, l = platform.architecture()
+	return PLATFORM[b]
+
+def download_binaries():
+	import urllib
+	downloader = urllib.URLopener()
+
+	ovpnfn = OVPN_DOWNLOAD.format(OVPN_VERSION, get_ovpn_platform_suffix())
+	ovpnurl = urlparse.urljoin(OVPN_DOWNLOAD_URL, ovpnfn)
+	print("Downloading", ovpnurl)
+	downloader.retrieve(ovpnurl, ovpnfn)
+
+	tuntapfn = TUNTAP_DOWNLOAD.format(TUNTAP_VERSION)
+	tuntapurl = urlparse.urljoin(OVPN_DOWNLOAD_URL, tuntapfn)
+	print("Downloading", tuntapurl)
+	downloader.retrieve(tuntapurl, tuntapfn)
+
 # absolute path to PyInstaller - expects an environment variable pointing to it
 def get_pyinstaller_path():
 	p = os.getenv("PYINSTALLER_HOME")
 	if p:
 		return p
 	else:
+		print("(!!!) The environment variable PYINSTALLER_HOME is not defined, resorting to default...")
 		return PYINST_DEFAULT_PATH
 
 # build actual command call to PyInstaller
