@@ -45,7 +45,7 @@ def home():
 
 @route('/resources/<filename>')
 def server_static(filename):
-    return bottle.static_file(filename, root='resources/')
+    return bottle.static_file(filename, root='resources/www/res/')
 
 @route('/tunnel/open', method='POST')
 def tunnel_open():
@@ -54,7 +54,7 @@ def tunnel_open():
     #pprint(request.body)
     if jreq and ( ('config' in jreq) and ('log' in jreq) ):
         logging.info( "Open tunnel wih params [config = {0}] [log = {1}]".format(jreq['config'], jreq['log']) )
-        reactor.core.tunnel_open()
+        reactor.core.tunnel_open(jreq['config'], jreq['log'])
     else:
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 

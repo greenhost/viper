@@ -79,7 +79,7 @@ def is_openvpn_running():
     """Check that the OpenVPN process is only run once"""
     try:
         procs = []
-        for p in psutil.get_process_list():
+        for p in list(psutil.process_iter()): #psutil.get_process_list():
             try:
                 if p.name() and ('openvpn' in p.name().lower()):
                     procs.append(p)
