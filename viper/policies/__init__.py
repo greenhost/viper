@@ -46,12 +46,15 @@ class Policy:
 	def after_shield_down():
 		pass
 
-	def checkupdate():
+	def verifyupdate():
 		pass
 
-	def check():
+	def verify():
 		pass
 
+## ####################################################################################
+## policy annotation
+## ####################################################################################
 @policy_export
 class StrictPolicy:
 	__command__ = "strict"
@@ -77,10 +80,10 @@ class IPv6Policy(Policy):
 	def after_shield_down():
 		pass
 
-	def checkupdate():
+	def verifyupdate():
 		pass
 
-	def check():
+	def verify():
 	    logging.info("Checking fw entries for IPv6")
 
 @policy_export
@@ -98,10 +101,10 @@ class GatewayPolicy(Policy):
 	def after_shield_down():
 		pass
 
-	def checkupdate():
+	def verifyupdate():
 		check()
 
-	def check():
+	def verify():
 	    logging.info("Checking that gateway hasn't changed")
 
 @policy_export
@@ -119,21 +122,8 @@ class CrossCheckPolicy(Policy):
 	def after_shield_down():
 		pass
 
-	def checkupdate():
+	def verifyupdate():
 		check()
 
-	def check():
+	def verify():
 	    logging.info("Cross checking that def. gateway matches OpenVPNs expectations")
-
-
-# @policy_export
-# class UnknownPolicy(Policy):
-# 	pass
-
-
-if __name__ == '__main__':
-	print "::: POLICIES :::"
-
-	for k, v in POLICIES_SUPPORTED.iteritems():
-		print "policy name [", k, "] // policy class [", v, "]"
-	pass

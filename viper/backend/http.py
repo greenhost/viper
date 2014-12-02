@@ -4,36 +4,19 @@ import os, sys, re
 import threading, time, traceback, string
 from pprint import pprint
 import bottle
-from bottle import route, run, template, get, post, request, view, static_file
+from bottle import route, template, get, post, request
 import logging
 import getopt
 import atexit
 import json
-
-from griffin.policies import *
+from viper.backend.http import *
+from viper.policies import *
+from viper.reactor import Reactor
 
 vstate = "DISCONNECTED"
 
-#bottle.TEMPLATE_PATH = './resources'
-
-"""
-/tunnel/open
-    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/tunnel/open -d '{"config":"/etc/greenhost.ovpn","log":"greenhost-ovpn.log"}'
-/tunnel/close
-    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/tunnel/close
-/tunnel/status
-    curl -X GET -i http://localhost:8080/tunnel/status
-/policy
-    curl -X GET -i http://localhost:8080/policy
-/policy
-    curl -X OPTIONS -i http://localhost:8080/policy
-/policy/enable
-    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/enable -d '"name"="ipv6"'
-/policy/setting
-    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/setting -d '{"name"="ipv6", "settings" : {"timeout" : 100}}'
-/policy/disable
-    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/disable -d '"name"="ipv6"'
-"""
+# wrapper for actions that require elevated privileges
+react = Reactor()
 
 ## ##########################################################################
 ## monitoring loop
@@ -48,8 +31,7 @@ def stop_monitor():
     vstate = 'DISCONNECTED'
     logging.info("Stopping thread that checks connection status...")
 
-            
-def handle_quit(sysTrayIcon):
+def handle_quit():
     quitting = True
     stop_monitor()
     logging.info('Bye, then.')
@@ -62,11 +44,11 @@ def on_exit():
 ## Request handlers
 @route('/', method='GET')
 def home():
-    return template('index', title="Viper dashboard")
+    return bottle.template('index', title="Viper dashboard")
 
 @route('/resources/<filename>')
 def server_static(filename):
-    return static_file(filename, root='resources/')
+    return bottle.static_file(filename, root='resources/')
 
 @route('/tunnel/open', method='POST')
 def tunnel_open():
@@ -75,14 +57,14 @@ def tunnel_open():
     #pprint(request.body)
     if jreq and ( ('config' in jreq) and ('log' in jreq) ):
         logging.info( "Open tunnel wih params [config = {0}] [log = {1}]".format(jreq['config'], jreq['log']) )
-        start_monitor()
+        react.tunnel_open()
     else:
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 
 @route('/tunnel/close', method='POST')
 def tunnel_close():
     logging.info("Closing tunnel")
-    stop_monitor()
+    react.tunnel_close()
 
 @route('/tunnel/status', method='GET')
 def tunnel_close():
@@ -123,11 +105,10 @@ def tunnel_close():
     else:
         raise HTTPResponse(output='Failed to disable policy', status=503, header=None)
 
-if __name__ == '__main__':
-    atexit.register( on_exit )
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S', level=logging.DEBUG, filemode="w+")
 
-    bottle.debug(True)
-    bottle.TEMPLATES.clear()
-
-    run(host='127.0.0.1', port=8080)
+def serve(host='127.0.0.1', port=8088, debug=True):
+    """ start the http service loop """
+    bottle.debug(debug)
+    bottle.TEMPLATES.clear()  # clear template cache
+    bottle.TEMPLATE_PATH.insert(0, './resources/www/views')
+    bottle.run(host=host, port=port)
