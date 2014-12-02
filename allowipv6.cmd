@@ -1,0 +1,6 @@
+netsh advfirewall firewall delete rule name="IPv6"
+netsh advfirewall firewall delete rule name="IPv6 protocol 43"
+netsh advfirewall firewall delete rule name="IPv6 protocol 44"
+netsh advfirewall firewall delete rule name="IPv6 protocol 58"
+netsh advfirewall firewall delete rule name="IPv6 protocol 59"
+netsh advfirewall firewall delete rule name="IPv6 protocol 60"
