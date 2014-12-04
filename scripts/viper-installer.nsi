@@ -155,7 +155,7 @@ Section "TUN/TAP driver install" SEC003
   MessageBox MB_OK|MB_ICONINFORMATION "This software needs a third-party TAP/TUN driver to work. This driver is included in this installation package and will install automatically when you click OK."
 
   SetOutPath "$INSTDIR\client\tap-windows"
-  ExecWait '"$INSTDIR\client\tap-windows\tap-windows.exe"'
+  ExecWait '"$INSTDIR\client\tap-windows\tap-windows.exe" /S'
 SectionEnd
 Section "Environment variables" SEC004
   SetOutPath "$INSTDIR"
