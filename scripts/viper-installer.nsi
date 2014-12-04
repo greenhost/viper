@@ -2,6 +2,7 @@
 
 !include "LogicLib.nsh"
 !include "WinVer.nsh"
+!include "x64.nsh"
 
 ; Define helper variables
 !define PRODUCT_NAME "viper"
@@ -188,7 +189,10 @@ Function .onInit
     StrCpy $CONDITION_0 "true"
   ${EndIf}
 
-
+  ${If} ${RunningX64}
+      SetRegView 64
+      StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCT_NAME}"
+  ${EndIf}
 
   ;Set section flags
   StrCpy $0 0
@@ -344,4 +348,3 @@ DeleteRegValue "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environ
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   SetAutoClose true
 SectionEnd
-
