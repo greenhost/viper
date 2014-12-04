@@ -10,7 +10,7 @@ import getopt
 import atexit
 import json
 from viper.backend.http import *
-from viper.policies import *
+from viper import policies
 from viper import reactor
 
 vstate = "DISCONNECTED"
@@ -48,53 +48,56 @@ def server_static(filename):
     return bottle.static_file(filename, root='resources/www/res/')
 
 @route('/tunnel/open', method='POST')
-def tunnel_open():
+def req_tunnel_open():
     logging.info("Request received to open tunnel")
     jreq = request.json
     #pprint(request.body)
     if jreq and ( ('config' in jreq) and ('log' in jreq) ):
-        logging.info( "Open tunnel wih params [config = {0}] [log = {1}]".format(jreq['config'], jreq['log']) )
-        reactor.core.tunnel_open(jreq['config'], jreq['log'])
+        logging.debug( "Open tunnel wih params [config = {0}] [log = {1}]".format(jreq['config'], jreq['log']) )
+        try:
+            reactor.core.tunnel_open(jreq['config'], jreq['log'])
+        except Exception, e:
+            raise bottle.HTTPResponse(output='Failed to initialize tunnel', status=503, header=None)
     else:
-        raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
+        raise bottle.HTTPResponse(output='Failed to initialize tunnel', status=503, header=None)
 
 @route('/tunnel/close', method='POST')
-def tunnel_close():
+def req_tunnel_close():
     logging.info("Closing tunnel")
     reactor.core.tunnel_close()
 
 @route('/tunnel/status', method='GET')
-def tunnel_status():
+def req_tunnel_status():
     global vstate
     state = {"state" : vstate, "policies" : ["ipv6", "xcheck", "gatewaymon"]}
     return json.dumps( state )
 
 @route('/policy', method=['GET','OPTIONS'])
-def policy():
+def req_policy():
     logging.info( "Request to policy, method = {0}".format(request.method) )
     if request.method == "GET":
         logging.info( "Getting list of policies that this daemon implements" )
-        return json.dumps( POLICIES_SUPPORTED.keys() )
+        return json.dumps( policies.POLICIES_SUPPORTED.keys() )
     elif request.method == "OPTIONS":
         logging.info( "Getting currently active policies" )
-        return json.dumps( get_active_policies() )
+        return json.dumps( policies.get_active_policies() )
 
 @route('/policy/enable', method='POST')
-def policy_enable():
+def req_policy_enable():
     jreq = request.json
     pprint(request.body)
     if jreq and ('name' in jreq):
         logging.info( "Request to enable policy with name [{0}]".format(jreq['name']) )
-        policy_enable(jreq['name'])
+        policies.policy_enable(jreq['name'])
     else:
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 
 @route('/policy/setting', method=['GET', 'POST'])
-def policy_setting():
+def req_policy_setting():
     pass
 
 @route('/policy/disable', method='POST')
-def policy_disable():
+def req_policy_disable():
     jreq = request.json
     if jreq and ('name' in jreq):
         logging.info( "Request to enable policy with name [{0}]".format(jreq['name']) )

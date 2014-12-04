@@ -20,15 +20,18 @@
 import os, sys
 from os import popen
 import logging
+import platform
+
 try:
     import appdirs
 except ImportError:
     print("appdirs module is required. Please see: https://pypi.python.org/pypi/appdirs/")
 
-try:
-    import servicemanager
-except ImportError:
-    print("Couldn't import servicemanager, you are probably not on windows")
+if platform.system() == "Windows":
+    try:
+        import servicemanager
+    except ImportError:
+        print("Couldn't import servicemanager, you are probably not on windows")
 
 try:
     import psutil
