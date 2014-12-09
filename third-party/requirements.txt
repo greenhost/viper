@@ -1,5 +1,6 @@
 appdirs==1.2.0
 psutil>=2.0.0
-py2exe==0.6.9
+#py2exe==0.6.9
 #pywin32==218
 rpyc==3.2.3
+#bottle==0.12

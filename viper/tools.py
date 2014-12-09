@@ -20,15 +20,18 @@
 import os, sys
 from os import popen
 import logging
+import platform
+
 try:
     import appdirs
 except ImportError:
     print("appdirs module is required. Please see: https://pypi.python.org/pypi/appdirs/")
 
-try:
-    import servicemanager
-except ImportError:
-    print("Couldn't import servicemanager, you are probably not on windows")
+if platform.system() == "Windows":
+    try:
+        import servicemanager
+    except ImportError:
+        print("Couldn't import servicemanager, you are probably not on windows")
 
 try:
     import psutil
@@ -79,7 +82,7 @@ def is_openvpn_running():
     """Check that the OpenVPN process is only run once"""
     try:
         procs = []
-        for p in psutil.get_process_list():
+        for p in list(psutil.process_iter()): #psutil.get_process_list():
             try:
                 if p.name() and ('openvpn' in p.name().lower()):
                     procs.append(p)
