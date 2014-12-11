@@ -20,7 +20,6 @@
 """
 Service to manage and monitor OpenVPN on windows
 """
-import rpyc
 import subprocess
 import os, sys, logging
 from datetime import datetime
@@ -38,7 +37,6 @@ import psutil
 
 from viper import routing
 from viper.windows import service
-from viper.openvpn import monitor
 from viper.tools import *
 import traceback
 
@@ -67,7 +65,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
         except Exception, e:
             logging.critical("Couldn't import runtime entry point")
         # start serving HTTP
-        self.svc = http.init(debug=False)
+        self.svc = http.serve(host='127.0.0.1', port=8088)
         logging.info("Viper service is running")
 
 
