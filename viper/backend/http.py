@@ -106,9 +106,46 @@ def req_policy_disable():
         raise HTTPResponse(output='Failed to disable policy', status=503, header=None)
 
 
-def serve(host='127.0.0.1', port=8088, debug=True):
+def init(debug=True):
     """ start the http service loop """
     bottle.debug(debug)
     bottle.TEMPLATES.clear()  # clear template cache
     bottle.TEMPLATE_PATH.insert(0, './resources/www/views')
+
+def serve(host='127.0.0.1', port=8088):
     bottle.run(host=host, port=port)
+
+
+"""
+From: http://stackoverflow.com/questions/11282218/bottle-web-framework-how-to-stop
+
+
+from bottle import Bottle, ServerAdapter
+
+class MyWSGIRefServer(ServerAdapter):
+    server = None
+
+    def run(self, handler):
+        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        if self.quiet:
+            class QuietHandler(WSGIRequestHandler):
+                def log_request(*args, **kw): pass
+            self.options['handler_class'] = QuietHandler
+        self.server = make_server(self.host, self.port, handler, **self.options)
+        self.server.serve_forever()
+
+    def stop(self):
+        # self.server.server_close() <--- alternative but causes bad fd exception
+        self.server.shutdown()
+
+app = Bottle()
+server = MyWSGIRefServer(host=listen_addr, port=listen_port)
+try:
+    app.run(server=server)
+except Exception,ex:
+    print ex
+
+When I want to stop the bottle application, from another thread, I do the following:
+
+server.stop()
+"""

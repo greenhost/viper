@@ -2,6 +2,7 @@
 
 !include "LogicLib.nsh"
 !include "WinVer.nsh"
+!include "x64.nsh"
 
 ; Define helper variables
 !define PRODUCT_NAME "viper"
@@ -106,7 +107,7 @@ Section "UmanViper Install" SEC001
   File "${SRC_ROOT}\dist\client\openvpn\openvpnserv.exe"
   File "${SRC_ROOT}\dist\client\openvpn\ssleay32.dll"
   SetOutPath "$INSTDIR\resources"
-  File "${SRC_ROOT}\dist\client\resources\provider.json"
+  File "${SRC_ROOT}\dist\client\resources\provider-default.json"
   SetOutPath "$INSTDIR\client\resources"
   File "${SRC_ROOT}\dist\client\resources\*"
   SetOutPath "$INSTDIR\client\resources\icons"
@@ -114,26 +115,6 @@ Section "UmanViper Install" SEC001
 
   SetOutPath "$INSTDIR\client\tap-windows"
   File "${SRC_ROOT}\dist\client\tap-windows\tap-windows.exe"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\icon.ico"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\license.txt"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers\$PLUGINSDIR"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\InstallOptions.dll"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\ioSpecial.ini"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\modern-header.bmp"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\modern-wizard.bmp"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\nsExec.dll"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\$PLUGINSDIR\System.dll"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers\bin"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\bin\devcon.exe"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers\driver"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\driver\OemWin2k.inf"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\driver\tap0901.cat"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\driver\tap0901.sys"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers\include"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\include\tap-windows.h"
-  SetOutPath "$INSTDIR\client\tap-windows\tapdrivers\include\$PLUGINSDIR"
-  File "${SRC_ROOT}\dist\client\tap-windows\tapdrivers\include\$PLUGINSDIR\UserInfo.dll"
 
   SetOutPath "$INSTDIR\doc"
   File "${SRC_ROOT}\dist\doc\*"
@@ -154,7 +135,7 @@ Section "TUN/TAP driver install" SEC003
   MessageBox MB_OK|MB_ICONINFORMATION "This software needs a third-party TAP/TUN driver to work. This driver is included in this installation package and will install automatically when you click OK."
 
   SetOutPath "$INSTDIR\client\tap-windows"
-  ExecWait '"$INSTDIR\client\tap-windows\tap-windows.exe"'
+  ExecWait '"$INSTDIR\client\tap-windows\tap-windows.exe" /S'
 SectionEnd
 Section "Environment variables" SEC004
   SetOutPath "$INSTDIR"
@@ -188,7 +169,10 @@ Function .onInit
     StrCpy $CONDITION_0 "true"
   ${EndIf}
 
-
+  ${If} ${RunningX64}
+      SetRegView 64
+      StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCT_NAME}"
+  ${EndIf}
 
   ;Set section flags
   StrCpy $0 0
@@ -212,19 +196,19 @@ Function .onInit
     "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
     "UninstallString"
     StrCmp $R0 "" done
-   
+
     MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
     "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to remove the \
     previous version or `Cancel` to cancel this upgrade." \
     IDOK uninst
     Abort
-   
+
   ;Run the uninstaller
   uninst:
     ClearErrors
     ;ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
     Exec $INSTDIR\uninst.exe
-    
+
   done:
 
 FunctionEnd
@@ -344,4 +328,3 @@ DeleteRegValue "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environ
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   SetAutoClose true
 SectionEnd
-
