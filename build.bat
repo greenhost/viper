@@ -18,31 +18,14 @@
 @echo off
 set msBuildDir=%WINDIR%\Microsoft.NET\Framework\v3.5
 
-:parsecli
-IF "%~1"=="64" GOTO amd64
-IF "%~1"=="32" GOTO x86
-
-echo "Please specify '64' if you want a 64bit build or '32' if you want a 32 bit build"
-goto end
-
-@rem set variables
-:x86
-set BUILD="x86"
-goto build_all
-:amd64
-set BUILD="amd64"
-goto build_all
-
 :build_all
 :clean
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo Cleaning build byproducts...
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-@rmdir dist\client /s /q
-@rmdir dist\service /s /q
-@rmdir dist\utils /s /q
-@rmdir dist\doc /s /q
+@rmdir dist /s /q
 @rmdir build /s /q
+@mkdir dist
 
 :build_firewall_ctl
 echo.
