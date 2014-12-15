@@ -18,16 +18,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import os, sys, logging
-from datetime import datetime
-import os, sys, string, time
-from pprint import pprint
 
-from viper import routing
-#from viper.windows import service, firewall
-from viper.tools import *
+from viper.windows import firewall
+from viper import tools
 from viper.openvpn import management, launcher
-
-import traceback
 
 
 class Reactor:
@@ -44,8 +38,16 @@ class Reactor:
         @param cfgfile location of OpenVPN configuration file in the file system
         @param logdir directory for log output
         """
-        if not is_openvpn_running():
+
+        # flushing the dns cache doesn't harm and it can prevent dns leaks
+        # @NOTE should we flush before connection is completed or should be flush only after new DNS
+        # entries are injected by OpenVPN?
+        tools.flush_dns()
+
+        if not tools.is_openvpn_running():
             logging.debug("OpenVPN isn't running, trying to start process")
+            
+            tools.save_default_gateway()
 
             # configure the Windows Firewall to block all IPv6 traffic
             #firewall.block_ipv6()
@@ -63,21 +65,23 @@ class Reactor:
         """ Use launcher to stop the OpenVPN process """
         self.launcher.terminate()
 
-    def firewall_up(self):
+    def shields_up(self):
         """ Activate the firewall rules that will enhance the user's protection through the duration of the VPN run """
         logging.debug("Putting up firewall")
-        # configure the Windows Firewall to block all IPv6 traffic
-        firewall.block_ipv6()
-        # @TODO launch is async, perhaps this should be a callback
-        firewall.block_default_gateway("none-specified")
 
-    def firewall_down(self):
+        # if Windows Firewall is not enabled, refuse to connect
+        if not firewall.is_firewall_enabled():
+            logging.critical("Firewall is not enabled. I will not connect.")
+            return False
+        else:
+            # configure the Windows Firewall to block all IPv6 traffic
+            firewall.block_ipv6()
+            # @TODO launch is async, perhaps this should be a callback
+            firewall.block_default_gateway("none-specified")
+
+    def shields_down(self):
         """ Deactivate the firewall rules """
         logging.debug("Taking down firewall")
         # allow IPv6 traffic again
         firewall.unblock_ipv6()
         firewall.unblock_default_gateway("none-specified")
-
-    def set_default_gateway(self, gwip):
-        logging.debug("Setting default gateway to '{0}'".format(gwip))
-        routing.route_add("0.0.0.0", "0.0.0.0", gwip)

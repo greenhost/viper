@@ -1,10 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2013 Greenhost VOF
+# https://greenhost.nl -\- https://greenhost.io
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 import logging
 from pprint import pprint
 
 POLICIES_SUPPORTED = {}
 POLICIES_ENABLED = []
+
+def get_policy_reference(name):
+	return POLICIES_SUPPORTED[name]
 
 def get_active_policies():
 	global POLICIES_ENABLED
@@ -15,7 +35,7 @@ def policy_enable(name):
 	if not (name in POLICIES_ENABLED):
 		POLICIES_ENABLED.append(name)
 
-def policy_disabled(name):
+def policy_disable(name):
 	global POLICIES_ENABLED
 	POLICIES_ENABLED.append(name)
 
@@ -34,27 +54,27 @@ def policy_export(klass):
 
 
 class Policy:
-	def before_shield_up():
+	""" Generic interface for a Viper security policies, these policies implement all the necessary
+	interfacing with the OS to guarantee that the tunnel has an acceptable level of security.
+	"""
+	def before_shield_up(self):
 		pass
 
-	def after_shield_up():
+	def after_shield_up(self):
 		pass
 
-	def before_shield_down():
+	def before_shield_down(self):
 		pass
 
-	def after_shield_down():
+	def after_shield_down(self):
 		pass
 
-	def verifyupdate():
+	def verifyupdate(self):
 		pass
 
-	def verify():
+	def verify(self):
 		pass
 
-## ####################################################################################
-## policy annotation
-## ####################################################################################
 @policy_export
 class StrictPolicy:
 	__command__ = "strict"
@@ -64,66 +84,3 @@ class StrictPolicy:
 class LaxPolicy:
 	__command__ = "lax"
 	pass
-
-@policy_export
-class IPv6Policy(Policy):
-	__command__ = "ipv6-off"
-	def before_shield_up():
-		check()
-
-	def after_shield_up():
-		pass
-
-	def before_shield_down():
-		pass
-
-	def after_shield_down():
-		pass
-
-	def verifyupdate():
-		pass
-
-	def verify():
-	    logging.info("Checking fw entries for IPv6")
-
-@policy_export
-class GatewayPolicy(Policy):
-	__command__ = "gateway-monitor"
-	def before_shield_up():
-		check()
-
-	def after_shield_up():
-		pass
-
-	def before_shield_down():
-		pass
-
-	def after_shield_down():
-		pass
-
-	def verifyupdate():
-		check()
-
-	def verify():
-	    logging.info("Checking that gateway hasn't changed")
-
-@policy_export
-class CrossCheckPolicy(Policy):
-	__command__ = "cross-check"
-	def before_shield_up():
-		check()
-
-	def after_shield_up():
-		pass
-
-	def before_shield_down():
-		pass
-
-	def after_shield_down():
-		pass
-
-	def verifyupdate():
-		check()
-
-	def verify():
-	    logging.info("Cross checking that def. gateway matches OpenVPNs expectations")
