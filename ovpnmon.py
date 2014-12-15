@@ -20,7 +20,6 @@
 """
 Service to manage and monitor OpenVPN on windows
 """
-import rpyc
 import subprocess
 import os, sys, logging
 from datetime import datetime
@@ -38,7 +37,6 @@ import psutil
 
 from viper import routing
 from viper.windows import service
-from viper.openvpn import monitor
 from viper.tools import *
 import traceback
 
@@ -55,15 +53,21 @@ class OVPNService(win32serviceutil.ServiceFramework):
     _svc_description_ = 'Monitor the OpenVPN client on this machine'
 
     def __init__(self, *args):
+        logging.getLogger('').handlers = []   # clear any existing log handers
         log_init_service()
         win32serviceutil.ServiceFramework.__init__(self, *args)
         logging.info('init')
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
         self.runflag = False
 
-        from rpyc.utils.server import ThreadedServer
-        # make sure only connections from localhost are accepted
-        self.svc = ThreadedServer(monitor.RPCService, hostname = 'localhost', port = 18861)
+        try:
+            from viper.backend import http
+        except Exception, e:
+            logging.critical("Couldn't import runtime entry point. The likely cause is a missing library, Bottle.py is the most likely culprit")
+        # start serving HTTP
+        self.svc = http.serve(host='127.0.0.1', port=8088)
+        logging.info("Viper service is running")
+
 
     def sleep(self, sec):
         win32api.Sleep(sec*1000, True)
@@ -92,15 +96,16 @@ class OVPNService(win32serviceutil.ServiceFramework):
     # to be overridden
     def start(self):        
         logging.info("OVPN monitoring service starting...")
-        self.svc.start()
+        self.svc.serve(host='127.0.0.1', port=8088)
         self.runflag = True
 
-        while self.runflag:
-            self.sleep(10)
-            logging.debug("Service is alive ...")
+        # while self.runflag:
+        #     self.sleep(10)
+        #     logging.debug("Service is alive ...")
 
     # to be overridden
     def stop(self):
         logging.info("OVPN monitoring service shutting down...")
-        self.svc.close()
+        # TODO no way to stop http server yet
+        #self.svc.close()
         self.runflag = False

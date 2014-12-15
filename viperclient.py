@@ -45,10 +45,10 @@ try:
 except ImportError:
     import win32gui
 
-try:
-    import rpyc
-except ImportError:
-    print("RPYC module is required for interprocess communication. Please see: http://rpyc.readthedocs.org/en/latest/")
+# try:
+#     import rpyc
+# except ImportError:
+#     print("RPYC module is required for interprocess communication. Please see: http://rpyc.readthedocs.org/en/latest/")
 
 
 # globals
@@ -146,7 +146,8 @@ class ServiceProxy:
     '''
     def __init__(self, host="localhost", port=18861):
         """Initialize the local-link connection to the Widows service"""
-        self.connection = rpyc.connect(host, port)
+        # TODO remove rpyc dependency
+        self.connection = None #rpyc.connect(host, port)
         self.ovpn = management.OVPNInterface()
 
     def connect(self):

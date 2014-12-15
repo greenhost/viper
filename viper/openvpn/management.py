@@ -23,12 +23,12 @@ Polls status of OpenVPN using the management socket interface.
 import subprocess, logging
 import os, sys, traceback
 from datetime import datetime
-import win32service
-import win32serviceutil
-import win32api
-import win32con
-import win32event
-import win32evtlogutil
+# import win32service
+# import win32serviceutil
+# import win32api
+# import win32con
+# import win32event
+# import win32evtlogutil
 import os, sys, string, time
 import socket
 import threading, time

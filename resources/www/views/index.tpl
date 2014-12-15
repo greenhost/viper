@@ -159,3 +159,21 @@ $(document).ready(function () {
 
 </body>
 </html>
+<!--
+/tunnel/open
+    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/tunnel/open -d '{"config":"/etc/greenhost.ovpn","log":"greenhost-ovpn.log"}'
+/tunnel/close
+    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/tunnel/close
+/tunnel/status
+    curl -X GET -i http://localhost:8080/tunnel/status
+/policy
+    curl -X GET -i http://localhost:8080/policy
+/policy
+    curl -X OPTIONS -i http://localhost:8080/policy
+/policy/enable
+    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/enable -d '"name"="ipv6"'
+/policy/setting
+    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/setting -d '{"name"="ipv6", "settings" : {"timeout" : 100}}'
+/policy/disable
+    curl -X POST -i -H "Content-type: application/json" http://localhost:8080/policy/disable -d '"name"="ipv6"'
+-->
