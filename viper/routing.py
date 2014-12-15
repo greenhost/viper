@@ -31,11 +31,6 @@ import subprocess
 class InconsistentRoutingTable(Exception):
 	pass
 
-# def get_default_route():
-# 	rtr_table = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]
-# 	# on windows the default route is always listed first
-# 	return rtr_table[0]
-
 def get_all_routes():
 	retval = [elem.strip().split() for elem in popen("route print").read().split("Metric\n")[1].split("\n") if match("^[0-9]", elem.strip())]
 	return retval
@@ -76,3 +71,10 @@ def route_del(net, mask, dest):
     logging.debug("Removing route (net {0}, mask {1}, dst {2})".format(net, mask, dst))
     subprocess.call(cmd.split(), shell=True)
 
+def set_default_gateway(self, gwip):
+	"""
+	 Add a default gateway to the routing table of the current interface
+	:param gwip: ip address of the default gateway
+	"""
+	logging.debug("Setting default gateway to '{0}'".format(gwip))
+	route_add("0.0.0.0", "0.0.0.0", gwip)
