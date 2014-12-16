@@ -54,54 +54,64 @@ def firewall_enable():
 def firewall_disable():
 	set_firewall_state("off")
 
-def run_fwipv6(command):
-	path = tools.get_viper_home()
-	path = os.path.join(path, "utils/fwipv6")
-
-	logging.debug("Executing fwipv6 at {0}...".format(path) )
-
-	void = open(os.devnull, 'w')
-	try:
-		# build command array as expected by subprocess.Popen
-		cmd = [path]
-		cmd.extend(command.split())
-		# execute command
-		proc = subprocess.Popen(cmd, stdout=void, stderr=void)
-
-		proc.wait()
-		if (proc.returncode == 1) or (proc.returncode == 3):
-			if proc.returncode == 1:
-				msg = "Couldn't block IPv6 traffic (fwipv6 reports operation failed)"
-			else:
-				msg = "Couldn't block IPv6 traffic (fwipv6 reports firewall disabled)"
-
-			# log error and propagate condition
-			logging.error(msg)
-			raise FirewallException(msg)
-	except OSError, e:
-		# @todo check if the exception above is actually raised by subprocess.Popen
-		msg = "Couldn't execute subprocess '{0}'".format(path)
-		# log and propagate
-		logging.critical(msg)
-		raise FirewallException(msg)
-
 def block_ipv6():
 	"""Execute external fwipv6 tool to enable the Windows Firewall filtering of IPv6 traffic"""
+	rules = [
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6\" protocol=icmpv6 dir=out action=block",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6\" protocol=icmpv6 dir=in action=block",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6\" action=block protocol=41 dir=out",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6 protocol 43\" protocol=43 action=block dir=out",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6 protocol 44\" protocol=44 action=block dir=out",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6 protocol 58\" protocol=58 action=block dir=out",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6 protocol 59\" protocol=59 action=block dir=out",
+		"netsh advfirewall firewall add rule name=\"Viper - IPv6 protocol 60\" protocol=60 action=block dir=out"
+	]
+
 	logging.info("Configuring Windows Firewall to block IPv6 traffic...")
-	run_fwipv6("add ipv6")
+	for r in rules:
+		retval = subprocess.call( r.split() )
+		if retval != 0:
+			# if setting one of the rules fails, return
+			return False
+
+	return True
+
+def exec_rules(rules):
+	for r in rules:
+		retval = subprocess.call( r.split() )
+		if retval != 0:
+			# if setting one of the rules fails, return
+			return False
+
+	return True
 
 def unblock_ipv6():
 	"""Execute external fwipv6 tool to disable the Windows Firewall filtering of IPv6 traffic"""
-	logging.info("Windows Firewall allows IPv6 traffic now...")
-	run_fwipv6("remove ipv6")
+	rules = [
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6\"",
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6 protocol 43\"",
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6 protocol 44\"",
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6 protocol 58\"",
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6 protocol 59\"",
+		"netsh advfirewall firewall delete rule name=\"Viper - IPv6 protocol 60\""
+	]
 
-def block_default_gateway(interface_ip):
+	logging.info("Windows Firewall allows IPv6 traffic now...")
+	return exec_rules( rules )
+
+def block_default_local_subnet(interface_ip):
+	rules = [
+		"netsh advfirewall firewall add rule name=\"Viper - Block local subnet\" action=block protocol=any dir=out localip=any remoteip=LocalSubnet",
+	]
 	logging.info("Blocking all traffic on the local subnet (gateway ip: {0})".format(interface_ip))
-	run_fwipv6("add defgateway")
+	return exec_rules( rules )
 
 def unblock_default_gateway(interface_ip):
+	rules = [
+		"netsh advfirewall firewall delete rule name=\"Viper - Block local subnet\"",
+	]
 	logging.info("Unblocking local subnet (gateway ip: {0})".format(interface_ip))
-	run_fwipv6("remove defgateway")
+	return exec_rules( rules )
 
 def block_all_ports_except_vpn(vpn_port):
 	logging.info("Blocking all ports except the VPN's (vpn port: {0})".format(vpn_port))

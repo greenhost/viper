@@ -27,16 +27,6 @@ echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @rmdir build /s /q
 @mkdir dist
 
-:build_firewall_ctl
-echo.
-echo.
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo Building the firewall controller...
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-call %msBuildDir%\msbuild.exe  firewall\fwipv6\fwipv6.sln /p:Configuration=Release /l:FileLogger,Microsoft.Build.Engine;logfile=Manual_MSBuild_ReleaseVersion_LOG.log
-xcopy firewall\fwipv6\bin\Release\*.* dist\utils /s /e /i /y
-xcopy firewall\fwipv6\bin\Release\*.exe utils /s /e /i /y
-
 :build_service
 echo.
 echo.

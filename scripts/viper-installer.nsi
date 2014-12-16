@@ -124,9 +124,6 @@ Section "UmanViper Install" SEC001
   SetOutPath "$INSTDIR\service"
   File "${SRC_ROOT}\dist\service\*"
 
-  SetOutPath "$INSTDIR\utils"
-  File "${SRC_ROOT}\dist\utils\*.exe"
-  File "${SRC_ROOT}\dist\utils\*.dll"
 SectionEnd
 
 SectionGroup /e "Prerequisites" SEC002
@@ -288,7 +285,6 @@ Section Uninstall
   Delete "$INSTDIR\doc\res\run_as_admin.png"
   Delete "$INSTDIR\doc\res\validate.png"
   Delete "$INSTDIR\service\*"
-  Delete "$INSTDIR\utils\*"
   RMDir "$INSTDIR\client\openvpn"
   RMDir "$INSTDIR\client\resources\icons"
   RMDir "$INSTDIR\client\resources"
@@ -303,7 +299,6 @@ Section Uninstall
   RMDir "$INSTDIR\doc\res"
   RMDir "$INSTDIR\doc"
   RMDir "$INSTDIR\service"
-  RMDir "$INSTDIR\utils"
 
 DeleteRegValue "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "OPENVPN_HOME"
 
