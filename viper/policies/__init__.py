@@ -20,6 +20,8 @@
 import logging
 from pprint import pprint
 
+import viper
+
 POLICIES_SUPPORTED = {}
 POLICIES_ENABLED = []
 
@@ -38,6 +40,21 @@ def policy_enable(name):
 def policy_disable(name):
 	global POLICIES_ENABLED
 	POLICIES_ENABLED.append(name)
+
+def policy_load_last():
+	if viper.IS_WIN:
+		try:
+			import _winreg as winreg
+			reg = winreg.ConnectRegistry(winreg,HKEY_LOCAL_MACHINE)
+			key = winreg.OpenKey(reg, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run")
+			n, v, t = winreg.EnumValue(key, 0)
+
+			return v
+		except ImportError, e:
+			logging.error("Failed to import _winreg library. Cannot load last active policy")
+	else:
+		logging.error("policy_load_last is not supported in this OS")
+
 
 ## ####################################################################################
 ## policy annotation

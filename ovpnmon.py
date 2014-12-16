@@ -22,23 +22,24 @@ Service to manage and monitor OpenVPN on windows
 """
 import subprocess
 import os, sys, logging
-from datetime import datetime
+#from datetime import datetime
 import win32service
 import win32serviceutil
 import win32api
 import win32con
 import win32event
 import win32evtlogutil
-import os, sys, string, time
-import socket
-import threading, time
-from pprint import pprint
-import psutil
+#import os, sys, string, time
+#import socket
+#import threading, time
+#from pprint import pprint
+#import psutil
 
 from viper import routing
+from viper import backend
 from viper.windows import service
 from viper.tools import *
-import traceback
+#import traceback
 
 
 # see this http://tebl.homelinux.com/view_document.php?view=6
@@ -56,7 +57,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
         logging.getLogger('').handlers = []   # clear any existing log handlers
         log_init_service()
         win32serviceutil.ServiceFramework.__init__(self, *args)
-        logging.info('init')
+        logging.debug('init')
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
         self.runflag = False
 
@@ -65,9 +66,8 @@ class OVPNService(win32serviceutil.ServiceFramework):
         except Exception, e:
             logging.critical("Couldn't import runtime entry point. The likely cause is a missing library, Bottle.py is the most likely culprit")
         # start serving HTTP
-        http.init(debug=True)
-        self.svc = http.serve(host='127.0.0.1', port=8088)
-        logging.info("Viper service is running")
+        backend.http.init(debug=True)
+        logging.info("Initializing Viper service")
 
 
     def sleep(self, sec):
@@ -77,28 +77,29 @@ class OVPNService(win32serviceutil.ServiceFramework):
         self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
         try:
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
-            logging.info('start')
+            logging.debug('start')
             self.start()
-            logging.info('wait')
+            logging.debug('wait')
             win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
-            logging.info('done')
+            logging.debug('done')
         except Exception, x:
             logging.warning('Exception : %s' % x)
             self.SvcStop()
 
     def SvcStop(self):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        logging.info('stopping')
+        logging.debug('stopping')
         self.stop()
-        logging.info('stopped')
+        logging.debug('stopped')
         win32event.SetEvent(self.stop_event)
         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     # to be overridden
     def start(self):        
-        logging.info("OVPN monitoring service starting...")
-        self.svc.serve(host='127.0.0.1', port=8088)
+        logging.info("Viper service starting...")
+        self.svc = backend.http.serve(host='127.0.0.1', port=8088)
         self.runflag = True
+        logging.info("Viper service is running")
 
         # while self.runflag:
         #     self.sleep(10)

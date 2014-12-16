@@ -18,16 +18,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import logging
-from os import popen
-from re import match
-from pprint import pprint
-from viper.tools import *
-import subprocess
 
-import viper.routing import *
+from viper import policies
 
-@policy_export
-class IPv6Policy(Policy):
+from viper.routing import *
+
+@policies.policy_export
+class IPv6Policy(policies.Policy):
 	__command__ = "ipv6-off"
 	def before_shield_up(self):
 		self.verify()
