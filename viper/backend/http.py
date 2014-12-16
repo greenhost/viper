@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, sys, re
-import threading, time, traceback, string
-from pprint import pprint
+# import os, sys, re
+# import threading, time, traceback, string
+# import getopt
+# import atexit
+
 import bottle
 from bottle import route, template, get, post, request
 import logging
-import getopt
-import atexit
 import json
+from pprint import pprint
+
 from viper.backend.http import *
 from viper import policies
 from viper import reactor
 
 vstate = "DISCONNECTED"
+VIEWS_ROOT = './resources/www/views'
 
 ## ##########################################################################
 ## monitoring loop
@@ -101,16 +104,18 @@ def req_policy_disable():
     jreq = request.json
     if jreq and ('name' in jreq):
         logging.info( "Request to enable policy with name [{0}]".format(jreq['name']) )
-        policy_disable(jreq['name'])
+        policies.policy_disable(jreq['name'])
     else:
-        raise HTTPResponse(output='Failed to disable policy', status=503, header=None)
+        raise bottle.HTTPResponse(output='Failed to disable policy', status=503, header=None)
 
 
 def init(debug=True):
     """ start the http service loop """
+    logging.debug("Initializing the http backend...")
     bottle.debug(debug)
     bottle.TEMPLATES.clear()  # clear template cache
-    bottle.TEMPLATE_PATH.insert(0, './resources/www/views')
+    logging.debug("Setting template path to {0}".format(VIEWS_ROOT))
+    bottle.TEMPLATE_PATH.insert(0, VIEWS_ROOT)
 
 def serve(host='127.0.0.1', port=8088):
     bottle.run(host=host, port=port)

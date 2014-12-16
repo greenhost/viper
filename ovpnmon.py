@@ -53,7 +53,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
     _svc_description_ = 'Monitor the OpenVPN client on this machine'
 
     def __init__(self, *args):
-        logging.getLogger('').handlers = []   # clear any existing log handers
+        logging.getLogger('').handlers = []   # clear any existing log handlers
         log_init_service()
         win32serviceutil.ServiceFramework.__init__(self, *args)
         logging.info('init')
@@ -65,6 +65,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
         except Exception, e:
             logging.critical("Couldn't import runtime entry point. The likely cause is a missing library, Bottle.py is the most likely culprit")
         # start serving HTTP
+        http.init(debug=True)
         self.svc = http.serve(host='127.0.0.1', port=8088)
         logging.info("Viper service is running")
 

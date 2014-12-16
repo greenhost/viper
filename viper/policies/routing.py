@@ -17,17 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import logging
-from os import popen
-from re import match
-from pprint import pprint
 from viper.tools import *
-import subprocess
 
-import viper.routing import *
+from viper import routing
+from viper import policies
 
-@policy_export
-class GatewayPolicy(Policy):
+@policies.policy_export
+class GatewayPolicy(policies.Policy):
 	__command__ = "gateway-monitor"
 	def before_shield_up(self):
 		self.verify(self)
@@ -47,8 +43,8 @@ class GatewayPolicy(Policy):
 	def verify(self):
 	    logging.info("Checking that gateway hasn't changed")
 
-@policy_export
-class CrossCheckPolicy(Policy):
+@policies.policy_export
+class CrossCheckPolicy(policies.Policy):
 	__command__ = "cross-check"
 	def before_shield_up(self):
 		self.verify()
@@ -69,8 +65,8 @@ class CrossCheckPolicy(Policy):
 	    logging.info("Cross checking that def. gateway matches OpenVPNs expectations")
 
 
-@policy_export
-class MonitorSplitRoutes:
+@policies.policy_export
+class MonitorSplitRoutes(policies.Policy):
 	__command__ = "split-route"
 	""" 
 	This is a pass filter. Given an interface address that we obtain from querying OpenVPN, we should check for the existence of
@@ -86,8 +82,8 @@ class MonitorSplitRoutes:
 		self.interface = ifaceip
 
 	def verify(self):
-		route1 = filter_route("0.0.0.0", "128.0.0.0", self.interface)
-		route2 = filter_route("128.0.0.0", "128.0.0.0", self.interface)
+		route1 = routing.filter_route("0.0.0.0", "128.0.0.0", self.interface)
+		route2 = routing.filter_route("128.0.0.0", "128.0.0.0", self.interface)
 
 		if( (len(route1) == 1) and (len(route2) == 1) ):  # if one and only one route was found
 			logging.debug("Verifying routing table for interface '%s': PASSED" % self.interface)
@@ -96,13 +92,13 @@ class MonitorSplitRoutes:
 		# several of these routes for redundancy's sake. Viper wants to be
 		# conservative about this and wants to make sure that only one EIP gateway exists.
 		elif ( (len(route1) > 1) or (len(route2) > 1) ):
-			raise InconsistentRoutingTable("A routing table with multiple entries for interface %s was found" % self.interface)
+			raise routing.InconsistentRoutingTable("A routing table with multiple entries for interface %s was found" % self.interface)
 		else:
 			logging.debug("Verifying routing table for interface '%s': FAILED" % self.interface)
 			return False
 
-@policy_export
-class MonitorDefaultGateway:
+@policies.policy_export
+class MonitorDefaultGateway(policies.Policy):
 	__command__ = "unmutable-gateway"
 	"""
 	Makes sure there is a single default gateway entry in the routing table
@@ -111,7 +107,7 @@ class MonitorDefaultGateway:
 		self.gateway_ip = gwip
 
 	def verify(self):
-		defroute = filter_route("0.0.0.0", "0.0.0.0", self.gateway_ip)
+		defroute = routing.filter_route("0.0.0.0", "0.0.0.0", self.gateway_ip)
 		if( len(defroute) == 1 ):
 			logging.debug("Verifying default gateway '%s': PASSED" % self.gateway_ip)
 			return True
