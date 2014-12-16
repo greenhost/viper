@@ -47,7 +47,6 @@ from viper.tools import *
 class OVPNService(win32serviceutil.ServiceFramework):
     """Windows Service implementation. Starts a RPyC server listening to
     connections on port 18861 from localhost only.
-
     """
     _svc_name_ = 'ovpnmon'
     _svc_display_name_ = 'OVPN monitor'

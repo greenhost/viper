@@ -22,12 +22,13 @@ import logging
 from viper import policies
 
 from viper.routing import *
+from viper.windows import firewall
 
 @policies.policy_export
 class IPv6Policy(policies.Policy):
 	__command__ = "ipv6-off"
 	def before_shield_up(self):
-		self.verify()
+		return firewall.block_ipv6()
 
 	def after_shield_up(self):
 		pass
@@ -36,11 +37,11 @@ class IPv6Policy(policies.Policy):
 		pass
 
 	def after_shield_down(self):
-		pass
+		return firewall.unblock_ipv6()
 
 	def verifyupdate(self):
 		pass
 
 	def verify(self):
-	    logging.info("Checking fw entries for IPv6")
+		pass
 
