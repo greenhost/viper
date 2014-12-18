@@ -20,45 +20,47 @@
 from viper.tools import *
 
 from viper import routing
+from viper import reactor
 from viper import policies
+from viper.windows import firewall
 
 @policies.policy_export
-class GatewayPolicy(policies.Policy):
-	__command__ = "gateway-monitor"
-	def before_shield_up(self):
-		self.verify(self)
+class LocalSubnetPolicy(policies.Policy):
+	__command__ = "block-localsubnet"
+	def before_open_tunnel(self):
+		firewall.block_default_local_subnet("none-specified")
 
-	def after_shield_up(self):
+	def after_open_tunnel(self):
 		pass
 
-	def before_shield_down(self):
+	def before_close_tunnel(self):
 		pass
 
-	def after_shield_down(self):
-		pass
+	def after_close_tunnel(self):
+		firewall.unblock_default_local_subnet("none-specified")
 
-	def verifyupdate(self):
-		self.verify()
+	def verifyloop(self):
+		pass
 
 	def verify(self):
-	    logging.info("Checking that gateway hasn't changed")
+		pass
 
 @policies.policy_export
 class CrossCheckPolicy(policies.Policy):
 	__command__ = "cross-check"
-	def before_shield_up(self):
+	def before_open_tunnel(self):
 		self.verify()
 
-	def after_shield_up(self):
+	def after_open_tunnel(self):
 		pass
 
-	def before_shield_down(self):
+	def before_close_tunnel(self):
 		pass
 
-	def after_shield_down(self):
+	def after_close_tunnel(self):
 		pass
 
-	def verifyupdate(self):
+	def verifyloop(self):
 		self.verify()
 
 	def verify(self):
@@ -98,20 +100,20 @@ class MonitorSplitRoutes(policies.Policy):
 			return False
 
 @policies.policy_export
-class MonitorDefaultGateway(policies.Policy):
+class MonitorGatewayMutation(policies.Policy):
 	__command__ = "unmutable-gateway"
 	"""
 	Makes sure there is a single default gateway entry in the routing table
 	"""
-	def __init__(self, gwip):
-		self.gateway_ip = gwip
+	def __init__(self):
+		pass
 
 	def verify(self):
-		defroute = routing.filter_route("0.0.0.0", "0.0.0.0", self.gateway_ip)
+		defroute = routing.filter_route("0.0.0.0", "0.0.0.0", reactor.core.our_gateway_ip )
 		if( len(defroute) == 1 ):
-			logging.debug("Verifying default gateway '%s': PASSED" % self.gateway_ip)
+			logging.debug("Verifying default gateway '%s': PASSED" % reactor.core.our_gateway_ip )
 			return True
 		else:
-			logging.debug("Verifying default gateway '%s': FAILED" % self.gateway_ip)
+			logging.debug("Verifying default gateway '%s': FAILED" % reactor.core.our_gateway_ip )
 			return False
 

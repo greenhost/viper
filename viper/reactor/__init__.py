@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import impl
+from viper.reactor import impl
 
 __doc__ = """ This service performs all the operations that have to run with elevated privileges, such as
     starting and stopping OpenVPN, interacting with firewall rules and routing tables, etc.

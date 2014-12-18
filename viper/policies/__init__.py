@@ -18,7 +18,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import logging
-from pprint import pprint
 
 import viper
 
@@ -55,10 +54,42 @@ def policy_load_last():
 	else:
 		logging.error("policy_load_last is not supported in this OS")
 
+## ###########################################################################
+## events on enabled policies
+## ###########################################################################
+def before_open_tunnel():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.before_open_tunnel()
 
-## ####################################################################################
+def after_open_tunnel():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.after_open_tunnel()
+
+def before_close_tunnel():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.before_close_tunnel()
+
+def after_close_tunnel():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.after_close_tunnel()
+
+def verifyloop():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.verifyloop()
+
+def verify():
+	global POLICIES_ENABLED
+	for p in POLICIES_ENABLED:
+		p.verify()
+
+## ###########################################################################
 ## policy annotation
-## ####################################################################################
+## ###########################################################################
 def policy_export(klass):
 	global POLICIES_SUPPORTED
 	#print "Exported: ", klass.__name__
@@ -70,28 +101,58 @@ def policy_export(klass):
 	return klass
 
 
+## ###########################################################################
+## interface
+## ###########################################################################
 class Policy:
 	""" Generic interface for a Viper security policies, these policies implement all the necessary
 	interfacing with the OS to guarantee that the tunnel has an acceptable level of security.
 	"""
-	def before_shield_up(self):
+	def before_open_tunnel(self):
+		"""
+		 This event gets called BEFORE the tunnel connection is opened
+		:return: True if policy was enforced succesfully ""
+		"""
 		pass
 
-	def after_shield_up(self):
+	def after_open_tunnel(self):
+		"""
+		 This event gets called AFTER the tunnel connection is opened
+		:return: True if policy was enforced succesfully ""
+		"""
 		pass
 
-	def before_shield_down(self):
+	def before_close_tunnel(self):
+		"""
+		 This event gets called BEFORE the tunnel connection is closed
+		:return: True if policy was enforced succesfully ""
+		"""
 		pass
 
-	def after_shield_down(self):
+	def after_close_tunnel(self):
+		"""
+		 This event gets called AFTER the tunnel connection is closed
+		:return: True if policy was enforced succesfully ""
+		"""
 		pass
 
-	def verifyupdate(self):
-		pass
+	def verifyloop(self):
+		"""
+		 This event gets called on every run of the status loop
+		:return: True if policy has been verified successfully ""
+		"""
+		self.verify()
 
 	def verify(self):
+		"""
+		 This gets called when we want to verify that the policy is in place
+		:return: True if policy has been verified successfully ""
+		"""
 		pass
 
+## ###########################################################################
+## meta-policies
+## ###########################################################################
 @policy_export
 class StrictPolicy:
 	__command__ = "strict"

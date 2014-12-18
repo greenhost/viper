@@ -100,10 +100,6 @@ class OVPNService(win32serviceutil.ServiceFramework):
         self.runflag = True
         logging.info("Viper service is running")
 
-        # while self.runflag:
-        #     self.sleep(10)
-        #     logging.debug("Service is alive ...")
-
     # to be overridden
     def stop(self):
         logging.info("OVPN monitoring service shutting down...")

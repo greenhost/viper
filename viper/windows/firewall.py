@@ -106,7 +106,7 @@ def block_default_local_subnet(interface_ip):
 	logging.info("Blocking all traffic on the local subnet (gateway ip: {0})".format(interface_ip))
 	return exec_rules( rules )
 
-def unblock_default_gateway(interface_ip):
+def unblock_default_local_subnet(interface_ip):
 	rules = [
 		"netsh advfirewall firewall delete rule name=\"Viper - Block local subnet\"",
 	]

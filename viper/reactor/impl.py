@@ -21,6 +21,7 @@ import os, sys, logging
 
 from viper.windows import firewall
 from viper import tools
+from viper import policies
 from viper.openvpn import management, launcher
 
 
@@ -32,6 +33,8 @@ class Reactor:
         logging.info("Initializing reactor...")
         self.launcher = launcher.OpenVPNLauncher()
         self.settings = {}
+        if not firewall.is_firewall_enabled():
+             logging.critical("Firewall is not enabled. I will not connect.")
 
     def tunnel_open(self, cfgfile, logdir):
         """ Use launcher to start the OpenVPN instance 
@@ -49,11 +52,14 @@ class Reactor:
             
             tools.save_default_gateway()
 
-            # configure the Windows Firewall to block all IPv6 traffic
-            #firewall.block_ipv6()
-            self.launcher.launch(cfgfile, logdir)
-            # @TODOlaunch is async, perhaps this should be a callback
-            #firewall.block_default_gateway()
+            # enforce active policies before the tunnel goes up
+            if policies.before_open_tunnel():
+                # open tunnel
+                self.launcher.launch(cfgfile, logdir)
+                if not policies.after_open_tunnel():
+                    logging.warning("Failed to enforce policies AFTER opening tunnel")
+            else:
+                logging.warning("Failed to enforce policies BEFORE opening tunnel")
         else:
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
             handle = management.OVPNInterface()
@@ -63,25 +69,29 @@ class Reactor:
 
     def tunnel_close(self):
         """ Use launcher to stop the OpenVPN process """
+        if not policies.before_close_tunnel():
+            logging.warning("Failed to enforce policies BEFORE closing tunnel connection")
         self.launcher.terminate()
+        if not policies.after_close_tunnel():
+            logging.warning("Failed to enforce policies AFTER closing tunnel connection")
 
-    def shields_up(self):
-        """ Activate the firewall rules that will enhance the user's protection through the duration of the VPN run """
-        logging.debug("Putting up firewall")
-
-        # if Windows Firewall is not enabled, refuse to connect
-        if not firewall.is_firewall_enabled():
-            logging.critical("Firewall is not enabled. I will not connect.")
-            return False
-        else:
-            # configure the Windows Firewall to block all IPv6 traffic
-            firewall.block_ipv6()
-            # @TODO launch is async, perhaps this should be a callback
-            firewall.block_default_gateway("none-specified")
-
-    def shields_down(self):
-        """ Deactivate the firewall rules """
-        logging.debug("Taking down firewall")
-        # allow IPv6 traffic again
-        firewall.unblock_ipv6()
-        firewall.unblock_default_gateway("none-specified")
+    # def shields_up(self):
+    #     """ Activate the firewall rules that will enhance the user's protection through the duration of the VPN run """
+    #     logging.debug("Putting up firewall")
+    #
+    #     # if Windows Firewall is not enabled, refuse to connect
+    #     if not firewall.is_firewall_enabled():
+    #         logging.critical("Firewall is not enabled. I will not connect.")
+    #         return False
+    #     else:
+    #         # configure the Windows Firewall to block all IPv6 traffic
+    #         firewall.block_ipv6()
+    #         # @TODO launch is async, perhaps this should be a callback
+    #         firewall.block_default_gateway("none-specified")
+    #
+    # def shields_down(self):
+    #     """ Deactivate the firewall rules """
+    #     logging.debug("Taking down firewall")
+    #     # allow IPv6 traffic again
+    #     firewall.unblock_ipv6()
+    #     firewall.unblock_default_gateway("none-specified")
