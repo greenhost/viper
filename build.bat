@@ -66,4 +66,4 @@ IF NOT DEFINED FOUND  (
 )
 
 :end
-EXIT 0
+REM EXIT 0
