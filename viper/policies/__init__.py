@@ -156,9 +156,41 @@ class Policy:
 @policy_export
 class StrictPolicy:
 	__command__ = "strict"
-	pass
+	def before_open_tunnel(self):
+		pass
+
+	def after_open_tunnel(self):
+		pass
+
+	def before_close_tunnel(self):
+		pass
+
+	def after_close_tunnel(self):
+		pass
+
+	def verifyloop(self):
+		self.verify()
+
+	def verify(self):
+		pass
 
 @policy_export
 class LaxPolicy:
 	__command__ = "lax"
-	pass
+	def before_open_tunnel(self):
+		pass
+
+	def after_open_tunnel(self):
+		pass
+
+	def before_close_tunnel(self):
+		pass
+
+	def after_close_tunnel(self):
+		pass
+
+	def verifyloop(self):
+		self.verify()
+
+	def verify(self):
+		pass

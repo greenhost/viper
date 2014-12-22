@@ -107,7 +107,6 @@ Section "UmanViper Install" SEC001
   File "${SRC_ROOT}\dist\client\openvpn\openvpnserv.exe"
   File "${SRC_ROOT}\dist\client\openvpn\ssleay32.dll"
   SetOutPath "$INSTDIR\resources"
-  File "${SRC_ROOT}\dist\client\resources\provider-default.json"
   SetOutPath "$INSTDIR\client\resources"
   File "${SRC_ROOT}\dist\client\resources\*"
   SetOutPath "$INSTDIR\client\resources\icons"
