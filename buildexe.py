@@ -27,7 +27,7 @@ APPS = [
 OPTS = ['--onefile', '--noconsole']
 
 # Additional application resources
-RES  = ['README.md', 'resources', 'third-party/tap-windows', 'third-party/openvpn', 'dist/viperclient.exe']
+RES  = ['README.md', 'resources', 'third-party/tap-windows', 'third-party/openvpn'] #, 'dist/viperclient.exe']
 
 # Build byproducts to delete after build
 CLEAN = ['dist/viperclient.exe']
@@ -41,7 +41,7 @@ TUNTAP_VERSION = "9.21.1"
 
 # relative to the CWD
 def get_build_path():
-	p = os.path.join(os.getcwd(), "dist\client")
+	p = os.path.join(os.getcwd(), "dist")
 	if not os.path.exists(p):
 		os.makedirs(p)
 
@@ -120,7 +120,7 @@ def cleanup():
 ## Main loop
 ##
 if __name__ == '__main__':
-	create_executables()
+	#create_executables()
 	copy_resources()
 	cleanup()
 	#py2exe_build_services()
