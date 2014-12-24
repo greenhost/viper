@@ -94,10 +94,6 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "Comments" ""
 
 Section "UmanViper Install" SEC001
 
-  SetOutPath "$INSTDIR"
-  SetOutPath "$INSTDIR\client"
-  File "${SRC_ROOT}\dist\client\*"
-
   SetOutPath "$INSTDIR\openvpn"
   File "${SRC_ROOT}\dist\openvpn\*"
 
@@ -131,7 +127,7 @@ Section "TUN/TAP driver install" SEC003
 SectionEnd
 Section "Environment variables" SEC004
   SetOutPath "$INSTDIR"
-WriteRegStr "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "OPENVPN_HOME" "$INSTDIR\client\openvpn\"
+WriteRegStr "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "OPENVPN_HOME" "$INSTDIR\openvpn\"
 WriteRegStr "SHCTX" "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "VIPER_HOME" "$INSTDIR"
 SectionEnd
 SectionGroupEnd
@@ -210,7 +206,6 @@ Section -AdditionalIcons
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   WriteIniStr "$SMPROGRAMS\$ICONS_GROUP\Website.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\${PRODUCT_NAME}.lnk" "$INSTDIR\client\viperclient.exe"
   SetOutPath "$INSTDIR\doc"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\UmanViper Readme.html.lnk" "$INSTDIR\doc\index.html" "" "" "" "SW_SHOWNORMAL" "" ""
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -220,7 +215,6 @@ Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\client\viperclient.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
