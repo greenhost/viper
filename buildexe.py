@@ -114,7 +114,10 @@ def py2exe_build_services():
 def cleanup():
 	for r in CLEAN:
 		print("Cleaning byproduct %s" % (r,))
-		os.remove(r)
+		if os.path.isfile(r):
+			os.remove(r)
+		else:
+			print("File doesn't exist, skipping.")
 
 ##
 ## Main loop
