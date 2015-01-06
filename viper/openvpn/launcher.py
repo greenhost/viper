@@ -23,15 +23,13 @@ Launch & terminate the OpenVPN subprocess
 """
 import subprocess
 import os, sys, logging, string, time
-import shlex
-from datetime import datetime
-from pprint import pprint
-import psutil
 
-from viper import routing
+try:
+    import psutil
+except ImportError, e:
+    logging.critical("Couldn't import psutil in the launcher module")
+
 from viper.tools import *
-from viper.openvpn import management
-import traceback
 
 
 class VPNLauncherException(Exception):
