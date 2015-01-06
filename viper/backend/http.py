@@ -5,14 +5,15 @@
 # import getopt
 # import atexit
 
-import bottle
-from bottle import route, template, get, post, request
+#import bottle
+from viper.backend import bottle
+from viper.backend.bottle import route, template, get, post, request
 
 import logging
-#import json
-#from pprint import pprint
+import json
+from pprint import pprint
 
-from viper.backend.http import *
+#from viper.backend.http import *
 from viper import policies
 from viper import reactor
 
@@ -89,7 +90,7 @@ def req_policy():
 @route('/policy/enable', method='POST')
 def req_policy_enable():
     jreq = request.json
-    pprint(request.body)
+    #pprint(request.body)
     if jreq and ('name' in jreq):
         logging.info( "Request to enable policy with name [{0}]".format(jreq['name']) )
         policies.policy_enable(jreq['name'])

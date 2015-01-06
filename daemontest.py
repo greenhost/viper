@@ -3,7 +3,6 @@
 import logging
 import atexit
 from viper.backend import http
-from viper import reactor
 
 def on_exit():
     logging.info("I'm leaving. Bye.")

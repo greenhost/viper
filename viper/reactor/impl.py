@@ -22,7 +22,6 @@ import os, sys, logging
 from viper.windows import firewall
 from viper import tools
 from viper import policies
-from viper.openvpn import management, launcher
 
 
 class Reactor:
@@ -31,7 +30,14 @@ class Reactor:
     """
     def __init__(self):
         logging.info("Initializing reactor...")
-        self.launcher = launcher.OpenVPNLauncher()
+
+        # @NOTE this import is here to prevent circular module inclusion
+        try:
+            from viper.openvpn import launcher
+            self.launcher = launcher.OpenVPNLauncher()
+        except ImportError, e:
+            logging.critical("Couldn't import OpenVPN launcher")
+
         self.settings = {}
         if not firewall.is_firewall_enabled():
              logging.critical("Firewall is not enabled. I will not connect.")
@@ -41,7 +47,6 @@ class Reactor:
         @param cfgfile location of OpenVPN configuration file in the file system
         @param logdir directory for log output
         """
-
         # flushing the dns cache doesn't harm and it can prevent dns leaks
         # @NOTE should we flush before connection is completed or should be flush only after new DNS
         # entries are injected by OpenVPN?
@@ -62,10 +67,15 @@ class Reactor:
                 logging.warning("Failed to enforce policies BEFORE opening tunnel")
         else:
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
-            handle = management.OVPNInterface()
-            handle.hangup()
-            del handle
-            # if it's already running try to reaload it by sending hangup signal
+            # @NOTE this import is here to prevent circular module inclusion
+            try:
+                from viper.openvpn import management
+                handle = management.OVPNInterface()
+                handle.hangup()
+                del handle
+                # if it's already running try to reaload it by sending hangup signal
+            except ImportError, e:
+                logging.critical("Couldn't import management interface module")
 
     def tunnel_close(self):
         """ Use launcher to stop the OpenVPN process """

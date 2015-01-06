@@ -25,7 +25,7 @@ import socket
 import time
 
 from viper.tools import *
-from  viper import reactor
+from viper import reactor
 import traceback
 
 class OVPNInterface:
