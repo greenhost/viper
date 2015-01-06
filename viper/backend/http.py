@@ -5,17 +5,28 @@
 # import getopt
 # import atexit
 
-#import bottle
-from viper.backend import bottle
-from viper.backend.bottle import route, template, get, post, request
-
 import logging
+
+try:
+    from viper.backend import bottle
+except ImportError, e:
+    logging.critical("Failed to import Bottle module from HTTP controller")
+
+try:
+    from viper.backend.bottle import route, template, get, post, request
+except ImportError, e:
+    logging.critical("Failed to import Bottle routines into current namespace")
+
+
 import json
 from pprint import pprint
 
 #from viper.backend.http import *
 from viper import policies
-from viper import reactor
+try:
+    from viper import reactor
+except ImportError, e:
+    logging.critical("Failed to import reactor from http controller")
 
 vstate = "DISCONNECTED"
 VIEWS_ROOT = './resources/www/views'
