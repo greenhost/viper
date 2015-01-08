@@ -37,6 +37,7 @@ class FirewallException(Exception):
 
 def is_firewall_enabled():
 	"""Check whether windows firewall is enabled or not"""
+	pythoncom.CoInitialize()
 	fw = win32com.client.gencache.EnsureDispatch('HNetCfg.FwMgr',0)
 	fwprofile = fw.LocalPolicy.CurrentProfile
 	return fwprofile.FirewallEnabled
