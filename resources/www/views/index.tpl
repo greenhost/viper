@@ -9,12 +9,6 @@
 			margin: 80px 0 0 60px;
 		}
 		
-		#col1 {
-			margin: 60px 0 0 60px;
-			width: 200px;
-			float: right;
-		}
-
 		p {
 			padding: 0;
 			margin: 0;
@@ -65,22 +59,14 @@
 </header>
 <body>
 	<div id="container">
-		<!-- <div id="col1">
-			<img src="/resources/bunny.resized.png" alt=""/>
-		</div> -->
-		<div id="col2">
-			<!-- <h2>VIPER</h2>
-			<small>never get your animals wrong again</small><br/> -->
+		<div id="notification" class="yellow">TUNNEL STATUS</div>
+		<div id="policies" class="yellow">policies</div>
+		<button id="btnCheckStatus">Check status</button>
+		<button id="btnOpenTunnel">Open secure tunnel</button>
+		<button id="btnCloseTunnel">Close secure tunnel</button>
 
-			<div id="notification" class="yellow">DRINK ME</div>
-			<div id="policies" class="yellow">EAT ME</div>
-			<button id="btnCheckStatus">Check status</button>
-			<button id="btnOpenTunnel">Open secure tunnel</button>
-			<button id="btnCloseTunnel">Close secure tunnel</button>
-
-			<select id="slctPolicy" name="policy">
-			</select>
-		</div>
+		<select id="slctPolicy" name="policy">
+		</select>
 	</div>
 
 <script>
