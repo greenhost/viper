@@ -98,11 +98,9 @@ class OVPNService(win32serviceutil.ServiceFramework):
         logging.info("Viper service starting...")
         self.svc = backend.http.serve(host='127.0.0.1', port=8088)
         self.runflag = True
-        logging.info("Viper service is running")
 
     # to be overridden
     def stop(self):
         logging.info("OVPN monitoring service shutting down...")
-        # TODO no way to stop http server yet
-        #self.svc.close()
+        backend.http.shutdown()
         self.runflag = False

@@ -26,8 +26,9 @@ try:
 except ImportError, e:
     logging.exception("Failed to import reactor from http controller")
 
-## ##########################################################################
+## MODULE GLOBALS ###########################################################
 vstate = "DISCONNECTED"
+httpserver = None
 
 def get_view_path():
     """
@@ -127,8 +128,32 @@ def req_policy_disable():
         raise bottle.HTTPResponse(output='Failed to disable policy', status=503, header=None)
 
 
+## ###########################################################################
+class EmbeddedServer(bottle.ServerAdapter):
+    """ Bottle-specific HTTP server wrapper """
+    server = None
+
+    def run(self, handler):
+        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        if self.quiet:
+            class QuietHandler(WSGIRequestHandler):
+                def log_request(*args, **kw): pass
+            self.options['handler_class'] = QuietHandler
+        else:
+            class LoggerHandler(WSGIRequestHandler):
+                def log_request(*args, **kw):
+                    logging.debug("EbeddedServer - received request")
+            self.options['handler_class'] = LoggerHandler
+
+        self.server = make_server(self.host, self.port, handler, **self.options)
+        self.server.serve_forever()
+
+    def stop(self):
+        self.server.shutdown()
+
+## ###########################################################################
 def init(debug=True):
-    """ start the http service loop """
+    """ Configure the HTTP server """
     logging.debug("Initializing the http backend...")
     bottle.debug(debug)
     bottle.TEMPLATES.clear()  # clear template cache
@@ -137,8 +162,21 @@ def init(debug=True):
     bottle.TEMPLATE_PATH.insert(0, vpath)
 
 def serve(host='127.0.0.1', port=8088):
-    bottle.run(host=host, port=port)
+    """ Start the HTTP server loop """
+    global httpserver
+    # bottle.run(host=host, port=port)
+    app = bottle.default_app()
+    httpserver = EmbeddedServer(host=host, port=port)
+    try:
+        app.run(server=httpserver)
+    except Exception as ex:
+        logging.exception("HTTP server encountered an error")
 
+def shutdown():
+    """ Shut the HTTP server down """
+    global httpserver
+    logging.info()
+    httpserver.stop()
 
 """
 From: http://stackoverflow.com/questions/11282218/bottle-web-framework-how-to-stop
