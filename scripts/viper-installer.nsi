@@ -104,8 +104,8 @@ Section "UmanViper Install" SEC001
   SetOutPath "$INSTDIR\resources\icons"
   File "${SRC_ROOT}\dist\resources\icons\*.ico"
 
-  SetOutPath "$INSTDIR\resources\www"
-  File "${SRC_ROOT}\dist\resources\www\*"
+;  SetOutPath "$INSTDIR\resources\www"
+;  File "${SRC_ROOT}\dist\resources\www\*"
 
   SetOutPath "$INSTDIR\resources\www\res"
   File "${SRC_ROOT}\dist\resources\www\res\*"
