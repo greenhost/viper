@@ -65,12 +65,12 @@
 </header>
 <body>
 	<div id="container">
-		<div id="col1">
+		<!-- <div id="col1">
 			<img src="/resources/bunny.resized.png" alt=""/>
-		</div>
+		</div> -->
 		<div id="col2">
-			<h2>VIPER</h2>
-			<small>never get your animals wrong again</small><br/>
+			<!-- <h2>VIPER</h2>
+			<small>never get your animals wrong again</small><br/> -->
 
 			<div id="notification" class="yellow">DRINK ME</div>
 			<div id="policies" class="yellow">EAT ME</div>
