@@ -63,7 +63,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
         try:
             from viper.backend import http
         except Exception, e:
-            logging.critical("Couldn't import runtime entry point. The likely cause is a missing library, Bottle.py is the most likely culprit")
+            logging.exception("Couldn't import runtime entry point. The likely cause is a missing library, Bottle.py is the most likely culprit")
         # start serving HTTP
         backend.http.init(debug=True)
         logging.info("Initializing Viper service")
@@ -79,7 +79,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
             logging.debug('start')
             self.start()
             logging.debug('wait')
-            win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
+            win32event.WaitForSject(self.stop_event, win32event.INFINITE)
             logging.debug('done')
         except Exception, x:
             logging.warning('Exception : %s' % x)
