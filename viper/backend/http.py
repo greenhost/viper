@@ -4,32 +4,37 @@
 # import threading, time, traceback, string
 # import getopt
 # import atexit
-
+import json
 import logging
+import os
 
 try:
     from viper.backend import bottle
 except ImportError, e:
-    logging.critical("Failed to import Bottle module from HTTP controller")
+    logging.exception("Failed to import Bottle module from HTTP controller")
 
 try:
     from viper.backend.bottle import route, template, get, post, request
 except ImportError, e:
-    logging.critical("Failed to import Bottle routines into current namespace")
+    logging.exception("Failed to import Bottle routines into current namespace")
 
-
-import json
-from pprint import pprint
-
-#from viper.backend.http import *
 from viper import policies
+from viper import tools
+
 try:
     from viper import reactor
 except ImportError, e:
-    logging.critical("Failed to import reactor from http controller")
+    logging.exception("Failed to import reactor from http controller")
 
+## ##########################################################################
 vstate = "DISCONNECTED"
-VIEWS_ROOT = './resources/www/views'
+
+def get_view_path():
+    """
+    Find path to html templates for Viper service
+    :return: full path to the views directory
+    """
+    return os.path.join(tools.get_viper_home(), './resources/www/views')
 
 ## ##########################################################################
 ## monitoring loop
@@ -127,8 +132,9 @@ def init(debug=True):
     logging.debug("Initializing the http backend...")
     bottle.debug(debug)
     bottle.TEMPLATES.clear()  # clear template cache
-    logging.debug("Setting template path to {0}".format(VIEWS_ROOT))
-    bottle.TEMPLATE_PATH.insert(0, VIEWS_ROOT)
+    vpath = get_view_path()
+    logging.debug( "Setting template path to {0}".format(vpath) )
+    bottle.TEMPLATE_PATH.insert(0, vpath)
 
 def serve(host='127.0.0.1', port=8088):
     bottle.run(host=host, port=port)
