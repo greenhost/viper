@@ -29,6 +29,8 @@ import win32api
 import win32con
 import win32event
 import win32evtlogutil
+from threading import Thread, Event
+
 #import os, sys, string, time
 #import socket
 #import threading, time
@@ -39,7 +41,33 @@ from viper import routing
 from viper import backend
 from viper.windows import service
 from viper.tools import *
-#import traceback
+
+class NullOutput:
+    """A stdout / stderr replacement that discards everything."""
+
+    def noop(self, *args, **kw):
+        pass
+    write = writelines = close = seek = flush = truncate = noop
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        raise StopIteration
+
+    def isatty(self):
+        return False
+
+    def tell(self):
+        return 0
+
+    def read(self, *args, **kw):
+        return ''
+
+    readline = read
+
+    def readlines(self, *args, **kw):
+        return []
 
 
 # see this http://tebl.homelinux.com/view_document.php?view=6
@@ -56,6 +84,7 @@ class OVPNService(win32serviceutil.ServiceFramework):
         logging.getLogger('').handlers = []   # clear any existing log handlers
         log_init_service()
         win32serviceutil.ServiceFramework.__init__(self, *args)
+        self.redirectOutput()
         logging.debug('init')
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
         self.runflag = False
@@ -77,7 +106,26 @@ class OVPNService(win32serviceutil.ServiceFramework):
         try:
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
             logging.debug('start')
-            self.start()
+
+            #self.start()
+            while 1:
+                self.thread_event = Event()
+                self.thread_event.set()
+                try:
+                    self.bottle_srv = backend.http.BottleWsgiServer(self.thread_event)
+                    self.bottle_srv.start()
+                    self.runflag = True
+                except Exception as e:
+                    logging.exception("Failed during execution of service loop")
+                    self.SvcStop()
+
+                rc = win32event.WaitForMultipleObjects((self.hWaitStop,), 0,
+                    win32event.INFINITE)
+                if rc == win32event.WAIT_OBJECT_0:
+                    # user sent a stop service request
+                    self.SvcStop()
+                    break
+
             logging.debug('wait')
             win32event.WaitForSject(self.stop_event, win32event.INFINITE)
             logging.debug('done')
@@ -104,3 +152,13 @@ class OVPNService(win32serviceutil.ServiceFramework):
         logging.info("OVPN monitoring service shutting down...")
         backend.http.shutdown()
         self.runflag = False
+
+    def redirectOutput(self):
+        """ Redirect stdout and stderr to the bit-bucket.
+
+        Windows NT Services do not do well with data being written to stdout/stderror.
+        """
+        sys.stdout.close()
+        sys.stderr.close()
+        sys.stdout = NullOutput()
+        sys.stderr = NullOutput()

@@ -7,6 +7,8 @@
 import json
 import logging
 import os
+import select
+from threading import Thread, Event
 
 try:
     from viper.backend import bottle
@@ -135,24 +137,54 @@ class EmbeddedServer(bottle.ServerAdapter):
 
     def run(self, handler):
         from wsgiref.simple_server import make_server, WSGIRequestHandler
+
+        handler_class = WSGIRequestHandler
+
         if self.quiet:
             class QuietHandler(WSGIRequestHandler):
                 def log_request(*args, **kw): pass
+            handler_class = QuietHandler
             self.options['handler_class'] = QuietHandler
-        # else:
-        #     class LoggerHandler(WSGIRequestHandler):
-        #         def log_request(*args, **kw):
-        #             # from pprint import pprint
-        #             # pprint(args)
-        #             # pprint(kw)
-        #             logging.debug(args[1])
-        #     self.options['handler_class'] = LoggerHandler
 
-        self.server = make_server(self.host, self.port, handler, **self.options)
-        self.server.serve_forever()
+        srv = make_server(self.host, self.port, handler, handler_class=handler_class)
+        srv_wait = srv.fileno()
+        # The default  .serve_forever() call blocks waiting for requests.
+        # This causes the side effect of only shutting down the service if a
+        # request is handled.
+        #
+        # To fix this, we use the one-request-at-a-time ".handle_request"
+        # method.  Instead of sitting polling, we use select to sleep for a
+        # second and still be able to handle the request.
+        while self.options['notifyEvent'].isSet():
+            ready = select.select([srv_wait], [], [], 1)
+            if srv_wait in ready[0]:
+                srv.handle_request()
+            continue
 
     def stop(self):
         self.server.shutdown()
+
+
+class BottleThread(Thread):
+    def __init__(self, eventNotifyObj, host='127.0.0.1', port=8088):
+        Thread.__init__(self)
+        self.notifyEvent = eventNotifyObj
+        self.host = host
+        self.port = port
+
+    def run ( self ):
+        """ Start the HTTP server loop """
+        global httpserver
+        # bottle.run(host=host, port=port)
+        app = bottle.default_app()
+        httpserver = EmbeddedServer(host=self.host, port=self.port)
+        try:
+            app.run(server=httpserver)
+        except Exception as ex:
+            logging.exception("HTTP server encountered an error")
+
+        # bottle.bottle_run(app, host=self.host, port=self.port, server=EmbeddedServer, reloader=False, quiet=True, notifyEvent=self.notifyEvent)
+
 
 ## ###########################################################################
 def init(debug=True):
@@ -165,15 +197,7 @@ def init(debug=True):
     bottle.TEMPLATE_PATH.insert(0, vpath)
 
 def serve(host='127.0.0.1', port=8088):
-    """ Start the HTTP server loop """
-    global httpserver
-    # bottle.run(host=host, port=port)
-    app = bottle.default_app()
-    httpserver = EmbeddedServer(host=host, port=port)
-    try:
-        app.run(server=httpserver)
-    except Exception as ex:
-        logging.exception("HTTP server encountered an error")
+    raise NotImplementedError("Use the threa wrapper instead")
 
 def shutdown():
     """ Shut the HTTP server down """
