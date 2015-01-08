@@ -139,11 +139,14 @@ class EmbeddedServer(bottle.ServerAdapter):
             class QuietHandler(WSGIRequestHandler):
                 def log_request(*args, **kw): pass
             self.options['handler_class'] = QuietHandler
-        else:
-            class LoggerHandler(WSGIRequestHandler):
-                def log_request(*args, **kw):
-                    logging.debug("EbeddedServer - received request")
-            self.options['handler_class'] = LoggerHandler
+        # else:
+        #     class LoggerHandler(WSGIRequestHandler):
+        #         def log_request(*args, **kw):
+        #             # from pprint import pprint
+        #             # pprint(args)
+        #             # pprint(kw)
+        #             logging.debug(args[1])
+        #     self.options['handler_class'] = LoggerHandler
 
         self.server = make_server(self.host, self.port, handler, **self.options)
         self.server.serve_forever()
