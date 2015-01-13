@@ -64,6 +64,7 @@ class BottleService(win32serviceutil.ServiceFramework):
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
+        # self.redirectOutput()
         # Create an event which we will use to wait on.
         # The "service stop" request will set this event.
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
