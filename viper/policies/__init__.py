@@ -59,8 +59,17 @@ def policy_load_last():
 ## ###########################################################################
 def before_open_tunnel():
 	global POLICIES_ENABLED
+	logging.debug("Running before_open_tunnel()")
+	logging.debug("Contents of Policies enabled: %s" %POLICIES_ENABLED)
 	for p in POLICIES_ENABLED:
-		p.before_open_tunnel()
+		logging.debug("Running before_open_tunnel on policy %s" %p)
+		# TODO: Add errorhandling, process return values
+		# TODO: p is a string, not a class
+		#p.before_open_tunnel()
+
+	logging.debug("Finished before_open_tunnel() loop")
+	# TODO: Assumption is the mother of all fuck-ups
+	return True
 
 def after_open_tunnel():
 	global POLICIES_ENABLED

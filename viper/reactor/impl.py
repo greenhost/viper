@@ -56,15 +56,16 @@ class Reactor:
             logging.debug("OpenVPN isn't running, trying to start process")
             
             tools.save_default_gateway()
-
+            logging.debug("Saving default gateway.")
             # enforce active policies before the tunnel goes up
             if policies.before_open_tunnel():
                 # open tunnel
+                logging.debug("Open tunnel...")
                 self.launcher.launch(cfgfile, logdir)
                 if not policies.after_open_tunnel():
                     logging.warning("Failed to enforce policies AFTER opening tunnel")
             else:
-                logging.warning("Failed to enforce policies BEFORE opening tunnel")
+                logging.debug("Failed to enforce policies BEFORE opening tunnel")
         else:
             logging.debug("Another instance of OpenVPN was found, sending SIGHUP to force restart")
             # @NOTE this import is here to prevent circular module inclusion

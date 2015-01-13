@@ -1,32 +1,18 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# import os, sys, re
-# import threading, time, traceback, string
-# import getopt
-# import atexit
-import json
-import logging
+__author__ = 'pacopablo'
+
 import os
-import select
-from threading import Thread, Event
-
-try:
-    from viper.backend import bottle
-except ImportError, e:
-    logging.exception("Failed to import Bottle module from HTTP controller")
-
-try:
-    from viper.backend.bottle import route, template, get, post, request
-except ImportError, e:
-    logging.exception("Failed to import Bottle routines into current namespace")
-
+import logging
+import json
+from viper.backend.bottle import Bottle, route, template, get, post, request
+from viper.backend import bottle
 from viper import policies
 from viper import tools
+from viper import reactor
 
-try:
-    from viper import reactor
-except ImportError, e:
-    logging.exception("Failed to import reactor from http controller")
+logging.getLogger('').handlers = [] # clear any existing log handlers
+logging.basicConfig(filename="c:/ovpnmon.log", level=logging.DEBUG, filemode="w+")
+
+app = Bottle()
 
 ## MODULE GLOBALS ###########################################################
 vstate = "DISCONNECTED"
@@ -37,41 +23,30 @@ def get_view_path():
     Find path to html templates for Viper service
     :return: full path to the views directory
     """
-    return os.path.join(tools.get_viper_home(), './resources/www/views')
+    return os.path.join(os.environ.get('VIPER_HOME'), './resources/www/views')
 
-## ##########################################################################
-## monitoring loop
-## ##########################################################################
-def start_monitor():
-    global vstate
-    vstate = 'CONNECTED'
-    logging.info("Creating thread that checks connection status...")
+bottle.TEMPLATES.clear()  # clear template cache
+vpath = get_view_path()
+# logging.debug( "Setting template path to {0}".format(vpath) )
+bottle.TEMPLATE_PATH.insert(0, vpath)
 
-def stop_monitor():
-    global vstate
-    vstate = 'DISCONNECTED'
-    logging.info("Stopping thread that checks connection status...")
-
-def handle_quit():
-    quitting = True
-    stop_monitor()
-    logging.info('Bye, then.')
-
-def on_exit():
-    """ exit handler takes care of restoring firewall state """
-    logging.info("Shutting down: closing everything")
-
+@app.route('/hello')
+def hello():
+    return "Hello World."
 
 ## Request handlers
-@route('/', method='GET')
+@app.route('/', method='GET')
 def home():
     return bottle.template('index', title="Viper dashboard")
 
-@route('/resources/<filename>')
+@app.route('/resources/<filename>')
 def server_static(filename):
-    return bottle.static_file(filename, root='resources/www/res/')
+    root = os.path.join(os.environ.get('VIPER_HOME'), './resources/www/res/')
+    logging.info("Requesting %s in %s" %(filename, root))
+    logging.info("VIPER_HOME: %s" %os.environ.get('VIPER_HOME'))
+    return bottle.static_file(filename, root=root)
 
-@route('/tunnel/open', method='POST')
+@app.route('/tunnel/open', method='POST')
 def req_tunnel_open():
     logging.info("Request received to open tunnel")
     jreq = request.json
@@ -85,18 +60,18 @@ def req_tunnel_open():
     else:
         raise bottle.HTTPResponse(output='Failed to initialize tunnel', status=503, header=None)
 
-@route('/tunnel/close', method='POST')
+@app.route('/tunnel/close', method='POST')
 def req_tunnel_close():
     logging.info("Closing tunnel")
     reactor.core.tunnel_close()
 
-@route('/tunnel/status', method='GET')
+@app.route('/tunnel/status', method='GET')
 def req_tunnel_status():
     global vstate
     state = {"state" : vstate, "policies" : ["ipv6", "xcheck", "gatewaymon"]}
     return json.dumps( state )
 
-@route('/policy', method=['GET','OPTIONS'])
+@app.route('/policy', method=['GET','OPTIONS'])
 def req_policy():
     logging.info( "Request to policy, method = {0}".format(request.method) )
     if request.method == "GET":
@@ -106,7 +81,7 @@ def req_policy():
         logging.info( "Getting currently active policies" )
         return json.dumps( policies.get_active_policies() )
 
-@route('/policy/enable', method='POST')
+@app.route('/policy/enable', method='POST')
 def req_policy_enable():
     jreq = request.json
     #pprint(request.body)
@@ -116,11 +91,11 @@ def req_policy_enable():
     else:
         raise bottle.HTTPResponse(output='Failed to enable policy', status=503, header=None)
 
-@route('/policy/setting', method=['GET', 'POST'])
+@app.route('/policy/setting', method=['GET', 'POST'])
 def req_policy_setting():
     pass
 
-@route('/policy/disable', method='POST')
+@app.route('/policy/disable', method='POST')
 def req_policy_disable():
     jreq = request.json
     if jreq and ('name' in jreq):
@@ -129,83 +104,3 @@ def req_policy_disable():
     else:
         raise bottle.HTTPResponse(output='Failed to disable policy', status=503, header=None)
 
-
-## ###########################################################################
-class EmbeddedServer(bottle.ServerAdapter):
-    """ Bottle-specific HTTP server wrapper """
-    server = None
-
-    def run(self, handler):
-        from wsgiref.simple_server import make_server, WSGIRequestHandler
-
-        handler_class = WSGIRequestHandler
-
-        if self.quiet:
-            class QuietHandler(WSGIRequestHandler):
-                def log_request(*args, **kw): pass
-            handler_class = QuietHandler
-            self.options['handler_class'] = QuietHandler
-
-        srv = make_server(self.host, self.port, handler, handler_class=handler_class)
-        srv_wait = srv.fileno()
-        # The default  .serve_forever() call blocks waiting for requests.
-        # This causes the side effect of only shutting down the service if a
-        # request is handled.
-        #
-        # To fix this, we use the one-request-at-a-time ".handle_request"
-        # method.  Instead of sitting polling, we use select to sleep for a
-        # second and still be able to handle the request.
-        while self.options['notifyEvent'].isSet():
-            ready = select.select([srv_wait], [], [], 1)
-            if srv_wait in ready[0]:
-                srv.handle_request()
-            continue
-
-    def stop(self):
-        self.server.shutdown()
-
-
-class BottleThread(Thread):
-    def __init__(self, eventNotifyObj, host='127.0.0.1', port=8088):
-        Thread.__init__(self)
-        self.notifyEvent = eventNotifyObj
-        self.host = host
-        self.port = port
-
-    def run ( self ):
-        """ Start the HTTP server loop """
-        global httpserver
-        # bottle.run(host=host, port=port)
-        app = bottle.default_app()
-        httpserver = EmbeddedServer(host=self.host, port=self.port)
-        try:
-            app.run(server=httpserver)
-        except Exception as ex:
-            logging.exception("HTTP server encountered an error")
-
-        # bottle.bottle_run(app, host=self.host, port=self.port, server=EmbeddedServer, reloader=False, quiet=True, notifyEvent=self.notifyEvent)
-
-
-## ###########################################################################
-def init(debug=True):
-    """ Configure the HTTP server """
-    logging.debug("Initializing the http backend...")
-    bottle.debug(debug)
-    bottle.TEMPLATES.clear()  # clear template cache
-    vpath = get_view_path()
-    logging.debug( "Setting template path to {0}".format(vpath) )
-    bottle.TEMPLATE_PATH.insert(0, vpath)
-
-def serve(host='127.0.0.1', port=8088):
-    raise NotImplementedError("Use the threa wrapper instead")
-
-def shutdown():
-    """ Shut the HTTP server down """
-    global httpserver
-    logging.info()
-    httpserver.stop()
-
-"""
-Another example: https://github.com/pacopablo/bottle-nt-service/blob/master/bottle_service.py
-See for sample server impl: http://stackoverflow.com/questions/11282218/bottle-web-framework-how-to-stop
-"""
