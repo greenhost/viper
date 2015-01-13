@@ -1,12 +1,6 @@
-__author__ = 'Greenhost'
-
-
-__display_name__ = r'ovpnmon'
-__description__ = r'ovpnmon service'
-__virtualenv_directory__ = None
-
 import sys
 import os
+import logging
 import select
 import traceback
 import win32serviceutil
@@ -14,34 +8,18 @@ import win32service
 import win32event
 from threading import Thread, Event
 
-if __virtualenv_directory__:
-    activationscript = os.path.join(__virtualenv_directory__, 'Scripts', 'activate_this.py')
-    execfile(activationscript, {'__file__': activationscript})
-
 from viper.backend.bottle import ServerAdapter, run as bottle_run
 
-# Import your app here
-from viper.backend.http import app
-__bottle_app__ = app
+from viper.backend import http
+http.init()
+__bottle_app__ = http.__app__
 
 # Set host and port used to bind the webserver.  Leave the __host__ set to the
 # empty string to bind to all interfaces.
 __host__ = ''
 __port__ = '8088'
 
-
-def getTrace():
-    """ retrieve and format an exception into a nice message
-    """
-    msg = traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1],
-        sys.exc_info()[2])
-    msg = ''.join(msg)
-    msg = msg.split('\012')
-    msg = ''.join(msg)
-    msg += '\n'
-    return msg
-
-
+## ###########################################################################
 class WSGIRefHandleOneServer(ServerAdapter):
     def run(self, handler): # pragma: no cover
         import servicemanager
@@ -68,7 +46,6 @@ class WSGIRefHandleOneServer(ServerAdapter):
             continue
 
 class BottleWsgiServer(Thread):
-
     def __init__(self, eventNotifyObj):
         Thread.__init__(self)
         self.notifyEvent = eventNotifyObj
@@ -77,31 +54,20 @@ class BottleWsgiServer(Thread):
         bottle_run(__bottle_app__, host=__host__, port=__port__, server=WSGIRefHandleOneServer, reloader=False,
                     quiet=True, notifyEvent=self.notifyEvent)
 
-
+## ###########################################################################
 class BottleService(win32serviceutil.ServiceFramework):
     """ Windows NT Service class for running a bottle.py server """
 
-    _svc_name_ = ''.join(os.path.basename(__file__).split('.')[:-1])
-    _svc_display_name_ = __display_name__
-    _svc_description_ = __description__
+    _svc_name_ = "ovpnmon"
+    _svc_display_name_ = "Viper monitor"
+    _svc_description_ = "Guards your connection to the internet"
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
-        self.redirectOutput()
         # Create an event which we will use to wait on.
         # The "service stop" request will set this event.
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
 
-
-    def redirectOutput(self):
-        """ Redirect stdout and stderr to the bit-bucket.
-
-        Windows NT Services do not do well with data being written to stdout/stderror.
-        """
-        sys.stdout.close()
-        sys.stderr.close()
-        sys.stdout = NullOutput()
-        sys.stderr = NullOutput()
 
     def SvcStop(self):
         # Before we do anything, tell the SCM we are starting the stop process.
@@ -134,13 +100,12 @@ class BottleService(win32serviceutil.ServiceFramework):
             try:
                 self.bottle_srv = BottleWsgiServer(self.thread_event)
                 self.bottle_srv.start()
-            except Exception, info:
-                errmsg = getTrace()
+            except Exception as ex:
+                logging.exception("Failed to start server process")
                 servicemanager.LogErrorMsg(errmsg)
                 self.SvcStop()
 
-            rc = win32event.WaitForMultipleObjects((self.hWaitStop,), 0,
-                win32event.INFINITE)
+            rc = win32event.WaitForMultipleObjects((self.hWaitStop,), 0, win32event.INFINITE)
             if rc == win32event.WAIT_OBJECT_0:
                 # user sent a stop service request
                 self.SvcStop()
@@ -151,34 +116,6 @@ class BottleService(win32serviceutil.ServiceFramework):
             servicemanager.EVENTLOG_INFORMATION_TYPE,
             servicemanager.PYS_SERVICE_STOPPED,
             (self._svc_name_, ' (%s) ' % self._svc_display_name_))
-
-
-class NullOutput:
-    """A stdout / stderr replacement that discards everything."""
-
-    def noop(self, *args, **kw):
-        pass
-    write = writelines = close = seek = flush = truncate = noop
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    def isatty(self):
-        return False
-
-    def tell(self):
-        return 0
-
-    def read(self, *args, **kw):
-        return ''
-
-    readline = read
-
-    def readlines(self, *args, **kw):
-        return []
 
 
 if __name__=='__main__':
