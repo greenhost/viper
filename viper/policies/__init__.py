@@ -72,29 +72,44 @@ def before_open_tunnel():
 	return True
 
 def after_open_tunnel():
-	global POLICIES_ENABLED
-	for p in POLICIES_ENABLED:
-		p.after_open_tunnel()
+	try:
+		global POLICIES_ENABLED
+		for p in POLICIES_ENABLED:
+			p.after_open_tunnel()
+	except Exception as ex:
+		logging.exception("Failed to enforce policy after tunnel opened")
+		return False
+
+	return True
 
 def before_close_tunnel():
 	global POLICIES_ENABLED
 	for p in POLICIES_ENABLED:
 		p.before_close_tunnel()
 
+	return True
+
 def after_close_tunnel():
 	global POLICIES_ENABLED
 	for p in POLICIES_ENABLED:
 		p.after_close_tunnel()
+
+	return True
+
 
 def verifyloop():
 	global POLICIES_ENABLED
 	for p in POLICIES_ENABLED:
 		p.verifyloop()
 
+	return True
+
 def verify():
 	global POLICIES_ENABLED
 	for p in POLICIES_ENABLED:
 		p.verify()
+
+	return True
 
 ## ###########################################################################
 ## policy annotation

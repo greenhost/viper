@@ -50,6 +50,7 @@ class Reactor:
         @param cfgfile location of OpenVPN configuration file in the file system
         @param logdir directory for log output
         """
+        from viper.openvpn import launcher
         # flushing the dns cache doesn't harm and it can prevent dns leaks
         # @NOTE should we flush before connection is completed or should be flush only after new DNS
         # entries are injected by OpenVPN?
@@ -66,10 +67,9 @@ class Reactor:
                 logging.debug("Open tunnel...")
                 try:
                     self.launcher.launch(cfgfile, logdir)
-                except OpenVPNNotFoundException as ex:
-                    logging.error("FUUUUUUUUUCK!")
-                    #ovpnhome = tools.get_openvpn_home()
-                    #logging.critical("Couldn't find openvpn excutable [OVPN_HOME={0}]".format(ovpnhome) )
+                except launcher.OpenVPNNotFoundException as ex:
+                    ovpnhome = tools.get_openvpn_home()
+                    logging.critical("Couldn't find openvpn excutable [OVPN_HOME={0}]".format(ovpnhome) )
 
                 if not policies.after_open_tunnel():
                     logging.warning("Failed to enforce policies AFTER opening tunnel")

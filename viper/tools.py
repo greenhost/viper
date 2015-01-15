@@ -84,7 +84,7 @@ def is_openvpn_running():
         procs = []
         for p in list(psutil.process_iter()): #psutil.get_process_list():
             try:
-                if p.name() and ('openvpn' in p.name().lower()):
+                if p.name and ('openvpn' in p.name.lower()):
                     procs.append(p)
             except psutil.AccessDenied as e:
                 # we have no rights to peer into this process, skip to next
