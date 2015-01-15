@@ -28,3 +28,7 @@ core = impl.Reactor()
 # global that keeps track of the current status
 OVPN_STATUS = None
 isstarting = False
+
+def get_tunnel_status():
+    return OVPN_STATUS
+

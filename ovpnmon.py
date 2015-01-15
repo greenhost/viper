@@ -10,6 +10,8 @@ from threading import Thread, Event
 
 from viper.backend.bottle import ServerAdapter, run as bottle_run
 
+from viper import reactor
+
 from viper.backend import http
 http.init()
 __bottle_app__ = http.__app__
@@ -21,8 +23,7 @@ __port__ = '8088'
 
 ## ###########################################################################
 class WSGIRefHandleOneServer(ServerAdapter):
-    def run(self, handler): # pragma: no cover
-        import servicemanager
+    def run(self, handler):
         from wsgiref.simple_server import make_server, WSGIRequestHandler
         handler_class = WSGIRequestHandler
         if self.quiet:
@@ -30,7 +31,7 @@ class WSGIRefHandleOneServer(ServerAdapter):
                 def log_request(*args, **kw): pass
             handler_class = QuietHandler
         srv = make_server(self.host, self.port, handler, handler_class=handler_class)
-        servicemanager.LogInfoMsg("Bound to %s:%s" % (__host__ or '0.0.0.0', __port__))
+        logging.info("Bound to {0}:{1}".format(__host__ or '0.0.0.0', __port__))
         srv_wait = srv.fileno()
         # The default  .serve_forever() call blocks waiting for requests.
         # This causes the side effect of only shutting down the service if a
@@ -95,6 +96,8 @@ class BottleService(win32serviceutil.ServiceFramework):
             servicemanager.PYS_SERVICE_STARTED,
             (self._svc_name_, ' (%s)' % self._svc_display_name_))
 
+        logging.info("Reactor core: tunnel is up [{0}]".format( reactor.core.get_tunnel_status() ))
+
         while 1:
             self.thread_event = Event()
             self.thread_event.set()
@@ -103,7 +106,6 @@ class BottleService(win32serviceutil.ServiceFramework):
                 self.bottle_srv.start()
             except Exception as ex:
                 logging.exception("Failed to start server process")
-                servicemanager.LogErrorMsg(errmsg)
                 self.SvcStop()
 
             rc = win32event.WaitForMultipleObjects((self.hWaitStop,), 0, win32event.INFINITE)
