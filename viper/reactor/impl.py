@@ -42,7 +42,7 @@ class Reactor:
         if not firewall.is_firewall_enabled():
              logging.critical("Firewall is not enabled. I will not connect.")
 
-    def get_tunnel_status():
+    def get_tunnel_status(self):
         pass
 
     def tunnel_open(self, cfgfile, logdir):
@@ -64,7 +64,13 @@ class Reactor:
             if policies.before_open_tunnel():
                 # open tunnel
                 logging.debug("Open tunnel...")
-                self.launcher.launch(cfgfile, logdir)
+                try:
+                    self.launcher.launch(cfgfile, logdir)
+                except OpenVPNNotFoundException as ex:
+                    logging.error("FUUUUUUUUUCK!")
+                    #ovpnhome = tools.get_openvpn_home()
+                    #logging.critical("Couldn't find openvpn excutable [OVPN_HOME={0}]".format(ovpnhome) )
+
                 if not policies.after_open_tunnel():
                     logging.warning("Failed to enforce policies AFTER opening tunnel")
             else:

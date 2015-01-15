@@ -43,14 +43,12 @@ class OpenVPNLauncher:
     def __init__(self):
         self.proc = None
 
-    def launch(self, cfgfile, logdir):
+    def launch(self, cfgfile, logfile):
         """Start the OpenVPN process """
         path = get_openvpn_home()
         path = os.path.join(path, "openvpn")
-        # logfile goes to user's AppData dir
-        logfile = os.path.join(logdir, "openvpn.log")
 
-        cmd = "{0} --config {1} --log {2}".format(path, cfgfile, logfile)
+        cmd = "{0} --config {1} --log {2} --management 127.0.0.1 7505".format(path, cfgfile, logfile)
         logging.debug("Trying to execute OpenVPN client %s" % (cmd,))
         # @todo redirect stdout and stderr to /dev/null, perhaps we want to send this output somewhere else?
         f = open(os.devnull, 'w')
@@ -69,11 +67,8 @@ class OpenVPNLauncher:
             # return pid on successful run
             return self.proc.pid
         except OSError, e:
-            # @todo check if the exception above is actually raised by subprocess.Popen
-            msg = "Couldn't execute subprocess '%s'" % (path,)
-            # log and propagate
-            logging.critical(msg)
-            raise OpenVPNNotFoundException(msg)
+            logging.exception("Couldn't execute subprocess '{0}'".format(path))
+            raise OpenVPNNotFoundException()
 
     def terminate(self):
         """Terminate all OpenVPN processes that might be running"""

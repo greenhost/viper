@@ -58,14 +58,16 @@
 	</style>
 </header>
 <body>
+	<noscript>Your broser doesn't support Javascript</noscript>
 	<div id="container">
 		<div id="notification" class="yellow">TUNNEL STATUS</div>
 		<div id="policies" class="yellow">policies</div>
 		<button id="btnCheckStatus">Check status</button>
+		<!-- 
 		<button id="btnOpenTunnel">Open secure tunnel</button>
 		<button id="btnCloseTunnel">Close secure tunnel</button>
-
 		<select id="slctPolicy" name="policy">
+		-->
 		</select>
 	</div>
 
@@ -83,7 +85,7 @@ $(document).ready(function () {
 			    $("#notification").html(data['state']);
 			}
 		});
-
+/*
 		$.ajax({url: "/policy",
 			    contentType : 'application/json',
 			    type : 'OPTIONS',
@@ -98,11 +100,13 @@ $(document).ready(function () {
 					    $("#policies").html( html ); //JSON.stringify(data) );
 				      },
       	    });
+*/
 	}
 
 	displayStatus();
 
 	/* get list of available policies */
+/*
 	$.getJSON("/policy", function(data) {
 	    $.each(data, function(index, value){
 	    	//console.log(value);
@@ -139,6 +143,7 @@ $(document).ready(function () {
 	    });
 	    displayStatus();
 	});
+*/
 
 });
 </script>

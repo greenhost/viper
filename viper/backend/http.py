@@ -41,9 +41,9 @@ def home():
 
 @__app__.route('/resources/<filename>')
 def server_static(filename):
-    root = os.path.join(os.environ.get('VIPER_HOME'), './resources/www/res/')
-    logging.info("Requesting %s in %s" %(filename, root))
-    logging.info("VIPER_HOME: %s" %os.environ.get('VIPER_HOME'))
+    root = os.path.join(os.environ.get('VIPER_HOME'), 'resources/www/res/')
+    logging.info("Requesting resource {0} in {1}".format(filename, root) )
+    logging.info("VIPER_HOME={0}".format(os.environ.get('VIPER_HOME')) )
     return bottle.static_file(filename, root=root)
 
 @__app__.route('/tunnel/open', method='POST')
@@ -58,6 +58,9 @@ def req_tunnel_open():
         except Exception, e:
             raise bottle.HTTPResponse(output='Failed to initialize tunnel', status=503, header=None)
     else:
+        logging.debug("Content-type: ".format(request.content_type))
+        r = request.body.readlines()
+        logging.debug( "Request didn't contain the expected parameters {0}".format(r) )
         raise bottle.HTTPResponse(output='Failed to initialize tunnel', status=503, header=None)
 
 @__app__.route('/tunnel/close', method='POST')
