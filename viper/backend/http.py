@@ -18,7 +18,7 @@ def get_view_path():
     Find path to html templates for Viper service
     :return: full path to the views directory
     """
-    return os.path.join(tools.get_viper_home(), './resources/www/views')
+    return os.path.join(tools.get_viper_home(), 'resources/www/views')
 
 def init(debug=True):
     """ Initialize logging and HTTP engine """

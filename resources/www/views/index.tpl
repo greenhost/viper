@@ -3,6 +3,13 @@
 	<title>{{title}}</title>
 	<script type="text/javascript" src="/resources/jquery-1.11.1.min.js"></script>
 	<style>
+		body {
+			font-family: Tahoma, Geneva, sans-serif;
+			font-size: 10pt;
+			margin: 0;
+			padding: 0;
+		}
+
 		#col2 {
 			width: 220px;
 			float: left;
@@ -10,7 +17,7 @@
 		}
 		
 		p {
-			padding: 0;
+			padding: 1em 24px 1em 24px;
 			margin: 0;
 		}
 
@@ -47,7 +54,7 @@
 		}
 
 		#notification {
-			margin: 1em 0 1em 0;
+			margin: 0 0 1em 0;
 			padding: 12px 0 12px 0;
 			text-align: center;
 		}
@@ -61,9 +68,25 @@
 	<noscript>Your broser doesn't support Javascript</noscript>
 	<div id="container">
 		<div id="notification" class="yellow">TUNNEL STATUS</div>
-		<div id="policies" class="yellow">policies</div>
+		<div id="tunnel-closed-details">
+		<p>The tunnel is currently closed, this means that you probably are disconnected from the Internet. This is not a problem! You can connect yourself right away, just select a tunnel provider and click on 'Connect' to get back online.</p>
+		</div>
+		<div id="tunnel-open-details">
+			<p>You are now connected to the Internet through a Viper tunnel.</p>
+			<div id="policies" class="yellow">
+			<p>You are currently protected by the following security policies:</p>
+			<dl>
+				<dt>IPv6 blockade <a href="#">explain &#127;</a></dt>
+				<dt>Default gateway monitoring <a href="#">explain &#127;</a></dt>
+				<dt>Routing table cross-check <a href="#">explain &#127;</a></dt>
+				<dt>Local subnet blockade <a href="#">explain &#127;</a></dt>
+				<dt>DNS flush <a href="#">explain &#127;</a></dt>
+				<dt>Format-transforming encryption (fteproxy) <a href="#">explain &#127;</a></dt>
+			</dl>
+			</div>
+		</div>
+		<!--
 		<button id="btnCheckStatus">Check status</button>
-		<!-- 
 		<button id="btnOpenTunnel">Open secure tunnel</button>
 		<button id="btnCloseTunnel">Close secure tunnel</button>
 		<select id="slctPolicy" name="policy">
@@ -79,10 +102,14 @@ $(document).ready(function () {
 		$.getJSON("/tunnel/status", function(data) {
 			if(data['state'].toUpperCase() == "CONNECTED") {
 				$("#notification").css("background", "#aaffaa");
-			    $("#notification").html(data['state']);
+			    $("#notification").html('Tunnel Open');
+			    $("#tunnel-closed-details").hide();
+			    $("#tunnel-open-details").show();
 			} else {
 				$("#notification").css("background", "#ffaaaa");
-			    $("#notification").html(data['state']);
+			    $("#notification").html('Tunnel Closed');
+			    $("#tunnel-closed-details").show();
+			    $("#tunnel-open-details").hide();
 			}
 		});
 /*
