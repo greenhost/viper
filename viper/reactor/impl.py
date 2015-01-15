@@ -42,6 +42,9 @@ class Reactor:
         if not firewall.is_firewall_enabled():
              logging.critical("Firewall is not enabled. I will not connect.")
 
+    def get_tunnel_status():
+        pass
+
     def tunnel_open(self, cfgfile, logdir):
         """ Use launcher to start the OpenVPN instance 
         @param cfgfile location of OpenVPN configuration file in the file system

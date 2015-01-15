@@ -10,15 +10,14 @@ from threading import Thread, Event
 
 from viper.backend.bottle import ServerAdapter, run as bottle_run
 
-from viper import reactor
+#from viper import reactor
 
 from viper.backend import http
 http.init()
 __bottle_app__ = http.__app__
 
-# Set host and port used to bind the webserver.  Leave the __host__ set to the
-# empty string to bind to all interfaces.
-__host__ = ''
+# bind to loopback only
+__host__ = '127.0.0.1'
 __port__ = '8088'
 
 ## ###########################################################################
@@ -96,7 +95,12 @@ class BottleService(win32serviceutil.ServiceFramework):
             servicemanager.PYS_SERVICE_STARTED,
             (self._svc_name_, ' (%s)' % self._svc_display_name_))
 
-        logging.info("Reactor core: tunnel is up [{0}]".format( reactor.core.get_tunnel_status() ))
+        try:
+            from viper import reactor
+            logging.info("Reactor tunnel status [{0}]".format(reactor.core.get_tunnel_status()) )
+        except Exception as ex:
+            logging.exception("Failed to import Reactor")
+        #logging.info("Reactor core: tunnel is up [{0}]".format( reactor.core.get_tunnel_status() ))
 
         while 1:
             self.thread_event = Event()

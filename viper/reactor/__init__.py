@@ -29,6 +29,3 @@ core = impl.Reactor()
 OVPN_STATUS = None
 isstarting = False
 
-def get_tunnel_status():
-    return OVPN_STATUS
-
