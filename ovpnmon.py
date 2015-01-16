@@ -51,8 +51,11 @@ class BottleWsgiServer(Thread):
         self.notifyEvent = eventNotifyObj
 
     def run ( self ):
-        bottle_run(__bottle_app__, host=__host__, port=__port__, server=WSGIRefHandleOneServer, reloader=False,
+        try:
+            bottle_run(__bottle_app__, host=__host__, port=__port__, server=WSGIRefHandleOneServer, reloader=False,
                     quiet=True, notifyEvent=self.notifyEvent)
+        except Exception as ex:
+            logging.exception("Caught exception at top level, ovpnmon will probably stop working now")
 
 ## ###########################################################################
 class BottleService(win32serviceutil.ServiceFramework):
