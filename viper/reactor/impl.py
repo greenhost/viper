@@ -30,11 +30,12 @@ class Reactor:
     """
     def __init__(self):
         logging.info("Initializing reactor...")
+        self.last_known_gateway = None
 
-        # @NOTE this import is here to prevent circular module inclusion
         try:
-            from viper.openvpn import launcher
+            from viper.openvpn import launcher, management
             self.launcher = launcher.OpenVPNLauncher()
+            self.poll = management.OVPNInterface(self.set_last_known_gateway)
         except ImportError, e:
             logging.critical("Couldn't import OpenVPN launcher")
 
@@ -42,8 +43,19 @@ class Reactor:
         if not firewall.is_firewall_enabled():
              logging.critical("Firewall is not enabled. I will not connect.")
 
+    def set_last_known_gateway(self, gw):
+        logging.debug("Setting the last known gateway to {0}".format(gw))
+        self.last_known_gateway = gw
+
     def get_tunnel_status(self):
-        pass
+        st = {'tunnel': 'DISCONNECTED', 'openvpn': 'DISCONNECTED'}
+        ovpnst = self.poll.poll_status(self.last_known_gateway)
+        
+        if 'ovpn_state' in ovpnst:
+            st['tunnel']  = ovpnst['ovpn_state']
+            st['openvpn'] = ovpnst['ovpn_state']
+
+        return st
 
     def tunnel_open(self, cfgfile, logdir):
         """ Use launcher to start the OpenVPN instance 

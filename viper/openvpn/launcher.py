@@ -54,7 +54,7 @@ class OpenVPNLauncher:
         f = open(os.devnull, 'w')
         try:
             # prepare argument list for Popen
-            args = [path, "--config", cfgfile, "--log", logfile]
+            args = [path, "--config", cfgfile, "--log", logfile, "--management", "127.0.0.1", "7505"]
             self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             time.sleep(0.3)

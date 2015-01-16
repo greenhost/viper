@@ -8,8 +8,6 @@ from viper import tools
 from viper import reactor
 
 ## MODULE GLOBALS ###########################################################
-vstate = "DISCONNECTED"
-#httpserver = None
 __app__ = Bottle()
 
 
@@ -42,8 +40,8 @@ def home():
 @__app__.route('/resources/<filename>')
 def server_static(filename):
     root = os.path.join(os.environ.get('VIPER_HOME'), 'resources/www/res/')
-    logging.info("Requesting resource {0} in {1}".format(filename, root) )
-    logging.info("VIPER_HOME={0}".format(os.environ.get('VIPER_HOME')) )
+    #logging.info("Requesting resource {0} in {1}".format(filename, root) )
+    #logging.info("VIPER_HOME={0}".format(os.environ.get('VIPER_HOME')) )
     return bottle.static_file(filename, root=root)
 
 @__app__.route('/tunnel/open', method='POST')
@@ -70,8 +68,9 @@ def req_tunnel_close():
 
 @__app__.route('/tunnel/status', method='GET')
 def req_tunnel_status():
-    global vstate
-    state = {"state" : vstate, "policies" : ["ipv6", "xcheck", "gatewaymon"]}
+    status = reactor.core.get_tunnel_status()
+    logging.debug("Status request received [status={0}]".format(status['tunnel']) )
+    state = {"state" : status['tunnel'], "policies" : ["ipv6", "xcheck", "gatewaymon"]}
     return json.dumps( state )
 
 @__app__.route('/policy', method=['GET','OPTIONS'])

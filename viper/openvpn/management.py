@@ -25,16 +25,16 @@ import socket
 import time
 
 from viper.tools import *
-from viper import reactor
-import traceback
+#from viper import reactor
 
 class OVPNInterface:
-    def __init__(self):
+    def __init__(self, cb_last_gateway = None, cb_set_ovpn_status = None):
         self.connected = False
         self.sock = None
-        self.last_known_gateway = None  # in this session, we don't save to disk between sessions
         self.retries = 0
         self.gateway_monitor = None
+        self.cb_last_gateway = cb_last_gateway
+        self.cb_set_ovpn_status = cb_set_ovpn_status
 
     def send(self, command, connection_timeout = .5, response_delay = .5):
         retval = None
@@ -58,9 +58,8 @@ class OVPNInterface:
         except socket.timeout, e:
             logging.debug("OVPN management socket operation timed-out: {0}".format(e.message))
             return None 
-        except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            logging.warning("OVPN management socket error: {0}".format(e.message))
+        except Exception as e:
+            logging.exception("OVPN management socket error: ")
             return None
         finally:   # always execute
             try:
@@ -86,7 +85,7 @@ class OVPNInterface:
         self.send("signal SIGTERM\n")
         self.connected = False
 
-    def poll_status(self):
+    def poll_status(self, last_known_gateway = None):
         """ 
         Open connection to management socket and query the current status of OpenVPN. There's an important
         step implemented in this method, which is the translation of what OpenVPN reports as it's current
@@ -127,12 +126,13 @@ class OVPNInterface:
                     retval['viper_status'] = "CONNECTED"
 
                     # we only get a new gateway if a CONNECTED, SUCCESS message was read
-                    if 'gateway' in resp:
-                        reactor.core.last_known_gateway = resp['interface'] #resp['gateway']
+                    if ( ('gateway' in resp) and (self.cb_last_gateway)):
+                        self.cb_last_gateway( resp['interface'] )
+                    #     reactor.core.last_known_gateway = resp['interface'] #resp['gateway']
                 elif resp['ovpn_state'] in ['ASSIGN_IP', 'AUTH', 'GET_CONFIG', 'RECONNECTING', 'ADD_ROUTES']:
                     self.connected = False
                     retval['viper_status'] = "CONNECTING"
-                elif (resp['ovpn_state'] in ['WAIT']) and reactor.core.last_known_gateway:
+                elif (resp['ovpn_state'] in ['WAIT']) and last_known_gateway:
                     # connection seems stuck, restart the connection if we ever knew a gateway
                     logging.debug("WAIT state detected, notifying SIGHUP")
                     self.hangup()
@@ -147,8 +147,7 @@ class OVPNInterface:
                     self.connected = False
 
         except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            logging.warning("Exception while polling for status: %s" % e)
+            logging.exception("Exception while polling for status: ")
             logging.warning(resp)
             retval['viper_status'] = "DISCONNECTED" 
 
