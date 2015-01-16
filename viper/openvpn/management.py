@@ -23,11 +23,14 @@ Polls status of OpenVPN using the management socket interface.
 import string
 import socket
 import time
+import threading
 
 from viper.tools import *
 #from viper import reactor
 
+## ###########################################################################
 class OVPNInterface:
+    """ This type talks to the OpenVPN management interface and interprets its output """
     def __init__(self, cb_last_gateway = None, cb_set_ovpn_status = None):
         self.connected = False
         self.sock = None
@@ -153,7 +156,6 @@ class OVPNInterface:
 
         return retval
 
-
     def parse_state_response(self, msg):
         """ Parse OpenVPN management interface messages like this: 
                 >INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info
@@ -216,5 +218,31 @@ class OVPNInterface:
             logging.warning("Failed to parse status response: %s" % e)
 
     def parse_realtime_msg(self, line):
-        """not yet supported"""
-        pass
+        raise NotImplementedError("We don't support openvpn talk-back yet")
+
+## ###########################################################################
+class OVPNPollThread(threading.Thread):
+    """ This thread monitors OpenVPN's status """
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.ovpn_status = "DISCONNECTED"
+        self.last_known_gateway = None
+        self.running = True
+        self.poll = OVPNInterface(self.set_last_known_gateway)
+
+    def set_last_known_gateway(self, gw):
+        # only set the gateways value if it's new
+        if self.last_known_gateway != gw:
+            logging.debug("Setting last known gateway to {0}".format(gw))
+            self.last_known_gateway = gw
+
+    def shutdown(self):
+        self.running = False
+        logging.debug("Exiting OpenVPN polling thread")
+
+    def run(self):
+        while self.running:
+            self.ovpn_status = self.poll.poll_status(self.last_known_gateway)
+            print(self.ovpn_status)
+            time.sleep(0.5)
+
