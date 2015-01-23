@@ -35,17 +35,20 @@ class FirewallException(Exception):
 
 def is_firewall_enabled():
     """Check whether windows firewall is enabled or not"""
-    cmd = subprocess.Popen(['netsh', 'advfirewall', 'show', 'currentprofile'], stdout=subprocess.PIPE)
-    out = cmd.stdout.readlines()
+    try:
+        cmd = subprocess.Popen(['netsh', 'advfirewall', 'show', 'currentprofile'], stdout=subprocess.PIPE)
+        out = cmd.stdout.readlines()
 
-    for l in out:
-        if l.startswith('State'):
-            state = l.split()[-1]
+        for l in out:
+            if l.startswith('State'):
+                state = l.split()[-1]
 
-    if state == "ON":
-        return True
-    else:
-        return False
+        if state == "ON":
+            return True
+        else:
+            return False
+    except OSError as ex:
+        raise FirewallException("Couldn't determine if firewall is up")
 
 def set_firewall_state(state = "on"):
     """ Elevated privileges needed to run this 
