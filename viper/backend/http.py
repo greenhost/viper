@@ -28,9 +28,9 @@ def init(debug=True):
     logging.debug( "Setting template path to {0}".format(vpath) )
     bottle.TEMPLATE_PATH.insert(0, vpath)
 
-@__app__.route('/hello')
+@__app__.route('/ping')
 def hello():
-    return "Hello World."
+    return "pong"
 
 ## Request handlers
 @__app__.route('/', method='GET')
