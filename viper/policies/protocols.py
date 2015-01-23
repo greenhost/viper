@@ -28,6 +28,7 @@ from viper.windows import firewall
 class IPv6Policy(policies.Policy):
 	__command__ = "ipv6-off"
 	def before_open_tunnel(self):
+		logging.debug("IPv6Policy.before_open_tunnel() called")
 		return firewall.block_ipv6()
 
 	def after_open_tunnel(self):
@@ -37,10 +38,8 @@ class IPv6Policy(policies.Policy):
 		pass
 
 	def after_close_tunnel(self):
+		logging.debug("IPv6Policy.after_close_tunnel() called")
 		return firewall.unblock_ipv6()
-
-	def verifyloop(self):
-		pass
 
 	def verify(self):
 		pass

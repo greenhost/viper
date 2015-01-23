@@ -58,10 +58,10 @@ def policy_load_last():
 ## events on enabled policies
 ## ###########################################################################
 def before_open_tunnel():
-	global POLICIES_ENABLED
+	policies = get_active_policies()
 	logging.debug("Running before_open_tunnel()")
 	logging.debug("Contents of Policies enabled: %s" %POLICIES_ENABLED)
-	for p in POLICIES_ENABLED:
+	for p in policies:
 		logging.debug("Running before_open_tunnel on policy %s" %p)
 		# TODO: Add errorhandling, process return values
 		# TODO: p is a string, not a class
@@ -73,8 +73,7 @@ def before_open_tunnel():
 
 def after_open_tunnel():
 	try:
-		global POLICIES_ENABLED
-		for p in POLICIES_ENABLED:
+		for p in get_active_policies():
 			p.after_open_tunnel()
 	except Exception as ex:
 		logging.exception("Failed to enforce policy after tunnel opened")
@@ -83,30 +82,26 @@ def after_open_tunnel():
 	return True
 
 def before_close_tunnel():
-	global POLICIES_ENABLED
-	for p in POLICIES_ENABLED:
+	for p in get_active_policies():
 		p.before_close_tunnel()
 
 	return True
 
 def after_close_tunnel():
-	global POLICIES_ENABLED
-	for p in POLICIES_ENABLED:
+	for p in get_active_policies():
 		p.after_close_tunnel()
 
 	return True
 
 
 def verifyloop():
-	global POLICIES_ENABLED
-	for p in POLICIES_ENABLED:
+	for p in get_active_policies():
 		p.verifyloop()
 
 	return True
 
 def verify():
-	global POLICIES_ENABLED
-	for p in POLICIES_ENABLED:
+	for p in get_active_policies():
 		p.verify()
 
 	return True
@@ -174,47 +169,3 @@ class Policy:
 		"""
 		pass
 
-## ###########################################################################
-## meta-policies
-## ###########################################################################
-@policy_export
-class StrictPolicy:
-	__command__ = "strict"
-	def before_open_tunnel(self):
-		pass
-
-	def after_open_tunnel(self):
-		pass
-
-	def before_close_tunnel(self):
-		pass
-
-	def after_close_tunnel(self):
-		pass
-
-	def verifyloop(self):
-		self.verify()
-
-	def verify(self):
-		pass
-
-@policy_export
-class LaxPolicy:
-	__command__ = "lax"
-	def before_open_tunnel(self):
-		pass
-
-	def after_open_tunnel(self):
-		pass
-
-	def before_close_tunnel(self):
-		pass
-
-	def after_close_tunnel(self):
-		pass
-
-	def verifyloop(self):
-		self.verify()
-
-	def verify(self):
-		pass

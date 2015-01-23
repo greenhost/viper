@@ -39,9 +39,6 @@ class LocalSubnetPolicy(policies.Policy):
 	def after_close_tunnel(self):
 		firewall.unblock_default_local_subnet("none-specified")
 
-	def verifyloop(self):
-		pass
-
 	def verify(self):
 		pass
 
@@ -60,9 +57,6 @@ class CrossCheckPolicy(policies.Policy):
 	def after_close_tunnel(self):
 		pass
 
-	def verifyloop(self):
-		self.verify()
-
 	def verify(self):
 	    logging.info("Cross checking that def. gateway matches OpenVPNs expectations")
 
@@ -80,23 +74,23 @@ class MonitorSplitRoutes(policies.Policy):
 	If we find more than one of these then our routing table is corrupted, this might be from a OpenVPN 
 	run that didn't close properly.
 	"""
-	def __init__(self, ifaceip):
-		self.interface = ifaceip
+	def __init__(self):
+		pass
 
 	def verify(self):
-		route1 = routing.filter_route("0.0.0.0", "128.0.0.0", self.interface)
-		route2 = routing.filter_route("128.0.0.0", "128.0.0.0", self.interface)
+		route1 = routing.filter_route("0.0.0.0", "128.0.0.0", reactor.core.our_interface_ip)
+		route2 = routing.filter_route("128.0.0.0", "128.0.0.0", reactor.core.our_interface_ip)
 
 		if( (len(route1) == 1) and (len(route2) == 1) ):  # if one and only one route was found
-			logging.debug("Verifying routing table for interface '%s': PASSED" % self.interface)
+			logging.debug("Verifying routing table for interface '{0}': PASSED".format(reactor.core.our_interface_ip) )
 			return True
 		# the following condition might not be true, some providers might provide
 		# several of these routes for redundancy's sake. Viper wants to be
 		# conservative about this and wants to make sure that only one EIP gateway exists.
 		elif ( (len(route1) > 1) or (len(route2) > 1) ):
-			raise routing.InconsistentRoutingTable("A routing table with multiple entries for interface %s was found" % self.interface)
+			raise routing.InconsistentRoutingTable("A routing table with multiple entries for interface {0} was found".format(reactor.core.our_interface_ip) )
 		else:
-			logging.debug("Verifying routing table for interface '%s': FAILED" % self.interface)
+			logging.debug("Verifying routing table for interface '{0}': FAILED".format(reactor.core.our_interface_ip))
 			return False
 
 @policies.policy_export
