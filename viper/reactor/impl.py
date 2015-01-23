@@ -38,8 +38,11 @@ class Reactor:
             logging.critical("Couldn't import OpenVPN launcher")
 
         self.settings = {}
-        if not firewall.is_firewall_enabled():
-             logging.critical("Firewall is not enabled. I will not connect.")
+        try:
+            if not firewall.is_firewall_enabled():
+                 logging.critical("Firewall is not enabled. I will not connect.")
+        except firewall.FirewallException as ex:
+            logging.exception("Failed to check firewall")
 
     def get_tunnel_status(self):
         st = {'tunnel': 'DISCONNECTED', 'openvpn': 'DISCONNECTED'}
