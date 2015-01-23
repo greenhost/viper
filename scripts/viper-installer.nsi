@@ -124,6 +124,12 @@ Section "UmanViper Install" SEC001
   SetOutPath "$INSTDIR\service"
   File "${SRC_ROOT}\dist\service\*"
 
+; reference GUI
+; 	Newtonsoft.Json.dll
+;	Newtonsoft.Json.xml
+;	viper-reference-client.exe
+;	viper-reference-client.exe.config
+;	viper-reference-client.pdb
 SectionEnd
 
 SectionGroup /e "Prerequisites" SEC002
