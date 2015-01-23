@@ -31,7 +31,7 @@ Once your build machine has this software readily available you should be able t
   * Clearly describe the issue including steps to reproduce it is a bug.
   * Note the earliest version that you know has the issue.
 
-### Request a feture you would like to see implemented
+### Request a feature you would like to see implemented
 * Use the github issues to tell us what you would like to see implemented. Tell us why you need the feature you are asking for.
 
 ### Rolling up your sleeves and making your own changes

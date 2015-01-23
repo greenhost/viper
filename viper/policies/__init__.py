@@ -44,7 +44,7 @@ def policy_load_last():
 	if viper.IS_WIN:
 		try:
 			import _winreg as winreg
-			reg = winreg.ConnectRegistry(winreg,HKEY_LOCAL_MACHINE)
+			reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
 			key = winreg.OpenKey(reg, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run")
 			n, v, t = winreg.EnumValue(key, 0)
 
