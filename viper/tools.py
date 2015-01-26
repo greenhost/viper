@@ -22,6 +22,8 @@ from os import popen
 import logging
 import platform
 
+import viper
+
 try:
     import appdirs
 except ImportError:
@@ -44,6 +46,42 @@ PRODUCT_NAME = "Viper"
 PRODUCER_NAME = "Greenhost"
 DEFAULT_OPENVPN_HOME = "./openvpn/"
 DEFAULT_VIPER_HOME = "./"
+
+WINREG_KEY_NAME = r'Software\Viper'
+
+def save_last_config(tunname, tunconfig, tunpolicy):
+    """ Save last known configuration in Windows registry, if the key isn't found it will be created """
+    if viper.IS_WIN:
+        import _winreg as winreg
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINREG_KEY_NAME, 0, winreg.KEY_ALL_ACCESS)
+        except:
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, WINREG_KEY_NAME)
+        finally:
+            winreg.SetValueEx(key, "TunnelName", 0, winreg.REG_SZ, tunname)
+            winreg.SetValueEx(key, "TunnelConfig", 0, winreg.REG_SZ, tunconfig)
+            winreg.SetValueEx(key, "TunnelSecPolicy", 0, winreg.REG_SZ, tunpolicy)
+            winreg.CloseKey(key)
+
+def load_last_config():
+    """ Load last known configuration from the registry, throws a WindowsError exception if key wasn't found in registry """
+    retval = None
+    if viper.IS_WIN:
+        import _winreg as winreg
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINREG_KEY_NAME, 0, winreg.KEY_ALL_ACCESS)
+            # QueryValueEx returns a tuple containing 0: value, 1: type (e.g. REG_SZ)
+            tunname   = winreg.QueryValueEx(key, "TunnelName")[0]
+            tunconfig = winreg.QueryValueEx(key, "TunnelConfig")[0]
+            tunpolicy = winreg.QueryValueEx(key, "TunnelSecPolicy")[0]
+            retval = (tunname, tunconfig, tunpolicy)
+        except ImportError, e:
+            logging.error("Failed to import _winreg library. Cannot load last active policy")
+    else:
+        logging.error("policy_load_last is not supported in this OS")
+
+    return retval
+
 
 def is_viper_running():
     """Make sure that no other instance of Viper is being executed at the moment"""
