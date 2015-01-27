@@ -35,6 +35,15 @@ echo Building the Viper service...
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 python setup.py py2exe
 
+:third-party
+echo.
+echo.
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo Copying third-party binaries...
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+xcopy third-party\openvpn dist\openvpn /s /e /i
+xcopy third-party\tap-windows dist\tap-windows /s /e /i
+
 :doc
 echo.
 echo.
