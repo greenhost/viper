@@ -51,19 +51,6 @@ echo Copying documentation...
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 xcopy doc dist\doc /s /e /i
 
-:build_installer
-echo.
-echo.
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo Compiling windows installer...
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-set FOUND=
-for %%i in (makensis.exe) do (set FOUND=%%~PATH:i)
-IF NOT DEFINED FOUND  (
-	echo "!!! NSIS doesn't seem to be installed in your system. I cannot build the Windows installer without it."
-) else (
-	makensis scripts\viper-installer.nsi
-)
 
 :end
 REM EXIT 0
