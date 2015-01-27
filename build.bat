@@ -44,6 +44,14 @@ echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 xcopy third-party\openvpn dist\openvpn /s /e /i
 xcopy third-party\tap-windows dist\tap-windows /s /e /i
 
+:third-party
+echo.
+echo.
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo Copying runtime resources...
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+xcopy resources dist\resources /s /e /i
+
 :doc
 echo.
 echo.
