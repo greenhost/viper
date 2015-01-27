@@ -35,14 +35,6 @@ echo Building the Viper service...
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 python setup.py py2exe
 
-:build_client
-echo.
-echo.
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo Building the Viper client...
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-python buildexe.py
-
 :doc
 echo.
 echo.
