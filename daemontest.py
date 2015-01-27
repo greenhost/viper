@@ -4,6 +4,7 @@ import logging
 import atexit
 from threading import Thread, Event
 from viper.backend import http
+import ovpnmon
 
 def on_exit():
     logging.info("I'm leaving. Bye.")
@@ -16,6 +17,5 @@ if __name__ == '__main__':
     thread_event.set()
 
     http.init(debug=True)
-    #http.serve(host='127.0.0.1', port=8088)
-    bottle_srv = http.BottleThread(thread_event)
+    bottle_srv = ovpnmon.BottleWsgiServer(thread_event)
     bottle_srv.start()
