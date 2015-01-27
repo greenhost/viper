@@ -15,6 +15,8 @@
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
 
 !define SRC_ROOT ".."
+!define SERVICE_ROOT "${PRODUCT_NAME}\viper"
+!define CLIENT_ROOT "${PRODUCT_NAME}\systray"
 ;"${SRC_ROOT}\"
 
 ; Define user variables
@@ -95,41 +97,40 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "Comments" ""
 Section "UmanViper Install" SEC001
 
   SetOutPath "$INSTDIR\openvpn"
-  File "${SRC_ROOT}\dist\openvpn\*"
+  File "${SERVICE_ROOT}\dist\openvpn\*"
 
   SetOutPath "$INSTDIR\resources"
   SetOutPath "$INSTDIR\resources"
-  File "${SRC_ROOT}\dist\resources\*"
+  File "${SERVICE_ROOT}\dist\resources\*"
 
   SetOutPath "$INSTDIR\resources\icons"
-  File "${SRC_ROOT}\dist\resources\icons\*.ico"
+  File "${SERVICE_ROOT}\dist\resources\icons\*.ico"
 
 ;  SetOutPath "$INSTDIR\resources\www"
-;  File "${SRC_ROOT}\dist\resources\www\*"
+;  File "${SERVICE_ROOT}\dist\resources\www\*"
 
   SetOutPath "$INSTDIR\resources\www\res"
-  File "${SRC_ROOT}\dist\resources\www\res\*"
+  File "${SERVICE_ROOT}\dist\resources\www\res\*"
 
   SetOutPath "$INSTDIR\resources\www\views"
-  File "${SRC_ROOT}\dist\resources\www\views\*"
+  File "${SERVICE_ROOT}\dist\resources\www\views\*"
 
   SetOutPath "$INSTDIR\tap-windows"
-  File "${SRC_ROOT}\dist\tap-windows\tap-windows.exe"
+  File "${SERVICE_ROOT}\dist\tap-windows\tap-windows.exe"
 
   SetOutPath "$INSTDIR\doc"
-  File "${SRC_ROOT}\dist\doc\*"
+  File "${SERVICE_ROOT}\dist\doc\*"
   SetOutPath "$INSTDIR\doc\res"
-  File "${SRC_ROOT}\dist\doc\res\*"
+  File "${SERVICE_ROOT}\dist\doc\res\*"
 
   SetOutPath "$INSTDIR\service"
-  File "${SRC_ROOT}\dist\service\*"
+  File "${SERVICE_ROOT}\dist\service\*"
 
-; reference GUI
-; 	Newtonsoft.Json.dll
-;	Newtonsoft.Json.xml
-;	viper-reference-client.exe
-;	viper-reference-client.exe.config
-;	viper-reference-client.pdb
+  SetOutPath "$INSTDIR\client"
+  File "${CLIENT_ROOT}\bin\Release\Newtonsoft.Json.dll"
+  File "${CLIENT_ROOT}\bin\Release\Newtonsoft.Json.xml"
+  File "${CLIENT_ROOT}\bin\Release\viper-reference-client.exe"
+  File "${CLIENT_ROOT}\bin\Release\viper-reference-client.exe.config"
 SectionEnd
 
 SectionGroup /e "Prerequisites" SEC002
@@ -154,8 +155,6 @@ Section "Startup" SEC005
   SetOutPath ""
   ExecWait '"net" start ovpnmon'
 SectionEnd
-
-
 
 
 Function .onInit
@@ -221,7 +220,7 @@ Section -AdditionalIcons
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   WriteIniStr "$SMPROGRAMS\$ICONS_GROUP\Website.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
-  SetOutPath "$INSTDIR\doc"
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\${PRODUCT_NAME}.lnk" "$INSTDIR\client\viper-reference-client.exe"  SetOutPath "$INSTDIR\doc"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\UmanViper Readme.html.lnk" "$INSTDIR\doc\index.html" "" "" "" "SW_SHOWNORMAL" "" ""
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
