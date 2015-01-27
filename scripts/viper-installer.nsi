@@ -15,8 +15,8 @@
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
 
 !define SRC_ROOT ".."
-!define SERVICE_ROOT "${PRODUCT_NAME}\viper"
-!define CLIENT_ROOT "${PRODUCT_NAME}\systray"
+!define SERVICE_ROOT "${SRC_ROOT}\viper"
+!define CLIENT_ROOT "${SRC_ROOT}\viper-reference-gui\systray"
 ;"${SRC_ROOT}\"
 
 ; Define user variables
