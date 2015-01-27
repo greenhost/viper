@@ -49,7 +49,7 @@ DEFAULT_VIPER_HOME = "./"
 
 WINREG_KEY_NAME = r'Software\Viper'
 
-def save_last_config(tunname, tunconfig, tunpolicy):
+def save_last_config(tunname, tunconfig, tunlogdir, tunpolicy):
     """ Save last known configuration in Windows registry, if the key isn't found it will be created """
     if viper.IS_WIN:
         import _winreg as winreg
@@ -60,6 +60,7 @@ def save_last_config(tunname, tunconfig, tunpolicy):
         finally:
             winreg.SetValueEx(key, "TunnelName", 0, winreg.REG_SZ, tunname)
             winreg.SetValueEx(key, "TunnelConfig", 0, winreg.REG_SZ, tunconfig)
+            winreg.SetValueEx(key, "TunnelLogDir", 0, winreg.REG_SZ, tunlogdir)
             winreg.SetValueEx(key, "TunnelSecPolicy", 0, winreg.REG_SZ, tunpolicy)
             winreg.CloseKey(key)
 
@@ -77,8 +78,9 @@ def load_last_config():
             # QueryValueEx returns a tuple containing 0: value, 1: type (e.g. REG_SZ)
             tunname   = winreg.QueryValueEx(key, "TunnelName")[0]
             tunconfig = winreg.QueryValueEx(key, "TunnelConfig")[0]
+            tunlogdir = winreg.QueryValueEx(key, "TunnelLogDir")[0]
             tunpolicy = winreg.QueryValueEx(key, "TunnelSecPolicy")[0]
-            retval = (tunname, tunconfig, tunpolicy)
+            retval = (tunname, tunconfig, tunlogdir, tunpolicy)
         except WindowsError as ex:  # regkey wasn't found, return none
             return None
 
