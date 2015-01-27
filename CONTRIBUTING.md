@@ -34,8 +34,12 @@ Once your build machine has this software readily available you should be able t
 ### Request a feature you would like to see implemented
 * Use the github issues to tell us what you would like to see implemented. Tell us why you need the feature you are asking for.
 
-### Rolling up your sleeves and making your own changes
+### Build your own GUI client
+If you have some mad UX skills you might want to develop a better user-facing UI. Most of the networking code in Viper is taken care of by the Windows service that runs in the background. The GUI client just interacts with the service using a simple JSON/REST API. Using this API you can control the basic functions of Viper.
 
+Have a look at the [API specification here](doc/daemon-api.yaml). You can use the [Swagger editor](http://editor.swagger.io) to render a pretty document from the YAML spec source.
+
+### Rolling up your sleeves and making your own changes
 * Fork the repository on GitHub
 * Create a topic branch from where you want to base your work.
   * This is usually the master branch.
@@ -47,13 +51,11 @@ Once your build machine has this software readily available you should be able t
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format.
 
-
 * Make sure you have added any necessary tests for your changes. Typically
   only refactoring and documentation changes require no new tests.
 * Run _all_ the tests to assure nothing else was accidentally broken.
 
 ## Submitting Changes
-
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the [greenhost](https://github.com/greenhost) organization.
 
