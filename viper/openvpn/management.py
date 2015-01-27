@@ -154,6 +154,10 @@ class OVPNInterface:
             logging.warning(resp)
             retval['viper_status'] = "DISCONNECTED" 
 
+        # do status callback
+        if(self.cb_set_ovpn_status):
+            self.cb_set_ovpn_status( retval['viper_status'] )
+
         return retval
 
     def parse_state_response(self, msg):

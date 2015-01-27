@@ -30,11 +30,15 @@ class Reactor:
     def __init__(self):
         logging.info("Initializing reactor...")
 
+        # Reactor keeps track of these state variables
+        self.last_known_gateway = None
+        self.ovpn_state = None
+
         try:
             from viper.openvpn import launcher, management
             self.launcher = launcher.OpenVPNLauncher()
-            self.poll = management.OVPNInterface(self.set_last_known_gateway)
-        except ImportError, e:
+            self.poll = management.OVPNInterface(self.set_last_known_gateway, self.set_ovpn_status)
+        except ImportError as e:
             logging.critical("Couldn't import OpenVPN launcher")
 
         self.settings = {}
@@ -53,6 +57,12 @@ class Reactor:
         else:
             logging.debug("Previous configuration was not found, waiting for further instructions")
 
+
+    def set_last_known_gateway(self, gwip):
+        self.last_known_gateway = gwip
+
+    def set_ovpn_status(self, state):
+        self.ovpn_state = state
 
     def get_tunnel_status(self):
         st = {'tunnel': 'DISCONNECTED', 'openvpn': 'DISCONNECTED'}
