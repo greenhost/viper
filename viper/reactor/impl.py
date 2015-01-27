@@ -33,7 +33,7 @@ class Reactor:
         try:
             from viper.openvpn import launcher, management
             self.launcher = launcher.OpenVPNLauncher()
-            #self.poll = management.OVPNInterface(self.set_last_known_gateway)
+            self.poll = management.OVPNInterface(self.set_last_known_gateway)
         except ImportError, e:
             logging.critical("Couldn't import OpenVPN launcher")
 
@@ -56,11 +56,11 @@ class Reactor:
 
     def get_tunnel_status(self):
         st = {'tunnel': 'DISCONNECTED', 'openvpn': 'DISCONNECTED'}
-        # ovpnst = self.poll.poll_status(self.last_known_gateway)
+        ovpnst = self.poll.poll_status(self.last_known_gateway)
         
-        # if 'ovpn_state' in ovpnst:
-        #     st['tunnel']  = ovpnst['ovpn_state']
-        #     st['openvpn'] = ovpnst['ovpn_state']
+        if 'ovpn_state' in ovpnst:
+            st['tunnel']  = ovpnst['ovpn_state']
+            st['openvpn'] = ovpnst['ovpn_state']
 
         return st
 
@@ -117,23 +117,3 @@ class Reactor:
         if not policies.after_close_tunnel():
             logging.warning("Failed to enforce policies AFTER closing tunnel connection")
 
-    # def shields_up(self):
-    #     """ Activate the firewall rules that will enhance the user's protection through the duration of the VPN run """
-    #     logging.debug("Putting up firewall")
-    #
-    #     # if Windows Firewall is not enabled, refuse to connect
-    #     if not firewall.is_firewall_enabled():
-    #         logging.critical("Firewall is not enabled. I will not connect.")
-    #         return False
-    #     else:
-    #         # configure the Windows Firewall to block all IPv6 traffic
-    #         firewall.block_ipv6()
-    #         # @TODO launch is async, perhaps this should be a callback
-    #         firewall.block_default_gateway("none-specified")
-    #
-    # def shields_down(self):
-    #     """ Deactivate the firewall rules """
-    #     logging.debug("Taking down firewall")
-    #     # allow IPv6 traffic again
-    #     firewall.unblock_ipv6()
-    #     firewall.unblock_default_gateway("none-specified")
