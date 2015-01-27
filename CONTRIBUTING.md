@@ -32,7 +32,7 @@ Once your build machine has this software readily available you should be able t
   * Note the earliest version that you know has the issue.
 
 ### Request a feature you would like to see implemented
-* Use the github issues to tell us what you would like to see implemented. Tell us why you need the feature you are asking for.
+Use the github issues to tell us what you would like to see implemented. Tell us why you need the feature you are asking for.
 
 ### Build your own GUI client
 If you have some mad UX skills you might want to develop a better user-facing UI. Most of the networking code in Viper is taken care of by the Windows service that runs in the background. The GUI client just interacts with the service using a simple JSON/REST API. Using this API you can control the basic functions of Viper.
