@@ -1,6 +1,7 @@
 <html>
 <header>
 	<title>{{title}}</title>
+	<meta http-equiv="cache-control" content="no-cache">
 	<script type="text/javascript" src="/resources/jquery-1.11.1.min.js"></script>
 	<style>
 		body {
@@ -73,6 +74,7 @@
 		</div>
 		<div id="tunnel-open-details">
 			<p>You are now connected to the Internet through a Viper tunnel.</p>
+			<!--
 			<div id="policies" class="yellow">
 			<p>You are currently protected by the following security policies:</p>
 			<dl>
@@ -84,6 +86,7 @@
 				<dt>Format-transforming encryption (fteproxy) <a href="#">explain &#127;</a></dt>
 			</dl>
 			</div>
+			-->
 		</div>
 		<!--
 		<button id="btnCheckStatus">Check status</button>
