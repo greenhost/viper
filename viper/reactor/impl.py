@@ -44,6 +44,16 @@ class Reactor:
         except firewall.FirewallException as ex:
             logging.exception("Failed to check firewall")
 
+        # see if we have a previous configuration we can use
+        cfg = tools.load_last_config()
+        # if so start the tunnel right away with it
+        if cfg:
+            logging.debug("Found a default config from a previous run, opening tunnel with this config...")
+            self.tunnel_open(cfg[1], cfg[2])
+        else:
+            logging.debug("Previous configuration was not found, waiting for further instructions")
+
+
     def get_tunnel_status(self):
         st = {'tunnel': 'DISCONNECTED', 'openvpn': 'DISCONNECTED'}
         # ovpnst = self.poll.poll_status(self.last_known_gateway)
@@ -82,6 +92,9 @@ class Reactor:
 
                 if not policies.after_open_tunnel():
                     logging.warning("Failed to enforce policies AFTER opening tunnel")
+
+                # if we got this far, save this config as default for next run
+                tools.save_last_config("default", cfgfile, logdir)
             else:
                 logging.debug("Failed to enforce policies BEFORE opening tunnel")
         else:
