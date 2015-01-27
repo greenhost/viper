@@ -67,7 +67,11 @@ def load_last_config():
     """ Load last known configuration from the registry, throws a WindowsError exception if key wasn't found in registry """
     retval = None
     if viper.IS_WIN:
-        import _winreg as winreg
+        try:
+            import _winreg as winreg
+        except ImportError, e:
+            logging.error("Failed to import _winreg library. Cannot load last active policy")
+
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINREG_KEY_NAME, 0, winreg.KEY_ALL_ACCESS)
             # QueryValueEx returns a tuple containing 0: value, 1: type (e.g. REG_SZ)
@@ -75,10 +79,8 @@ def load_last_config():
             tunconfig = winreg.QueryValueEx(key, "TunnelConfig")[0]
             tunpolicy = winreg.QueryValueEx(key, "TunnelSecPolicy")[0]
             retval = (tunname, tunconfig, tunpolicy)
-        except ImportError, e:
-            logging.error("Failed to import _winreg library. Cannot load last active policy")
-    else:
-        logging.error("policy_load_last is not supported in this OS")
+        except WindowsError as ex:  # regkey wasn't found, return none
+            return None
 
     return retval
 
