@@ -55,13 +55,24 @@ def set_firewall_state(state = "on"):
     @note uses the netsh command to interact with the firewall which is notorious for changing acrsso versions of windows
     """
     cmd = "netsh advfirewall set allprofiles state {0}".format(state)
-    subprocess.call( cmd.split() )
+    FNULL = open(os.devnull, 'w')
+    subprocess.call(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
 
 def firewall_enable():
     set_firewall_state("on")
 
 def firewall_disable():
     set_firewall_state("off")
+
+def exec_rules(rules):
+    for r in rules:
+        FNULL = open(os.devnull, 'w')
+        retval = subprocess.call(r.split(), stdout=FNULL, stderr=subprocess.STDOUT)
+        if retval != 0:
+            # if setting one of the rules fails, return
+            return False
+
+    return True
 
 def block_ipv6():
     """Execute external fwipv6 tool to enable the Windows Firewall filtering of IPv6 traffic"""
@@ -77,22 +88,7 @@ def block_ipv6():
     ]
 
     logging.info("Configuring Windows Firewall to block IPv6 traffic...")
-    for r in rules:
-        retval = subprocess.call( r.split() )
-        if retval != 0:
-            # if setting one of the rules fails, return
-            return False
-
-    return True
-
-def exec_rules(rules):
-    for r in rules:
-        retval = subprocess.call( r.split() )
-        if retval != 0:
-            # if setting one of the rules fails, return
-            return False
-
-    return True
+    return exec_rules(rules)
 
 def unblock_ipv6():
     """Execute external fwipv6 tool to disable the Windows Firewall filtering of IPv6 traffic"""
@@ -106,7 +102,7 @@ def unblock_ipv6():
     ]
 
     logging.info("Windows Firewall allows IPv6 traffic now...")
-    return exec_rules( rules )
+    return exec_rules(rules)
 
 def block_default_local_subnet(interface_ip):
     rules = [
